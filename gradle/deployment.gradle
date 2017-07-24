@@ -1,0 +1,20 @@
+task travisDeploy(group: "release") {
+	description "Publishes assembled archives to public repositories"
+	dependsOn artifactoryPublish
+	dependsOn bintrayUpload
+}
+
+// This code will exclude either bintray upload task or artifactory upload task
+// depending whether current version is a snapshot or not
+gradle.taskGraph.whenReady { taskGraph ->
+	if (taskGraph.hasTask(travisDeploy)) {
+		if (project.version.endsWith("SNAPSHOT"))
+			bintrayUpload.enabled = false
+		
+		if (System.getenv("TRAVIS_BRANCH") != gitMasterBranch)
+			bintrayUpload.enabled = false
+		
+		if (!project.version.endsWith("SNAPSHOT"))
+			artifactoryPublish.enabled = false
+	}
+}

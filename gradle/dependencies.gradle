@@ -1,0 +1,19 @@
+repositories {
+    jcenter()
+}
+
+dependencies {
+	compile "com.github.jshaptic:js4j:+"
+	compile "org.apache.commons:commons-lang3:3.4"
+	compile "commons-cli:commons-cli:1.2"
+	compile "com.google.guava:guava:18.0"
+	compile "org.mozilla:rhino:1.7R5"
+	compile "net.htmlparser.jericho:jericho-html:3.3"
+    
+    // TODO: try to avoid these two libraries and create own json parser
+    compile "com.eclipsesource.minimal-json:minimal-json:0.9.4"
+    compile "com.google.code.gson:gson:2.3.1"
+    
+    // Dependecies during testing stage
+    testCompile "org.testng:testng:6.9.13.6"
+}

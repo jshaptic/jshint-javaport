@@ -1,0 +1,50 @@
+language: java
+jdk: oraclejdk8
+
+# Encrypted global secret variables (passwords and keys)
+env:
+  global:
+    - secure: dH6yhuE+U8wKJbfRk51CJ6tG+j5PVllx6OHD4rXPb9jKVw/H3AiDsUnWnnBJCkL2mgSMeSDmOlS298kqKXPl7QHRWbx50dZebcEm8k5KLvkB4eW/wozZ9VaZG4ZUpAvV1v7dYpcQi2kPxIkxpZMpA1kPT12ukrLKIFbVD3W+1FvVEWCcbXRduhBF4dklwL5G70XkwM8DNIkAhsynAgellbedlcf9ScBNWpnBBKHLXJaHNxfrPyB4GQEvplhrr03L0zqDIFih56YJJjUuJ6N+V3i0gTIexmKdrBp4VTJzYNZE8GJad9zbSTdoYqF8r9mqWhWs5tmz17juWLyb3Ludl1Syb1UKOwDM0LmmLSeK1MaDlnv8eoKODGiZD8Of1k77rvEL7066PdMsPbxCF1xWm25hdrNERhB1WYxprbZtS5uqc6yRedGPUDxRW2WfOv1ns3FvaP+GBRmG9Qq2hUldVlbJXSSprC8wX/FUokeEO4Mg76JNnOv9F/HMWy7rT9dOPZBWyvpdF1pP2d1nrrmOCj9aYf27MldoqecRBShjQmn6nldJx7DsCvg69rt23pU1uPXIoGK18fEZwBUOn8PFhu2aCA/K4YlH3G6oD0cj7WYGPl1oFoTMZBoPgxC7+kVV2ehN4ZS7To6vRZsh6WJ49eTW/BmFKuyBc+dUBr2N5m8=
+    - secure: lByGSM4Jgi24/r0GaWmI5H38R417JF3HRZB/ThJeLC9SVLmzn894AKcZGBcb6Z5UDA0Eo3GohuSnmGHX0zGk78M5+9U2Mh3mO9gOb3288pYa2nsDKpSDNNdJIjDVR1YZAbuJjW7JzT77HNCN4mEfruZTwQdG8eUgDzA29+21L2GevzaaYdrbqWliveAYeALOGapQ9Tuu2cXsWmvWs++RUrJD+vzgVuY7ncH6IFCHo01J4TzUdikHDpqJXkCC/PJNb7WicNv2JU88AZnupeqVQt811W0b8IZ9oJ5kPnfvLDzf1pNJNW8vc2YzGsZPhtkwwXz0mJ25zW+UZ5xIVcAeOCJii9yPHpuj5ikWxl7Rh+/XpPuJMiOSzhPJxBwpebgwxnsj5MjxtMYEy1OqsqKskJ7lgiqrT1MMey7WNeIKvGep/FfIvNc0IQD5uIo6Jq1DKRmcD/NwRjCtvu56SmyIdB+qfiFCOue0YwkvCxtL3g4iJbGN1pxkBubs76cbJ3Y/fJJ4OC3beBFu/LZB5nk59oLROnJ9z6fcJAufhsmwREV+OHPgRk0VjjY6OcDLT7wanPmi73TcjntC489GOzMscFYmTAYrck6s2IfSZk9iZHLk29KA/f6NQdzflRq94Z/bZMf3fMK/PAWfx2vSPPHO/tHuu6Gd7YOBz+wRgqcKCOc=
+    - secure: Tx5XLj3O0fDcZaWwMiKeNCG/gq2cOZD6/n2Vd9zNLirZEhBtraEGnXY/JjrHOWIiPZK2UcMWWVZZ1G/gxPGV3oJFHnt77v31SRxuqkilXIiziP/uHxrVOhW2ZzLUneuN0V1Sj/1dPezU2XcirpVQZrG7N4pCJs88NqT/a3N6drgPaYBgxw9FLULRdUI7NWhloPLOOXz9s7GCSSVIxD6CivRjLp8r6n0enEpNjoCXQFnaDzl1g2qhRhV4y0IfKi2owdSFS3wThAgJ6v25Eo/x6LdImselLLZ4UAetCWAfb/cKaLrlIXE385rPkdKqiSSW1NvOphGEOOOPAW5Nc92d8DdOOAm2hPlMcH0+9y6Y2NAk8QUCeAVpPxfVdqHo2pQgP9HDNhfhvaoPkX565RhD8wByyLmv6oQI4OCD4JhSjecY5xnuOkkzRvz4xwG/ArdmXGrDuDilD9BHo3HY2FOyxH2Ds/yK4UQo/yNaZIb99qHy48SsHGTstX+76nK0xerzJBGOdbg4LvkZIllh2UmscfufS6dhg4d0iE4Cnk/Vv+BPqnll/N9axaQ61Ab/VEUQYI3+d0qBND3Tp47CibeLOeU7LrMgc0zrAATEG/DQaHKKVWuHyVj9DxX1IV0r1LCpBPoIgZnN/6czfMs8XtuVPFaCe5RpGKmEzoGctdxQqYs=
+  
+# Build settings
+sudo: false
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+notifications:
+  email: false
+
+# Execute custom script instead of default travis execution
+script:
+  - ./gradlew --rerun-tasks test jacocoTestReport coveralls -x classes
+branches:
+  only:
+  - develop
+  - master
+  
+# Output all test results in case of the build failure
+after_failure:
+  - cat build/test-results/test/*.xml
+
+# Deploy snapshot version or release version, depending on the branch (that is decided in gradle, see deployment.gradle)
+# TODO if deployment failed do something and add task to redeploy package if it was successfully compiled and tested 
+deploy:
+  provider: script
+  script: ./gradlew travisDeploy
+  skip_cleanup: true
+  on:
+    all_branches: true
+    jdk: oraclejdk8
+
+# Used to avoid uploading the cache after every build, see https://docs.travis-ci.com/user/languages/java/#Caching
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repositories/

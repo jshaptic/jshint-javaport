@@ -1,0 +1,11 @@
+// Use TestNG framework instead of default JUnit
+test {
+	useTestNG()
+}
+
+// For coveralls check jacoco xml report should be turned on
+jacocoTestReport {
+	reports {
+        xml.enabled = true
+    }
+}

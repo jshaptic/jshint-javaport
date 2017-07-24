@@ -1,0 +1,16 @@
+// Setup compile settings
+sourceCompatibility = project.javaVersion
+targetCompatibility = project.javaVersion
+compileJava.options.encoding = project.defaultEncoding
+
+// Custom task for creating source jar
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+// Custom task for creating javadoc jar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = "javadoc"
+    from javadoc.destinationDir
+}

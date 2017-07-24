@@ -1,0 +1,31 @@
+// Setup bintray configuration, redentials are initialized in credentials.gradle file
+// For properties description see gradle bintray plugin readme page 
+bintray {
+	user = project.bintrayUsername
+	key = project.bintrayKey
+	publications = ["mavenJava"]
+	publish = true
+	pkg {
+		repo = project.bintrayRepoName
+		name = project.name
+		desc = project.description
+		websiteUrl = project.homeUrl
+		issueTrackerUrl = project.issuesUrl
+		vcsUrl = project.scmUrl
+		licenses = project.licenses.name 
+		labels = project.labels.split(",")
+		publicDownloadNumbers = true
+		githubRepo = project.bintrayGHRepoName
+		githubReleaseNotesFile  = project.bintrayGHReleaseNotesFile
+		version {
+			name = project.version
+			desc = "Version '${project.version}' of the '${project.name}' library"
+			released = new Date()
+			vcsTag = project.vcsTag
+			gpg {
+				sign = true
+				passphrase = project.gpgPassphrase
+			}
+		}
+	}
+}

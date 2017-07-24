@@ -1,0 +1,17 @@
+# Java
+*.class
+*.jar
+
+# TestNG
+test-output/
+
+# Gradle
+/build
+.gradle
+!gradle-wrapper.jar
+
+# Eclipse
+bin/
+.settings/
+.project
+.classpath

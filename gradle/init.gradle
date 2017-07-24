@@ -1,0 +1,42 @@
+import java.text.SimpleDateFormat
+
+ext {
+    // initialize build date and time
+    Date buildTimeAndDate = new Date()
+    buildDate = new SimpleDateFormat("yyyy-MM-dd").format(buildTimeAndDate)
+    buildTime = new SimpleDateFormat("HH:mm:ss.SSSZ").format(buildTimeAndDate)
+    
+    // initialize vcsTag property
+    vcsTag = "v" + project.version
+    
+    // initialize licenses property
+    licenses = []
+	properties.findAll{ it.key.startsWith("license") && it.value instanceof String }.each { k, v ->
+		def licData = v.split(",")
+		if (licData.size() > 1)
+		{
+			for (l in licData) if (!l) throw new GradleException("One of the license properties '${k}' missing required data!")
+			licenses.add([name: licData[0], url: licData[1]])
+		}
+		else
+			throw new GradleException("One of the license properties '${k}' missing required data!")
+	}
+	
+	// initialize developers property
+	developers = []
+	properties.findAll{ it.key.startsWith("developer") && it.value instanceof String }.each { k, v ->
+		def devData = v.split(",")
+		if (devData.size() > 3)
+		{
+			for (d in devData) if (!d) throw new GradleException("One of the developer properties '${k}' missing required data!")
+			developers.add([name: devData[0], email: devData[1], organization: devData[2], organizationUrl: devData[3]])
+		}
+		else
+			throw new GradleException("One of the developer properties '${k}' missing required data!")
+	}
+	
+	// initialize helper property method
+	setExtValue = { String property, String systemenv ->
+ 		project.ext."$property" = project.hasProperty(property) ? project.getProperty(property) : System.getenv(systemenv)
+ 	}
+}

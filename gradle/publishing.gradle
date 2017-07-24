@@ -1,0 +1,96 @@
+// Setup manifest file
+jar {
+    manifest {
+        attributes(
+            "Built-By": System.properties["user.name"],
+            "Created-By": System.properties["java.version"] + " (" + System.properties["java.vendor"] + " " + System.properties["java.vm.version"] + ")",
+            "Build-Date": project.buildDate,
+            "Build-Time": project.buildTime,
+            "Name": project.packageName,
+            "Specification-Title": project.name,
+            "Specification-Version": project.version,
+            "Specification-Vendor": project.packageVendor,
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.version,
+            "Implementation-Vendor": project.packageVendor
+        )
+    }
+    from "LICENSE" // include license file
+}
+
+// Add javadoc/source jar tasks as artifacts
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+// Create additional pom.xml properties to comply with a Sonatype standards 
+def pomMetaData = {
+	resolveStrategy = Closure.DELEGATE_FIRST
+	name project.name
+    description project.description
+    url project.homeUrl
+    inceptionYear project.inceptionYear
+    licenses {
+        project.licenses.each { lic ->
+            license {
+	            name lic.name
+	            url lic.url
+            }
+        }
+    }
+    scm {
+        connection project.scmROConnection
+        developerConnection project.scmRWConnection
+        url project.scmUrl
+    }
+    issueManagement {
+    	system project.issuesSystem
+    	url project.issuesUrl
+    }
+    developers {
+        project.developers.each { dev ->
+            developer {
+                name dev.name
+                email dev.email
+				organization dev.organization
+				organizationUrl dev.organizationUrl
+            }
+        }
+    }
+}
+
+def pomConfig = {
+	def root = asNode()
+	def dependencies = root.dependencies
+	def allDependencies = dependencies.'*'
+
+	//Fix issue with maven-publish plugin setting compile deps to runtime
+	allDependencies.findAll() {
+	  it.scope.text() == 'runtime' && project.configurations.compile.allDependencies.find { dep ->
+		dep.name == it.artifactId.text()
+	  }
+	}.each() {
+	  it.scope*.value = 'compile'
+	}
+
+	root.children().last() + pomMetaData
+}
+
+// Setup maven publishing task, which is used by bintray and artifactory tasks
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourcesJar {
+                classifier "sources"
+            }
+
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            
+            pom.withXml pomConfig
+        }
+    }
+}

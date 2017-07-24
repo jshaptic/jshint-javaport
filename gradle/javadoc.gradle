@@ -1,0 +1,8 @@
+// Setup javadoc settings: only public members and beautiful hyperlinks for standard Java objects 
+javadoc {
+	options {
+		memberLevel = project.javadocMemberLevel
+		encoding = project.defaultEncoding
+		linksOffline "https://docs.oracle.com/javase/8/docs/api/", "https://docs.oracle.com/javase/8/docs/api/"
+	}
+}

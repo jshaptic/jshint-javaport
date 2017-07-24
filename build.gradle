@@ -1,0 +1,24 @@
+plugins {
+    id "java"
+    id "jacoco"
+    id "maven-publish"
+	id "com.jfrog.artifactory" version "4.4.7"
+    id "com.jfrog.bintray" version "1.7.2"
+    id "com.github.kt3k.coveralls" version "2.6.3"
+}
+
+apply from: "gradle/init.gradle"			// intialize helper methods and runtime properties
+apply from: "gradle/dependencies.gradle"	// setup dependecies
+apply from: "gradle/credentials.gradle"		// setup sensitive properties
+apply from: "gradle/compile.gradle"			// setup compile settings and tasks
+apply from: "gradle/javadoc.gradle"			// setup javadoc settings and tasks
+apply from: "gradle/testing.gradle"			// setup testing settings and tasks
+apply from: "gradle/git.gradle"				// setup git tasks
+apply from: "gradle/publishing.gradle"		// setup maven publishing settings and tasks
+apply from: "gradle/artifactory.gradle"		// setup jfrog artifactory settings and tasks 
+apply from: "gradle/bintray.gradle"			// setup jfrog bintray settings and tasks
+apply from: "gradle/deployment.gradle"		// setup deployment settings and tasks
+
+wrapper {
+    gradleVersion = "3.1"					// setup gradle version
+}
