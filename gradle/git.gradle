@@ -9,7 +9,7 @@ buildscript {
 }
 
 // Define global git object
-//def grgit = org.ajoberstar.grgit.Grgit.open(project.projectDir)
+def grgit = org.ajoberstar.grgit.Grgit.open(project.projectDir)
 
 task gitReadyForRelease(group: "git") {
 	description "Fetch all remotes, validates current repository state and will stop execution if something is wrong"
