@@ -329,7 +329,7 @@ public class Cli
 	 * the list is located in a file called '.jshintignore'.
 	 * 
 	 * @return a list of files to ignore.
-	 * @throws IOException 
+	 * @throws IOException if ignore files cannot be read from file system
 	 */
 	private List<String> loadIgnores(String exclude, String excludePath, String cwd) throws IOException
 	{
@@ -498,8 +498,8 @@ public class Cli
 	 * @param config  an object with JSHint configuration
 	 * @param data    a pointer to an object with extra data
 	 * @param file    (optional) file name that is being linted
-	 * @throws IOException
-	 * @throws JSHintException 
+	 * @throws IOException if there is issue reading files from filesystem
+	 * @throws JSHintException if <b>code</b> cannot be linted for some reason
 	 */
 	private void lint(String code, List<ReporterResult> results, UniversalContainer config, List<DataSummary> data, String file) throws IOException, JSHintException
 	{
@@ -589,12 +589,12 @@ public class Cli
 	 * code or JS code. In the latter case, no extraction will be done unless
 	 * 'always' is given.
 	 *
-	 * @param code a piece of code
+	 * @param code a piece of code.
 	 * @param when 'always' will extract the JS code, no matter what.
 	 * 'never' won't do anything. 'auto' will check if the code looks like HTML
 	 * before extracting it.
 	 *
-	 * @return the extracted code
+	 * @return the extracted code.
 	 */
 	public String extract(String code, String when)
 	{
@@ -649,6 +649,12 @@ public class Cli
 		return StringUtils.join(js, "");
 	}
 	
+	/**
+	 * Shortcut that just throws ExitException with specified exit code.
+	 * 
+	 * @param code exit code.
+	 * @throws ExitException purpose of this method is to throw ExitException.
+	 */
 	public void exit(int code) throws ExitException
 	{
 		throw new ExitException(code);
@@ -656,7 +662,10 @@ public class Cli
 	
 	/**
 	 * Returns a configuration file or nothing, if it can't be found.
-	 * @throws ExitException 
+	 * 
+	 * @param fp a path to the config file.
+	 * @return configuration file.
+	 * @throws ExitException if config cannot be resolved due to any reason.
 	 */
 	public UniversalContainer getConfig(String fp) throws ExitException
 	{
@@ -667,9 +676,9 @@ public class Cli
 	/**
 	 * Loads and parses a configuration file.
 	 *
-	 * @param fp a path to the config file
-	 * @throws ExitException 
-	 * @returns config object
+	 * @param fp a path to the config file.
+	 * @throws ExitException if config cannot be loaded due to any reason.
+	 * @return configuration object.
 	 */
 	public UniversalContainer loadConfig(String fp) throws ExitException
 	{
@@ -720,10 +729,11 @@ public class Cli
 	}
 
 	/**
-	 * Gathers all files that need to be linted
+	 * Gathers all files that need to be linted.
 	 *
-	 * @param post-processed options from main function
-	 * @throws IOException 
+	 * @param opts post-processed options from main function.
+	 * @return list of files.
+	 * @throws IOException if files cannot be read from filesystem.
 	 */
 	public List<String> gather(RunOptions opts) throws IOException
 	{
@@ -765,12 +775,11 @@ public class Cli
 	 * Gathers all files that need to be linted, lints them, sends them to
 	 * a reporter and returns the overall result.
 	 *
-	 * @param post-processed options from main function
-	 * @throws ExitException 
-	 * @throws IOException 
-	 * @throws JSHintException 
-	 *
-	 * @returns 'true' if all files passed, 'false' otherwise
+	 * @param opts post-processed options from main function.
+	 * @return true if all files passed, false otherwise.
+	 * @throws ExitException if code linting cannot be started.
+	 * @throws IOException if required files cannot be read from filesystem.
+	 * @throws JSHintException if there is issue during code linting.
 	 */
 	public boolean run(RunOptions opts) throws ExitException, JSHintException, IOException
 	{
@@ -855,10 +864,11 @@ public class Cli
 	}
 	
 	/**
-	 * Main entrance function. Parses arguments and calls 'run' when
+	 * Main entrance function. Parses arguments and calls #run(RunOptions) when
 	 * its done.
 	 *
-	 * @param args, list of passed arguments
+	 * @param args list of passed arguments.
+	 * @return exit code.
 	 */
 	public int interpret(String... args)
 	{

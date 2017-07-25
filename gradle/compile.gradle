@@ -2,6 +2,7 @@
 sourceCompatibility = project.javaVersion
 targetCompatibility = project.javaVersion
 compileJava.options.encoding = project.defaultEncoding
+compileTestJava.options.encoding = project.defaultEncoding
 
 // Custom task for creating source jar
 task sourcesJar(type: Jar, dependsOn: classes) {

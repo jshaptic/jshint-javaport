@@ -40,8 +40,7 @@ public class NameStack
 	/**
 	 * Update the most recent name on the top of the stack.
 	 *
-	 * @param {object} token The token to consider as the source for the most
-	 *                       recent name.
+	 * @param token The token to consider as the source for the most recent name.
 	 */
 	public void set(Token token)
 	{
@@ -51,7 +50,7 @@ public class NameStack
 	/**
 	 * Generate a string representation of the most recent name.
 	 *
-	 * @returns {string}
+	 * @return string representation of the most recent name
 	 */
 	public String infer()
 	{

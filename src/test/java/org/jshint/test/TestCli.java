@@ -20,11 +20,18 @@ import org.jshint.reporters.ReporterResult;
 import org.jshint.test.helpers.CliWrapper;
 import org.jshint.utils.JSHintUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
 
 public class TestCli extends Assert
 {
+	@BeforeClass
+	private void setupBeforeClass()
+	{
+		JSHintUtils.reset();
+	}
+	
 	@BeforeGroups(groups = {"config"})
 	public void setUpConfig()
 	{	

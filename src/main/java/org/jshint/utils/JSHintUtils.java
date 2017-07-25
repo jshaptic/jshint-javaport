@@ -21,6 +21,13 @@ public final class JSHintUtils
 	public static PathUtils path = new PathUtils();
 	public static CliUtils cli = new CliUtils();
 	
+	public static void reset()
+	{
+		shell = new ShellUtils();
+		path = new PathUtils();
+		cli = new CliUtils();
+	}
+	
 	public static class ShellUtils
 	{	
 		//shjs.cat(path)

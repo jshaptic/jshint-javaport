@@ -202,7 +202,7 @@ public final class State
 	/**
 	 * Determine if the code currently being linted is strict mode code.
 	 * 
-	 * @returns {boolean}
+	 * @return true if code is in strict mod, false otherwise.
 	 */
 	public static boolean isStrict()
 	{
@@ -223,6 +223,8 @@ public final class State
 	 * 'use strict'" warning is *also* reported at function boundaries, this
 	 * function interprets `strict` option values `true` and `undefined` as
 	 * equivalent.
+	 * 
+	 * @return true if code misses use strict directive, false otherwise.
 	 */
 	public static boolean stmtMissingStrict()
 	{
@@ -254,7 +256,7 @@ public final class State
 	 * Determine if the current configuration describes an environment that is
 	 * wrapped in an immediately-invoked function expression prior to evaluation.
 	 *
-	 * @returns {boolean}
+	 * @return true if environment is wrapped in an immediately-invoked function expression, false otherwise.
 	 */
 	public static boolean impliedClosure()
 	{
@@ -267,14 +269,20 @@ public final class State
 		return getOption().test("moz");
 	}
 	
+	/** Checks whether current configuration is ES6 compliant.
+	 * 
+	 * @return true if current environment is ES6, false otherwise.
+	 * @see #inES6(boolean)
+	 */
 	public static boolean inES6()
 	{
 		return inES6(false);
 	}
 	
-	/**
-	 * @param {boolean} strict - When `true`, only consider ES6 when in
-	 *                           "esversion: 6" code.
+	/** Checks whether current configuration is ES6 compliant.
+	 * 
+	 * @param strict When true, only consider ES6 when in "esversion: 6" code.
+	 * @return true if current environment is ES6, false otherwise.
 	 */
 	public static boolean inES6(boolean strict)
 	{
@@ -285,14 +293,21 @@ public final class State
 		return getOption().test("moz") || esVersion >= 6;
 	}
 	
+	/** Checks whether current configuration is ES5 compliant.
+	 * 
+	 * @return true if current environment is ES5, false otherwise.
+	 * @see #inES5(boolean)
+	 */
 	public static boolean inES5()
 	{
 		return inES5(false);
 	}
 	
 	/**
-	 * @param {boolean} strict - When `true`, return `true` only when
-	 *                           esVersion is exactly 5
+	 * Checks whether current configuration is ES5 compliant.
+	 * 
+	 * @param strict When true, return true only when esVersion is exactly 5
+	 * @return true if current environment is ES5, false otherwise.
 	 */
 	public static boolean inES5(boolean strict)
 	{
@@ -310,8 +325,7 @@ public final class State
 	 * `esnext`, and it may be drastically simplified when those options are
 	 * removed.
 	 *
-	 * @returns {string|null} - the name of any incompatible option detected,
-	 *                          `null` otherwise
+	 * @return the name of any incompatible option detected, null otherwise
 	 */
 	public static String inferEsVersion()
 	{

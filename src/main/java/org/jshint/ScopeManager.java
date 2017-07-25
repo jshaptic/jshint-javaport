@@ -326,10 +326,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * Tell the manager we are entering a new block of code
-     * @param {string} [type] - The type of the block. Valid values are
-     *                          "functionparams", "catchparams" and
-     *                          "functionouter"
+     * Tell the manager we are entering a new block of code.
+     * 
+     * @param type The type of the block. Valid values are "functionparams", "catchparams" and "functionouter".
      */
 	public void stack(String type)
 	{
@@ -560,16 +559,23 @@ public class ScopeManager
 		current = subScope;
 	}
 	
+	/**
+     * Add a param to the current scope.
+     * 
+     * @param labelName name of the label
+     * @param token current token
+     */
 	public void addParam(String labelName, Token token)
 	{
 		addParam(labelName, token, null);
 	}
 	
 	/**
-     * Add a param to the current scope
-     * @param {string} labelName
-     * @param {Token} token
-     * @param {string} [type="param"] param type
+     * Add a param to the current scope.
+     * 
+     * @param labelName name of the label
+     * @param token current token
+     * @param type type of the parameter token
      */
 	public void addParam(String labelName, Token token, String type)
 	{
@@ -661,8 +667,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * Gets an array of implied globals
-     * @returns {Array.<{ name: string, line: Array.<number>}>}
+     * Gets an array of implied globals.
+     * 
+     * @return list of globals.
      */
 	public List<ImpliedGlobal> getImpliedGlobals()
 	{
@@ -670,8 +677,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * Returns a list of unused variables
-     * @returns {Array}
+     * Returns a list of unused variables.
+     * 
+     * @return list of unused variables.
      */
 	public List<Token> getUnuseds()
 	{
@@ -695,7 +703,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * for the exported options, indicating a variable is used outside the file
+     * For the exported options, indicating a variable is used outside the file.
+     * 
+     * @param labelName name of the label.
      */
 	public void addExported(String labelName)
 	{
@@ -734,19 +744,22 @@ public class ScopeManager
 	}
 	
 	/**
-     * Mark an indentifier as es6 module exported
+     * Mark an indentifier as es6 module exported.
+     * 
+     * @param labelName name of the label
+     * @param token current token
      */
-	public void setExported(String labeName, Token token)
+	public void setExported(String labelName, Token token)
 	{
-		block.use(labeName, token);
+		block.use(labelName, token);
 	}
 	
 	/**
-     * adds an indentifier to the relevant current scope and creates warnings/errors as necessary
-     * @param {string} labelName
-     * @param {Object} opts
-     * @param {String} opts.type - the type of the label e.g. "param", "var", "let, "const", "function"
-     * @param {Token} opts.token - the token pointing at the declaration
+     * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
+     * 
+     * @param labelName name of the label
+     * @param type the type of the label e.g. "param", "var", "let, "const", "function".
+     * @param token the token pointing at the declaration.
      */
 	public void addlabel(String labelName, String type, Token token)
 	{
@@ -848,13 +861,13 @@ public class ScopeManager
 	public class Functor
 	{
 		/**
-	     * Returns the label type given certain options
-	     * @param labelName
-	     * @param {Object=} options
-	     * @param {Boolean=} options.onlyBlockscoped - only include block scoped labels
-	     * @param {Boolean=} options.excludeParams - exclude the param scope
-	     * @param {Boolean=} options.excludeCurrent - exclude the current scope
-	     * @returns {String}
+	     * Returns the label type given certain options.
+	     * 
+	     * @param labelName name of the label.
+	     * @param onlyBlockscoped only include block scoped labels.
+	     * @param excludeParams exclude the param scope.
+	     * @param excludeCurrent exclude the current scope.
+	     * @return label type string
 	     */
 		public String labeltype(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -877,9 +890,10 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Returns if a break label exists in the function scope
-	     * @param {string} labelName
-	     * @returns {boolean}
+	     * Returns if a break label exists in the function scope.
+	     * 
+	     * @param labelName name of the label.
+	     * @return true if break label exists, false otherwise.
 	     */
 		public boolean hasBreakLabel(String labelName)
 		{
@@ -900,8 +914,15 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Returns if the label is in the current function scope
-	     * See scopeManager.funct.labelType for options
+	     * Returns if the label is in the current function scope.
+	     * 
+	     * @param labelName name of the label.
+	     * @param onlyBlockscoped only include block scoped labels.
+	     * @param excludeParams exclude the param scope.
+	     * @param excludeCurrent exclude the current scope.
+	     * @return true if label in the current scope, false otherwise.
+	     * 
+	     * @see #labeltype(String, boolean, boolean, boolean) for options
 	     */
 		public boolean has(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -909,8 +930,14 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Adds a new function scoped variable
-	     * see block.add for block scoped
+	     * Adds a new function scoped variable.
+	     * 
+	     * @param labelName name of the label.
+	     * @param type type of the label.
+	     * @param tok current token.
+	     * @param unused whether variable is unused or not.
+	     * 
+	     * @see Block#add(String, String, Token, boolean) for block scoped.
 	     */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{
@@ -926,8 +953,9 @@ public class ScopeManager
 	public class Block
 	{
 		/**
-	     * is the current block global?
-	     * @returns Boolean
+	     * Is the current block global?
+	     * 
+	     * @return true if block is global, false otherwise.
 	     */
 		public boolean isGlobal()
 		{
@@ -986,7 +1014,12 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Adds a new variable
+	     * Adds a new variable.
+	     * 
+	     * @param labelName name of the label.
+	     * @param type type of the label.
+	     * @param tok current token.
+	     * @param unused whether label is unused or not.
 	     */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{

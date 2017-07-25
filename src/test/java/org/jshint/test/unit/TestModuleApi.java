@@ -7,8 +7,10 @@ import org.jshint.JSHint;
 import org.jshint.JSHintException;
 import org.jshint.LexerEventListener;
 import org.jshint.utils.JSHintModule;
+import org.jshint.utils.JSHintUtils;
 import org.jshint.utils.EventContext;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -24,6 +26,12 @@ import org.testng.annotations.Test;
  */
 public class TestModuleApi extends Assert
 {
+	@BeforeClass
+	private void setupBeforeClass()
+	{
+		JSHintUtils.reset();
+	}
+	
 	@Test
 	public void testIdentifiers()
 	{

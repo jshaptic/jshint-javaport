@@ -11,8 +11,11 @@ import org.jshint.Token;
 import org.jshint.DataSummary;
 import org.jshint.ImpliedGlobal;
 import org.jshint.test.helpers.TestHelper;
+import org.jshint.utils.JSHintUtils;
+
 import com.github.jshaptic.js4j.UniversalContainer;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -23,8 +26,14 @@ public class TestParser extends Assert
 {
 	private TestHelper th = new TestHelper();
 	
+	@BeforeClass
+	private void setupBeforeClass()
+	{
+		JSHintUtils.reset();
+	}
+	
 	@BeforeMethod
-	public void setup()
+	private void setupBeforeMethod()
 	{
 		th.reset();
 	}

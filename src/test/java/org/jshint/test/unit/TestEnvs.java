@@ -11,7 +11,9 @@ import org.jshint.LinterOptions;
 import org.jshint.DataSummary;
 import org.jshint.ImpliedGlobal;
 import org.jshint.test.helpers.TestHelper;
+import org.jshint.utils.JSHintUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -75,8 +77,14 @@ public class TestEnvs extends Assert
 		assertEquals(implieds.size(), globals.length);
 	}
 	
+	@BeforeClass
+	private void setupBeforeClass()
+	{
+		JSHintUtils.reset();
+	}
+	
 	@BeforeMethod
-	public void setup()
+	private void setupBeforeMethod()
 	{
 		th.reset();
 	}

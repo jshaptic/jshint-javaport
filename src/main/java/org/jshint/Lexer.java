@@ -642,6 +642,8 @@ public class Lexer
 	 * In addition to normal JavaScript comments (// and /*) this method
 	 * also recognizes JSHint- and JSLint-specific comments such as
 	 * /*jshint, /*jslint, /*globals and so on.
+	 * 
+	 * @return lexer token.
 	 */
 	public LexerToken scanComments() throws JSHintException
 	{
@@ -724,6 +726,8 @@ public class Lexer
 	/**
 	 * Extract a keyword out of the next sequence of characters or
 	 * return 'null' if its not possible.
+	 * 
+	 * @return lexer token.
 	 */
 	public LexerToken scanKeyword()
 	{
