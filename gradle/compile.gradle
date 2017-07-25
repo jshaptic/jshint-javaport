@@ -2,7 +2,9 @@
 sourceCompatibility = project.javaVersion
 targetCompatibility = project.javaVersion
 compileJava.options.encoding = project.defaultEncoding
+compileJava.options.compilerArgs += ["-Xlint:-options"]
 compileTestJava.options.encoding = project.defaultEncoding
+compileTestJava.options.compilerArgs += ["-Xlint:-options"]
 
 // Custom task for creating source jar
 task sourcesJar(type: Jar, dependsOn: classes) {
