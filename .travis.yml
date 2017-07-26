@@ -15,7 +15,8 @@ addons:
     packages:
       - oracle-java8-installer
 notifications:
-  email: false
+  email:
+    on_failure: always
 
 # Execute custom script instead of default travis execution
 script:
