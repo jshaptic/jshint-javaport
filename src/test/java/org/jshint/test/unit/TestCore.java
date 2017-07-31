@@ -465,9 +465,10 @@ public class TestCore extends Assert
 		
 		// The "TestRun" class (and these errors) probably needs some
 		// facility for checking the expected scope of the error
-		th.addError(1, "Unexpected early end of program.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(13, "Unexpected early end of program.");
+		th.addError(13, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(17, "Unexpected early end of program.");
+		th.addError(17, "Unrecoverable syntax error. (100% scanned).");
 		
 		th.test(src, new LinterOptions().set("es3", true).set("evil", false));
 		
@@ -686,17 +687,17 @@ public class TestCore extends Assert
 	public void testForIn()
 	{
 		String[] src = {
-				"(function (o) {",
-				"for (var i in o) { i(); }",
-				"}());"
+			"(function (o) {",
+			"for (var i in o) { i(); }",
+			"}());"
 		};
 		
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		src = new String[]{
-				"(function (o) {",
-				"for (i in o) { i(); }",
-				"}());"
+			"(function (o) {",
+			"for (i in o) { i(); }",
+			"}());"
 		};
 		
 		th.reset();
@@ -704,22 +705,22 @@ public class TestCore extends Assert
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		src = new String[]{
-				"(function (o) {",
-				"for ('i' in o) { i(); }",
-				"}());"
+			"(function (o) {",
+			"for ('i' in o) { i(); }",
+			"}());"
 		};
 		
 		th.reset();
-		th.addError(2, "Expected an identifier and instead saw 'i'.");
+		th.addError(2, "Bad assignment.");
 		th.test(src);
 		
 		src = new String[]{
-				"(function (o) {",
-				"for (i, j in o) { i(); }",
-				"for (var x, u in o) { x(); }",
-				"for (z = 0 in o) { z(); }",
-				"for (var q = 0 in o) { q(); }",
-				"})();"
+			"(function (o) {",
+			"for (i, j in o) { i(); }",
+			"for (var x, u in o) { x(); }",
+			"for (z = 0 in o) { z(); }",
+			"for (var q = 0 in o) { q(); }",
+			"})();"
 		};
 		
 		th.reset();
@@ -744,6 +745,20 @@ public class TestCore extends Assert
 		th.addError(4, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.addError(5, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.test(src, new LinterOptions().set("esnext", true));
+		
+		th.reset();
+		th.test(new String[]{
+			"for (x.y in {}) {}",
+			"for (x[z] in {}) {}"
+		});
+		
+		th.reset();
+		th.addError(1, 10, "Bad assignment.");
+		th.addError(2, 13, "Bad assignment.");
+		th.test(new String[]{
+			"for (x+y in {}) {}",
+			"for ((this) in {}) {}"
+		});
 	}
 	
 	@Test
@@ -813,8 +828,7 @@ public class TestCore extends Assert
 		    {"58", "'emGet' has already been declared."},
 		    {"58", "'set' has already been declared."},
 		    {"59", "'_' has already been declared."},
-		    {"60", "'ember2' has already been declared."},
-		    {"65", "'newImport' was used before it was declared, which is illegal for 'const' variables."}
+		    {"60", "'ember2' has already been declared."}
 		};
 		
 		for (String[] error : importConstErrors)
@@ -870,6 +884,14 @@ public class TestCore extends Assert
 		
 		th.reset();
 		th.test(src2);
+		
+		// See gh-3055 "Labels Break JSHint"
+		th.reset();
+		th.test(new String[]{
+			"label: {}",
+			"export function afterLabelExported() {}",
+			"import afterLabelImported from 'elsewhere';"
+		}, new LinterOptions().set("esversion", 6));
 	}
 	
 	@Test
@@ -925,6 +947,7 @@ public class TestCore extends Assert
 		};
 		
 		th.addError(2, "'a' has already been declared.");
+		th.addError(6, "'a' was used before it was declared, which is illegal for 'const' variables.");
 		th.addError(9, "'a' has already been declared.");
 		th.addError(13, "'b' has already been declared.");
 		th.test(src, new LinterOptions().set("esnext", true));
@@ -1698,6 +1721,13 @@ public class TestCore extends Assert
 	    th.addError(22, "'bar' is not a statement label.");
 	    th.addError(24, "'baz' is not a statement label.");
 	    th.test(src);
+	    
+	    th.reset();
+	    th.addError(2, "'x' is not a statement label.");
+	    th.test(new String[]{
+	    	"x: {}",
+	    	"break x;"
+	    });
 	}
 	
 	@Test
@@ -2010,5 +2040,102 @@ public class TestCore extends Assert
 		    "  set x({ a, b }) {}",
 		    "};"
 		}, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test
+	public void testTDZWithinInitializerOfLexicalDeclarations()
+	{
+		String[] code = {
+			"let a = a;",
+		    "const b = b;",
+		    "let c = () => c;",
+		    "const d = () => d;",
+		    // line 5
+		    "let e = {",
+		    "  x: e,",
+		    "  y: () => e",
+		    "};",
+		    "const f = {",
+		    "  x: f,",
+		    "  y: () => f",
+		    "};",
+		    // line 13
+		    "let g, h = g;",
+		    "const i = 0, j = i;",
+		    "let [ k, l ] = l;",
+		    "const [ m, n ] = n;",
+		    // line 17
+		    "let o = (() => o) + o;",
+		    "const p = (() => p) + p;"
+		};
+		
+		th.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(6, "'e' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(10, "'f' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(15, "'l' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(16, "'n' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(17, "'o' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(18, "'p' was used before it was declared, which is illegal for 'const' variables.");
+	    th.test(code, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test
+	public void testTDZWithinClassHeritageDefinition()
+	{
+		String[] code = {
+			"let A = class extends A {};",
+		    "let B = class extends { B } {};",
+		    "let C = class extends { method() { return C; } } {};",
+		    // line 4
+		    "const D = class extends D {};",
+		    "const E = class extends { E } {};",
+		    "const F = class extends { method() { return F; } } {};",
+		    // line 7
+		    "class G extends G {}",
+		    "class H extends { H } {}",
+		    "class I extends { method() { return I; }} {}"
+		};
+		
+		th.addError(1, "'A' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(2, "'B' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(4, "'D' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(5, "'E' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(7, "'G' was used before it was declared, which is illegal for 'class' variables.");
+	    th.addError(8, "'H' was used before it was declared, which is illegal for 'class' variables.");
+	    th.test(code, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test
+	public void testTDZWithinForInOfHead()
+	{
+		String[] code = {
+			"for (let a   in a);",
+		    "for (const b in b);",
+		    "for (let c   of c);",
+		    "for (const d of d);",
+
+		    // line 5
+		    "for (let e   in { e });",
+		    "for (const f in { f });",
+		    "for (let g   of { g });",
+		    "for (const h of { h });",
+
+		    // line 9
+		    "for (let i   in { method() { return i; } });",
+		    "for (const j in { method() { return j; } });",
+		    "for (let k   of { method() { return k; } });",
+		    "for (const l of { method() { return l; } });"
+		};
+		
+		th.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(3, "'c' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(4, "'d' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(5, "'e' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(6, "'f' was used before it was declared, which is illegal for 'const' variables.");
+	    th.addError(7, "'g' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(8, "'h' was used before it was declared, which is illegal for 'const' variables.");
+	    th.test(code, new LinterOptions().set("esversion", 6));
 	}
 }

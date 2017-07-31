@@ -65,7 +65,7 @@ public class Cli
 		OPTIONS.addOption(Option.builder()
 										.longOpt("prereq")
 										.hasArg()
-										.desc("Comma-separate list of prerequisite (paths). E.g. files which include definitions of global variabls used throughout your project")
+										.desc("Comma-separated list of prerequisites (paths). E.g. files which include definitions of global variables used throughout your project")
 										.argName("files")
 										.build());
 		
@@ -395,7 +395,7 @@ public class Cli
 				return true;
 			}
 			
-			if (JSHintUtils.shell.isDirectory(fp) && Reg.test("^[^\\/]*\\/?$", ip) &&
+			if (JSHintUtils.shell.isDirectory(fp) && Reg.test("^[^\\/\\\\]*[\\/\\\\]?$", ip) &&
 					Reg.test("^" + ip + ".*", fp))
 			{
 				return true;
@@ -799,21 +799,21 @@ public class Cli
 		List<ReporterResult> results = new ArrayList<ReporterResult>();
 		List<DataSummary> data = new ArrayList<DataSummary>();
 		
-		if (opts.useStdin)
+		String filename = "";
+		
+		// There is an if(filename) check in the lint() function called below.
+		// passing a filename of undefined is the same as calling the function
+		// without a filename.  If there is no opts.filename, filename remains
+		// undefined and lint() is effectively called with 4 parameters.
+		if (StringUtils.isNotEmpty(opts.filename))
+		{
+			filename = JSHintUtils.path.resolve(opts.filename);
+		}
+		if (opts.useStdin && opts.ignores.indexOf(filename) == -1)
 		{
 			String code = JSHintUtils.cli.readFromStdin();
 			
 			UniversalContainer config = ContainerFactory.undefinedContainerIfFalse(opts.config);
-			String filename = "";
-			
-			// There is an if(filename) check in the lint() function called below.
-			// passing a filename of undefined is the same as calling the function
-			// without a filename.  If there is no opts.filename, filename remains
-			// undefined and lint() is effectively called with 4 parameters.
-			if (StringUtils.isNotEmpty(opts.filename))
-			{
-				filename = JSHintUtils.path.resolve(opts.filename);
-			}
 			
 			if (StringUtils.isNotEmpty(filename) && !config.test())
 			{

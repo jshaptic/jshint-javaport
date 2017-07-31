@@ -168,6 +168,7 @@ public class Vars
 		.put("localStorage", false)
 		.put("location", false)
 		.put("matchMedia", false)
+		.put("MediaRecorder", false)
 		.put("MessageChannel", false)
 		.put("MessageEvent", false)
 		.put("MessagePort", false)
@@ -209,6 +210,7 @@ public class Vars
 		.put("setTimeout", false)
 		.put("SharedWorker", false)
 		.put("status", false)
+		.put("Storage", false)
 		.put("SVGAElement", false)
 		.put("SVGAltGlyphDefElement", false)
 		.put("SVGAltGlyphElement", false)
@@ -407,6 +409,7 @@ public class Vars
 	
 	public static final Map<String, Boolean> worker = ImmutableMap.<String, Boolean>builder()
 		.put("importScripts", true)
+		.put("onmessage", true)
 		.put("postMessage", true)
 		.put("self", true)
 		.put("FileReaderSync", true)

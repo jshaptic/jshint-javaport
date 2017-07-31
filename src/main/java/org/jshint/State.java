@@ -351,7 +351,14 @@ public final class State
 				return badOpt;
 			}
 			
-			esVersion = getOption().asInt("esversion");
+			if (getOption().get("esversion").equals(2015))
+			{
+				esVersion = 6;
+			}
+			else
+			{
+				esVersion = getOption().asInt("esversion");
+			}
 		}
 		else if (getOption().test("es3"))
 		{

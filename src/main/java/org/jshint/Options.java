@@ -78,23 +78,6 @@ public class Options
 			.put("futurehostile", true)
 			
 			/**
-			 * This option suppresses warnings about invalid `typeof` operator values.
-			 * This operator has only [a limited set of possible return
-			 * values](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof).
-			 * By default, JSHint warns when you compare its result with an invalid
-			 * value which often can be a typo.
-			 *
-			 *     // 'fuction' instead of 'function'
-			 *     if (typeof a == "fuction") { // Invalid typeof value 'fuction'
-			 *       // ...
-			 *     }
-			 *
-			 * Do not use this option unless you're absolutely sure you don't want
-			 * these checks.
-			 */
-			.put("notypeof", true)
-			
-			/**
 			 * This option tells JSHint that your code needs to adhere to ECMAScript 3
 			 * specification. Use this option if you need your program to be executable
 			 * in older browsers�such as Internet Explorer 6/7/8/9�and other legacy
@@ -105,12 +88,12 @@ public class Options
 			.put("es3", true)
 			
 			/**
-			   * This option enables syntax first defined in [the ECMAScript 5.1
-			   * specification](http://es5.github.io/). This includes allowing reserved
-			   * keywords as object properties.
-			   * 
-			   * @deprecated Use `esversion: 5` instead.
-			   */
+			 * This option enables syntax first defined in [the ECMAScript 5.1
+			 * specification](http://es5.github.io/). This includes allowing reserved
+			 * keywords as object properties.
+			 * 
+			 * @deprecated Use `esversion: 5` instead.
+			 */
 			.put("es5", true)
 			
 			/**
@@ -135,26 +118,6 @@ public class Options
 			.put("forin", true)
 			
 			/**
-			 * This option suppresses warnings about declaring variables inside of
-			 * control
-			 * structures while accessing them later from the outside. Even though
-			 * JavaScript has only two real scopes�global and function�such practice
-			 * leads to confusion among people new to the language and hard-to-debug
-			 * bugs. This is why, by default, JSHint warns about variables that are
-			 * used outside of their intended scope.
-			 *
-			 *     function test() {
-			 *       if (true) {
-			 *         var x = 0;
-			 *       }
-			 *
-			 *       x += 1; // Default: 'x' used out of scope.
-			 *                 // No warning when funcscope:true
-			 *     }
-			 */
-			.put("funcscope", true)
-			
-			/**
 			 * This option prohibits the use of immediate function invocations without
 			 * wrapping them in parentheses. Wrapping parentheses assists readers of
 			 * your code in understanding that the expression is the result of a
@@ -166,13 +129,7 @@ public class Options
 			 * 			   project](https://github.com/jscs-dev/node-jscs).
 			 */
 			.put("immed", true)
-			
-			/**
-			 * This option suppresses warnings about the `__iterator__` property. This
-			 * property is not supported by all browsers so use it carefully.
-			 */
-			.put("iterator", true)
-			
+						
 			/**
 			 * This option requires you to capitalize names of constructor functions.
 			 * Capitalizing functions that are intended to be used with `new` operator
@@ -260,14 +217,14 @@ public class Options
 			.put("undef", true)
 			
 			/**
-			   * This option prohibits the use of the grouping operator when it is not
-			   * strictly required. Such usage commonly reflects a misunderstanding of
-			   * unary operators, for example:
-			   *
-			   *     // jshint singleGroups: true
-			   *
-			   *     delete(obj.attr); // Warning: Unnecessary grouping operator.
-			   */
+			 * This option prohibits the use of the grouping operator when it is not
+			 * strictly required. Such usage commonly reflects a misunderstanding of
+			 * unary operators, for example:
+			 *
+			 *     // jshint singleGroups: true
+			 *
+			 *     delete(obj.attr); // Warning: Unnecessary grouping operator.
+			 */
 			.put("singleGroups", false)
 			
 			/**
@@ -282,16 +239,56 @@ public class Options
 			.put("varstmt", false)
 			
 			/**
-			   * This option is a short hand for the most strict JSHint configuration as
-			   * available in JSHint version 2.6.3. It enables all enforcing options and
-			   * disables all relaxing options that were defined in that release.
-			   * 
-			   * @deprecated The option cannot be maintained without automatically opting
-			   * 			 users in to new features. This can lead to unexpected
-			   * 			 warnings/errors in when upgrading between minor versions of
-			   * 			 JSHint.
-			   */
+			 * This option is a short hand for the most strict JSHint configuration as
+			 * available in JSHint version 2.6.3. It enables all enforcing options and
+			 * disables all relaxing options that were defined in that release.
+			 * 
+			 * @deprecated The option cannot be maintained without automatically opting
+			 * 			 users in to new features. This can lead to unexpected
+			 * 			 warnings/errors in when upgrading between minor versions of
+			 * 			 JSHint.
+			 */
 			.put("enforceall", false)
+			
+			/**
+			 * This option warns when a comma is not placed after the last element in an
+			 * array or object literal. Due to bugs in old versions of IE, trailing
+			 * commas used to be discouraged, but since ES5 their semantics were
+			 * standardized. (See
+			 * [#11.1.4](http://www.ecma-international.org/ecma-262/5.1/#sec-11.1.4) and
+			 * [#11.1.5](http://www.ecma-international.org/ecma-262/5.1/#sec-11.1.5).)
+			 * Now, they help to prevent the same [visual
+			 * ambiguities](http://www.ecma-international.org/ecma-262/5.1/#sec-7.9.2)
+			 * that the strict usage of semicolons helps prevent.
+			 *
+			 * For example, this code might have worked last Tuesday:
+			 *
+			 *     [
+			 *         b + c
+			 *     ].forEach(print);
+			 *
+			 * But if one adds an element to the array and forgets to compensate for the
+			 * missing comma, no syntax error is thrown, and a linter cannot determine
+			 * if this was a mistake or an intentional function invocation.
+			 *
+			 *     [
+			 *         b + c
+			 *         (d + e)
+			 *     ].forEach(print);
+			 *
+			 * If one always appends a list item with a comma, this ambiguity cannot
+			 * occur:
+			 *
+			 *     [
+			 *         b + c,
+			 *     ].forEach(print);
+			 *
+			 *     [
+			 *         b + c,
+			 *         (d + e),
+			 *     ].forEach(print);
+			 */
+			.put("trailingcomma", false)
 			.build())
 		
 		.put("relaxing", ImmutableMap.<String, Boolean>builder()
@@ -369,6 +366,26 @@ public class Options
 			.put("evil", true)
 			
 			/**
+			 * This option suppresses warnings about declaring variables inside of
+			 * control
+			 * structures while accessing them later from the outside. Even though
+			 * JavaScript has only two real scopes-global and function-such practice
+			 * leads to confusion among people new to the language and hard-to-debug
+			 * bugs. This is why, by default, JSHint warns about variables that are
+			 * used outside of their intended scope.
+			 *
+			 *     function test() {
+			 *       if (true) {
+			 *         var x = 0;
+			 *       }
+			 *
+			 *       x += 1; // Default: 'x' used out of scope.
+			 *                 // No warning when funcscope:true
+			 *     }
+			 */
+			.put("funcscope", true)
+			
+			/**
 			 * This option suppresses warnings about the use of global strict mode.
 			 * Global strict mode can break third-party widgets so it is not
 			 * recommended.
@@ -378,6 +395,29 @@ public class Options
 			 * @deprecated Use `strict: "global"`.
 			 */
 			.put("globalstrict", true)
+			
+			/**
+			 * This option suppresses warnings about the `__iterator__` property. This
+			 * property is not supported by all browsers so use it carefully.
+			 */
+			.put("iterator", true)
+			
+			/**
+			 * This option suppresses warnings about invalid `typeof` operator values.
+			 * This operator has only [a limited set of possible return
+			 * values](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof).
+			 * By default, JSHint warns when you compare its result with an invalid
+			 * value which often can be a typo.
+			 *
+			 *     // 'fuction' instead of 'function'
+			 *     if (typeof a == "fuction") { // Invalid typeof value 'fuction'
+			 *       // ...
+			 *     }
+			 *
+			 * Do not use this option unless you're absolutely sure you don't want
+			 * these checks.
+			 */
+			.put("notypeof", true)
 			
 			/**
 			 * This option prohibits the use of unary increment and decrement
@@ -926,10 +966,10 @@ public class Options
 		 * In addition to that, this option will warn you about unused global
 		 * variables declared via the `global` directive.
 		 *
-		 * This can be set to `vars` to only check for variables, not function
-		 * parameters, or `strict` to check all variables and parameters.  The
-		 * default (true) behavior is to allow unused parameters that are followed by
-		 * a used parameter.
+		 * When set to `true`, unused parameters that are followed by a used
+		 * parameter will not produce warnings. This option can be set to `vars` to
+		 * only check for variables, not function parameters, or `strict` to check
+		 * all variables and parameters.
 		 */
 		.put("unused", true)
 		

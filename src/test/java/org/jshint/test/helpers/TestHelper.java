@@ -73,6 +73,7 @@ public class TestHelper extends Assert
 	private List<ErrorMessage> undefinedErrors = new ArrayList<ErrorMessage>();
 	private List<ErrorMessage> unthrownErrors = new ArrayList<ErrorMessage>();
 	private List<ErrorMessage> wrongLineNumbers = new ArrayList<ErrorMessage>();
+	private List<ErrorMessage> duplicateErrors = new ArrayList<ErrorMessage>();
 	
 	public void reset()
 	{
@@ -80,6 +81,7 @@ public class TestHelper extends Assert
 		undefinedErrors.clear();
 		unthrownErrors.clear();
 		wrongLineNumbers.clear();
+		duplicateErrors.clear();
 	}
 	
 	public void test(String source)
@@ -373,6 +375,7 @@ public class TestHelper extends Assert
 		undefinedErrors.clear();
 		unthrownErrors.clear();
 		wrongLineNumbers.clear();
+		duplicateErrors.clear();
 		
 		List<LinterWarning> errors = jshint.getErrors();
 		
@@ -453,9 +456,30 @@ public class TestHelper extends Assert
 				wrongLineNumbers.add(new ErrorMessage(er.code, er.line, er.character, er.message, lines));
 			}
 		}
+		duplicateErrors = new ArrayList<ErrorMessage>();
+		for (LinterWarning er : errors)
+		{
+			boolean result = false;
+			for (LinterWarning other : errors)
+			{
+				if (er.getLine() == other.getLine() && er.getCharacter() == other.getCharacter() &&
+					er.getReason().equals(other.getReason()))
+				{
+					if (result)
+					{
+						duplicateErrors.add(new ErrorMessage(er.getCode(), er.getLine(), er.getCharacter(), er.getReason(), null));
+						break;
+					}
+					else
+					{
+						result = true;
+					}
+				}
+			}
+		}
 		
 		// remove undefined errors, if there is a definition with wrong line number
-		List<ErrorMessage> newUndefinedErrors = new ArrayList<ErrorMessage>();
+		List<ErrorMessage> filteredUndefinedErrors = new ArrayList<ErrorMessage>();
 		for (ErrorMessage er : undefinedErrors)
 		{
 			boolean result = false;
@@ -468,12 +492,12 @@ public class TestHelper extends Assert
 			
 			if (!result)
 			{
-				newUndefinedErrors.add(er);
+				filteredUndefinedErrors.add(er);
 			}
 		}	
-		undefinedErrors = newUndefinedErrors;
+		undefinedErrors = filteredUndefinedErrors;
 		
-		List<ErrorMessage> newUnthrownErrors = new ArrayList<ErrorMessage>();
+		List<ErrorMessage> filteredUnthrownErrors = new ArrayList<ErrorMessage>();
 		for (ErrorMessage er : unthrownErrors)
 		{
 			boolean result = false;
@@ -486,12 +510,12 @@ public class TestHelper extends Assert
 			
 			if (!result)
 			{
-				newUnthrownErrors.add(er);
+				filteredUnthrownErrors.add(er);
 			}
 		}	
-		unthrownErrors = newUnthrownErrors;
+		unthrownErrors = filteredUnthrownErrors;
 		
-		if (undefinedErrors.size() == 0 && unthrownErrors.size() == 0 && wrongLineNumbers.size() == 0)
+		if (undefinedErrors.size() == 0 && unthrownErrors.size() == 0 && wrongLineNumbers.size() == 0 && duplicateErrors.size() == 0)
 		{
 			return;
 		}
@@ -524,6 +548,13 @@ public class TestHelper extends Assert
 		{
 			if (idx == 0) message += "\nErrors with wrong line number:";
 			message += "\n (X) {Line " + el.line + "} " + el.message + " {not in line(s) " + el.definedIn.toString() + "}";
+			idx++;
+		}
+		idx = 0;
+		for (ErrorMessage el : duplicateErrors)
+		{
+			if (idx == 0) message += "\nDuplicated errors:";
+			message += "\n (X) {Line " + el.line + ", Char " + el.character + "} " + (el.code.isEmpty() ? "" : (el.code + " ")) + el.message;
 			idx++;
 		}
 		

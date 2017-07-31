@@ -134,7 +134,9 @@ public class TestOptions extends Assert
 		    {"344", "'zzi' has already been declared."},
 		    {"345", "'zzj' has already been declared."},
 		    {"349", "'zzl' has already been declared."},
+		    {"349", "'zzl' was used before it was declared, which is illegal for 'const' variables."},
 		    {"350", "'zzm' has already been declared."},
+		    {"350", "'zzm' was used before it was declared, which is illegal for 'let' variables."},
 		    {"364", "'zj' has already been declared."}
 		};
 		
@@ -279,7 +281,11 @@ public class TestOptions extends Assert
 	    th.addError(20, "'ai' was used before it was defined.");
 	    th.addError(31, "'bi' was used before it was defined.");
 	    th.addError(48, "'ci' was used before it was defined.");
-	    th.test(esnextSrc, new LinterOptions().set("esnext", true).set("latedef", true));
+	    th.addError(75, "'importedName' was used before it was defined.");
+	    th.addError(76, "'importedModule' was used before it was defined.");
+	    th.addError(77, "'importedNamespace' was used before it was defined.");
+	    th.test(esnextSrc, new LinterOptions().set("esversion", 2015).set("latedef", true));
+	    th.test(esnextSrc, new LinterOptions().set("esversion", 2015).set("latedef", "nofunc"));
 	    
 	    th.reset();
 	    th.test("var a;", new LinterOptions().addExporteds("a").set("latedef", true));
@@ -644,9 +650,9 @@ public class TestOptions extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/safeasi.js");
 		
-		// TOOD consider setting an option to suppress these errors so that
+		// JSHINT_TODO consider setting an option to suppress these errors so that
 	    // the tests don't become tightly interdependent
-		th.addError(10, "Bad line breaking before '/'.");
+		th.addError(10, "Misleading line break before '/'; readers may interpret this as an expression boundary.");
 	    th.addError(10, "Expected an identifier and instead saw '.'.");
 	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
 	    th.addError(10, "Missing semicolon.");
@@ -656,10 +662,10 @@ public class TestOptions extends Assert
 		th.test(src, new LinterOptions());
 		
 		th.reset();
-		th.addError(5, "Bad line breaking before '('.");
-	    th.addError(8, "Bad line breaking before '('.");
-	    th.addError(10, "Bad line breaking before '/'.");
-	    th.addError(10, "Bad line breaking before '/'.");
+		th.addError(5, "Misleading line break before '('; readers may interpret this as an expression boundary.");
+	    th.addError(8, "Misleading line break before '('; readers may interpret this as an expression boundary.");
+	    th.addError(10, "Misleading line break before '/'; readers may interpret this as an expression boundary.");
+	    th.addError(10, "Misleading line break before '/'; readers may interpret this as an expression boundary.");
 	    th.addError(10, "Expected an identifier and instead saw '.'.");
 	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
 	    th.addError(10, "Missing semicolon.");
@@ -688,6 +694,24 @@ public class TestOptions extends Assert
 		
 		th.reset();
 		th.test(code, new LinterOptions().set("expr", true).set("asi", true));
+		
+		String codeStr = "do {} while (false) var a;";
+		
+		th.reset();
+		th.addError(1, "E058", "Missing semicolon.");
+		th.test(codeStr);
+		th.test(codeStr, new LinterOptions().set("moz", true));
+		
+		th.reset();
+		th.addError(1, "W033", "Missing semicolon.");
+		th.test(codeStr, new LinterOptions().set("esversion", 6));
+		
+		th.reset();
+		th.test(codeStr, new LinterOptions().set("esversion", 6).set("asi", true));
+		
+		th.reset();
+		th.addError(1, "E058", "Missing semicolon.");
+		th.test("'do' var x;", new LinterOptions().set("esversion", 6).set("expr", true));
 	}
 	
 	/** Option `lastsemic` allows you to skip the semicolon after last statement in a block,
@@ -774,11 +798,8 @@ public class TestOptions extends Assert
 		
 		// block scope cannot use themselves in the declaration
 		th.reset();
-		// JSHint does not currently enforce the correct temporal dead zone
-	    // semantics in this case. Once this is fixed, the following errors
-	    // should be thrown:
-	    //.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.")
-	    //.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.")
+	    th.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.");
 		th.addError(5, "'e' is already defined.");
 		th.test(new String[] {
 			"let a = a;",
@@ -805,6 +826,16 @@ public class TestOptions extends Assert
 		jshint.lint("if (typeof foobar) {}", new LinterOptions().set("undef", true));
 		
 		assertTrue(jshint.generateSummary().getImplieds().size() == 0);
+		
+		// See gh-3055 "Labels Break JSHint"
+		th.reset();
+	    th.addError(4, "'x' is not defined.");
+	    th.test(new String[]{
+	    	"label: {",
+	    	"  let x;",
+	    	"}",
+	    	"void x;"
+	    }, new LinterOptions().set("esversion", 6).set("undef", true));
 	}
 	
 	@Test
@@ -1372,13 +1403,13 @@ public class TestOptions extends Assert
 		String src = th.readFile("src/test/resources/fixtures/loopfunc.js");
 		
 		// By default, not functions are allowed inside loops
-		th.addError(4, "Don't make functions within a loop.");
-	    th.addError(8, "Don't make functions within a loop.");
-	    th.addError(20, "Don't make functions within a loop.");
-	    th.addError(25, "Don't make functions within a loop.");
+		th.addError(4, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(8, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(20, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(25, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
 	    th.addError(12, "Function declarations should not be placed in blocks. Use a function " +
 	            		"expression or move the statement to the top of the outer function.");
-	    th.addError(42, "Don't make functions within a loop.");
+	    th.addError(42, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		// When loopfunc is true, only function declaration should fail.
@@ -1410,11 +1441,11 @@ public class TestOptions extends Assert
 		};
 		
 		th.reset();
-		th.addError(2, "Don't make functions within a loop.");
-	    th.addError(5, "Don't make functions within a loop.");
-	    th.addError(11, "Don't make functions within a loop.");
-	    th.addError(14, "Don't make functions within a loop.");
-	    th.addError(17, "Don't make functions within a loop.");
+		th.addError(2, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(5, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(11, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(14, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(17, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
 	    th.test(es6LoopFuncSrc, new LinterOptions().set("esnext", true));
 	    
 	    // functions declared in the expressions that loop should warn
@@ -1426,8 +1457,8 @@ public class TestOptions extends Assert
 	    };
 	    
 	    th.reset();
-	    th.addError(1, "Don't make functions within a loop.");
-	    th.addError(3, "Don't make functions within a loop.");
+	    th.addError(1, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
+	    th.addError(3, "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.");
 	    th.test(src2, new LinterOptions().set("es3", true).set("loopfunc", false).set("boss", true));
 	}
 	
@@ -1474,10 +1505,11 @@ public class TestOptions extends Assert
 		};
 		
 		// By default, warn about `== null` comparison
-		th.addError(1, "Use '===' to compare with 'null'.");
-	    th.addError(2, "Use '===' to compare with 'null'.");
-	    th.addError(3, "Use '!==' to compare with 'null'.");
-	    th.addError(4, "Use '!==' to compare with 'null'.");
+		/**
+		 * This test previously asserted the issuance of warning W041.
+		 * W041 has since been removed, but the test is maintained in
+		 * order to discourage regressions.
+		 */
 		th.test(code, new LinterOptions().set("es3", true));
 		
 		// But when `eqnull` is true, no questions asked
@@ -1591,7 +1623,11 @@ public class TestOptions extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/eqeqeq.js");
 		
-		th.addError(8, "Use '===' to compare with 'null'.");
+		/**
+		 * This test previously asserted the issuance of warning W041.
+		 * W041 has since been removed, but the test is maintained in 
+		 * order to discourage regressions.
+		 */
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		th.reset();
@@ -1764,7 +1800,7 @@ public class TestOptions extends Assert
 		
 		// Test for strict mode violations
 		th.reset();
-		th.addError(4, "Possible strict violation.");
+		th.addError(4, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 	    th.addError(7, "Strict violation.");
 	    th.addError(8, "Strict violation.");
 		th.test(src, new LinterOptions().set("es3", true).set("strict", true));
@@ -1989,9 +2025,9 @@ public class TestOptions extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/laxbreak.js");
 		
-		th.addError(2, "Bad line breaking before ','.");
+		th.addError(2, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(3, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(12, "Bad line breaking before ','.");
+	    th.addError(12, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		String[] ops = {"||", "&&", "*", "/", "%", "+", "-", ">=", "==", "===", "!=", "!==", ">", "<", "<=", "instanceof"};
@@ -2002,7 +2038,7 @@ public class TestOptions extends Assert
 			String[] code = {"var a = b ", op + " c;"};
 			
 			th.reset();
-			th.addError(2, "Bad line breaking before '" + op + "'.");
+			th.addError(2, "Misleading line break before '" + op + "'; readers may interpret this as an expression boundary.");
 			th.test(code, new LinterOptions().set("es3", true));
 			
 			th.reset();
@@ -2011,7 +2047,7 @@ public class TestOptions extends Assert
 		
 		String[] code = {"var a = b ", "? c : d;"};
 		th.reset();
-		th.addError(2, "Bad line breaking before '?'.");
+		th.addError(2, "Misleading line break before '?'; readers may interpret this as an expression boundary.");
 		th.test(code, new LinterOptions().set("es3", true));
 		
 		th.reset();
@@ -2023,9 +2059,9 @@ public class TestOptions extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/strict_this.js");
 		
-		th.addError(8, "Possible strict violation.");
-	    th.addError(9, "Possible strict violation.");
-	    th.addError(11, "Possible strict violation.");
+		th.addError(8, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+	    th.addError(9, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+	    th.addError(11, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		src = th.readFile("src/test/resources/fixtures/strict_this2.js");
@@ -2249,26 +2285,26 @@ public class TestOptions extends Assert
 		String src = th.readFile("src/test/resources/fixtures/laxcomma.js");
 		
 		// All errors.
-		th.addError(1, "Bad line breaking before ','.");
+		th.addError(1, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(2, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(2, "Bad line breaking before ','.");
-	    th.addError(6, "Bad line breaking before ','.");
-	    th.addError(10, "Bad line breaking before '&&'.");
-	    th.addError(15, "Bad line breaking before '?'.");
+	    th.addError(2, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+	    th.addError(6, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+	    th.addError(10, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
+	    th.addError(15, "Misleading line break before '?'; readers may interpret this as an expression boundary.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		// Allows bad line breaking, but not on commas.
 		th.reset();
-		th.addError(1, "Bad line breaking before ','.");
+		th.addError(1, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(2, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(2, "Bad line breaking before ','.");
-	    th.addError(6, "Bad line breaking before ','.");
+	    th.addError(2, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+	    th.addError(6, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.test(src, new LinterOptions().set("es3", true).set("laxbreak", true));
 	    
 	    // Allows comma-first style but warns on bad line breaking
 	    th.reset();
-	    th.addError(10, "Bad line breaking before '&&'.");
-	    th.addError(15, "Bad line breaking before '?'.");
+	    th.addError(10, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
+	    th.addError(15, "Misleading line break before '?'; readers may interpret this as an expression boundary.");
 	    th.test(src, new LinterOptions().set("es3", true).set("laxcomma", true));
 	    
 	    // No errors if both laxbreak and laxcomma are turned on
@@ -2580,6 +2616,7 @@ public class TestOptions extends Assert
 		String src = th.readFile("src/test/resources/fixtures/enforceall.js");
 		
 		// Throws errors not normally on be default
+		th.addError(1, "This line contains non-breaking spaces: http://jshint.com/docs/options/#nonbsp");
 		th.addError(1, "['key'] is better written in dot notation.");
 	    th.addError(1, "'obj' is not defined.");
 	    th.addError(1, "Missing semicolon.");
@@ -3505,12 +3542,12 @@ public class TestOptions extends Assert
 		th.reset();
 		th.addError(0, "The 'module' option is only available when linting ECMAScript 6 code.");
 		th.addError(1, "Expected an identifier and instead saw 'package' (a reserved word).");
-		th.addError(2, "Possible strict violation.");
+		th.addError(2, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(code, new LinterOptions().set("module", true));
 		
 		th.reset();
 		th.addError(1, "Expected an identifier and instead saw 'package' (a reserved word).");
-		th.addError(2, "Possible strict violation.");
+		th.addError(2, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(code, new LinterOptions().set("module", true).set("esnext", true));
 		
 		code = new String[]{
@@ -3522,14 +3559,14 @@ public class TestOptions extends Assert
 		th.reset();
 		th.addError(1, "The 'module' option is only available when linting ECMAScript 6 code.");
 		th.addError(2, "Expected an identifier and instead saw 'package' (a reserved word).");
-		th.addError(3, "Possible strict violation.");
+		th.addError(3, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(code);
 		
 		code[0] = "/* jshint module: true, esnext: true */";
 		
 		th.reset();
 		th.addError(2, "Expected an identifier and instead saw 'package' (a reserved word).");
-		th.addError(3, "Possible strict violation.");
+		th.addError(3, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(code);
 	}
 	
@@ -3678,15 +3715,19 @@ public class TestOptions extends Assert
 		String[] es6code = {
 			"var a = {",
 		    "  ['b']: 1",
-		    "};"
+		    "};",
+		    "var b = () => {};"
 		};
 		
+		th.reset();
 		th.addError(2, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
 		th.test(es6code, new LinterOptions().set("esversion", 3));
 		th.test(es6code); // esversion: 5 (default)
 		
 		th.reset();
 		th.test(es6code, new LinterOptions().set("esversion", 6));
+		th.test(es5code, new LinterOptions().set("esversion", 2015));
 		
 		// Array comprehensions aren't defined in ECMAScript 6,
 		// but they can be enabled using the `esnext` option
@@ -3732,7 +3773,8 @@ public class TestOptions extends Assert
 			"/* jshint esversion: 3, esnext: true */"
 		}, es6code);
 		
-		th.addError(1, "Incompatible values for the 'esversion' and 'esnext' linting options. (25% scanned).");
+		// JSHINT_TODO: Remove in JSHint 3
+		th.addError(1, "Incompatible values for the 'esversion' and 'esnext' linting options. (20% scanned).");
 	    th.test(code2);
 	    
 	    String[] code3 = {
@@ -3770,5 +3812,38 @@ public class TestOptions extends Assert
 	    
 	    th.addError(4, "get/set are ES5 features.");
 	    th.test(code5);
+	}
+	
+	// Option `trailingcomma` requires a comma after each element in an array or
+	// object literal.
+	@Test
+	public void testTrailingcomma()
+	{
+		String[] code = {
+			"var a = [];",
+		    "var b = [1];",
+		    "var c = [1,];",
+		    "var d = [1,2];",
+		    "var e = [1,2,];",
+		    "var f = {};",
+		    "var g = {a: 1};",
+		    "var h = {a: 1,};",
+		    "var i = {a: 1, b: 2};",
+		    "var j = {a: 1, b: 2,};"
+		};
+		
+		th.addError(2, "Missing comma.");
+	    th.addError(4, "Missing comma.");
+	    th.addError(7, "Missing comma.");
+	    th.addError(9, "Missing comma.");
+	    th.test(code, new LinterOptions().set("trailingcomma", true).set("esversion", 6));
+	    th.test(code, new LinterOptions().set("trailingcomma", true));
+	    
+	    th.reset();
+	    th.addError(3, "Extra comma. (it breaks older versions of IE)");
+	    th.addError(5, "Extra comma. (it breaks older versions of IE)");
+	    th.addError(8, "Extra comma. (it breaks older versions of IE)");
+	    th.addError(10, "Extra comma. (it breaks older versions of IE)");
+	    th.test(code, new LinterOptions().set("trailingcomma", true).set("es3", true));
 	}
 }

@@ -94,7 +94,7 @@ public class ScopeManager
 		context.setCode(code);
 		context.setToken(token);
 		context.setData(data);
-		emitter.emit("error", context); //JSHINT_BUG: copypaste bug, shouldn't it be an "error"?
+		emitter.emit("warning", context); //JSHINT_BUG: copypaste bug, shouldn't it be an "error"?
 	}
 	
 	private void setupUsages(String labelName)
@@ -361,6 +361,7 @@ public class ScopeManager
 			if (usedLabel != null)
 			{
 				String usedLabelType = usedLabel.getType();
+				boolean isImmutable = usedLabelType.equals("const") || usedLabelType.equals("import");
 				
 				if (usedLabel.isUseOutsideOfScope() && !State.getOption().test("funcscope"))
 				{
@@ -382,7 +383,7 @@ public class ScopeManager
 				current.getLabels().get(usedLabelName).setUnused(false);
 				
 				// check for modifying a const
-				if (usedLabelType.equals("const") && usage.getModified() != null)
+				if (isImmutable && usage.getModified() != null)
 				{
 					for (int j = 0; j < usage.getModified().size(); j++)
 					{
@@ -606,7 +607,7 @@ public class ScopeManager
 			// if this scope has the variable defined, it's a re-definition error
 			checkOuterShadow(labelName, token); //JSHINT_BUG: third parameter is not defined in function checkOuterShadow
 			
-			current.getLabels().put(labelName, new Label(type, token, true));
+			current.getLabels().put(labelName, new Label(type, token, false, null, true, false));
 			
 			current.getParams().add(labelName);
 		}
@@ -754,23 +755,45 @@ public class ScopeManager
 		block.use(labelName, token);
 	}
 	
+	public void initialize(String labelName)
+	{
+		if (current.getLabels().containsKey(labelName))
+		{
+			current.getLabels().get(labelName).setInitialized(true);
+		}
+	}
+	
 	/**
      * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
      * 
      * @param labelName name of the label
-     * @param type the type of the label e.g. "param", "var", "let, "const", "function".
+     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function".
      * @param token the token pointing at the declaration.
      */
 	public void addlabel(String labelName, String type, Token token)
 	{
-		boolean isblockscoped = type.equals("let") || type.equals("const") || type.equals("class");
+		addlabel(labelName, type, false, token);
+	}
+	
+	/**
+     * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
+     * 
+     * @param labelName name of the label
+     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function".
+     * @param initialized whether the binding should be created in an "initialized" state.
+     * @param token the token pointing at the declaration.
+     */
+	public void addlabel(String labelName, String type, boolean initialized, Token token)
+	{
+		boolean isblockscoped = type.equals("let") || type.equals("const") ||
+			type.equals("class") || type.equals("import");
+		boolean ishoisted = type.equals("function") || type.equals("import");
 		boolean isexported = (isblockscoped ? current.getType().equals("global") : currentFunctBody.getType().equals("global")) && 
 							 exported.containsKey(labelName);
 		
 		// outer shadow check (inner is only on non-block scoped)
 		checkOuterShadow(labelName, token); //JSHINT_BUG: third parameter is not defined in function checkOuterShadow
 		
-		// if is block scoped (let or const)
 		if (isblockscoped)
 		{
 			Label declaredInCurrentScope = current.getLabels().get(labelName);
@@ -787,11 +810,11 @@ public class ScopeManager
 			{
 				Usage usage = current.getUsages().get(labelName);
 				// if its in a sub function it is not necessarily an error, just latedef
-				if (usage.isOnlyUsedSubFunction())
+				if (usage.isOnlyUsedSubFunction() || ishoisted)
 				{
 					latedefWarning(type, labelName, token);
 				}
-				else
+				else if (!ishoisted)
 				{
 					// this is a clear illegal usage for block scoped variables
 					warning("E056", token, labelName, type);
@@ -812,7 +835,7 @@ public class ScopeManager
 				}
 			}
 			
-			block.add(labelName, type, token, !isexported);
+			block.add(labelName, type, token, !isexported, initialized);
 		}
 		else
 		{
@@ -941,7 +964,7 @@ public class ScopeManager
 	     */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{
-			current.getLabels().put(labelName, new Label(type, tok, false, currentFunctBody, unused));
+			current.getLabels().put(labelName, new Label(type, tok, false, currentFunctBody, unused, false));
 		}
 	}
 	
@@ -993,6 +1016,13 @@ public class ScopeManager
 				token.setFunction(currentFunctBody);
 				current.getUsages().get(labelName).getTokens().add(token);
 			}
+			
+			// blockscoped vars can't be used within their initializer (TDZ)
+			Label label = current.getLabels().get(labelName);
+			if (label != null && label.isBlockscoped() && !label.isInitialized())
+			{
+				error("E056", token, labelName, label.getType());
+			}
 		}
 		
 		public void reassign(String labelName, Token token)
@@ -1023,7 +1053,21 @@ public class ScopeManager
 	     */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{
-			current.getLabels().put(labelName, new Label(type, tok, true, unused));
+			add(labelName, type, tok, unused, false);
+		}
+		
+		/**
+	     * Adds a new variable.
+	     * 
+	     * @param labelName name of the label.
+	     * @param type type of the label.
+	     * @param tok current token.
+	     * @param unused whether label is unused or not.
+	     * @param initialized whether label is initialized or not.
+	     */
+		public void add(String labelName, String type, Token tok, boolean unused, boolean initialized)
+		{
+			current.getLabels().put(labelName, new Label(type, tok, true, null, unused, initialized));
 		}
 		
 		public void addBreakLabel(String labelName, Token token)
@@ -1146,32 +1190,19 @@ public class ScopeManager
 		private boolean blockscoped = false;
 		private Scope function;
 		private boolean unused = false;
+		private boolean initialized = false;
 		
 		private boolean useOutsideOfScope = false;
 		private boolean duplicated = false;
 		
-		private Label(String type, Token token, boolean unused)
-		{
-			this.type = type;
-			this.token = token;
-			this.unused = unused;
-		}
-		
-		private Label(String type, Token token, boolean blockscoped, boolean unused)
-		{
-			this.type = type;
-			this.token = token;
-			this.blockscoped = blockscoped;
-			this.unused = unused;
-		}
-		
-		private Label(String type, Token token, boolean blockscoped, Scope function, boolean unused)
+		private Label(String type, Token token, boolean blockscoped, Scope function, boolean unused, boolean initialized)
 		{
 			this.type = type;
 			this.token = token;
 			this.blockscoped = blockscoped;
 			this.function = function;
 			this.unused = unused;
+			this.initialized = initialized;
 		}
 		
 		private String getType()
@@ -1202,6 +1233,16 @@ public class ScopeManager
 		private void setUnused(boolean unused)
 		{
 			this.unused = unused;
+		}
+		
+		private boolean isInitialized()
+		{
+			return initialized;
+		}
+		
+		private void setInitialized(boolean initialized)
+		{
+			this.initialized = initialized;
 		}
 
 		private boolean isUseOutsideOfScope()

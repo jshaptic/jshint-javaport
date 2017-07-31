@@ -8,13 +8,15 @@ public class InternalSource
 {
 	private String id;
 	private Token elem;
-	private String value;
+	private Token token;
+	private String code;
 	
-	InternalSource(String id, Token elem, String value)
+	InternalSource(String id, Token elem, Token token, String code)
 	{
 		setId(id);
-		setToken(elem);
-		setValue(value);
+		setElem(elem);
+		setToken(token);
+		setCode(code);
 	}
 
 	public String getId()
@@ -27,24 +29,34 @@ public class InternalSource
 		this.id = StringUtils.defaultString(id);
 	}
 
-	public Token getToken()
+	public Token getElem()
 	{
 		return elem;
 	}
 	
-	void setToken(Token elem)
+	void setElem(Token elem)
 	{
 		this.elem = elem;
 	}
-
-	public String getValue()
+	
+	public Token getToken()
 	{
-		return value;
+		return token;
 	}
 	
-	void setValue(String value)
+	void setToken(Token token)
 	{
-		this.value = StringUtils.defaultString(value);
+		this.token = token;
+	}
+
+	public String getCode()
+	{
+		return code;
+	}
+	
+	void setCode(String code)
+	{
+		this.code = StringUtils.defaultString(code);
 	}
 	
 	@Override
@@ -53,7 +65,8 @@ public class InternalSource
         return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
             .append(id)
             .append(elem)
-            .append(value)
+            .append(token)
+            .append(code)
             .toHashCode();
 	}
 	
@@ -67,7 +80,8 @@ public class InternalSource
 		return new EqualsBuilder()
 			.append(this.id, other.id)
 			.append(this.elem, other.elem)
-			.append(this.value, other.value)
+			.append(this.token, other.token)
+			.append(this.code, other.code)
 			.isEquals();
 	}
 }

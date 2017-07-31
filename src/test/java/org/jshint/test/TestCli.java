@@ -695,7 +695,44 @@ public class TestCli extends Assert
 	}
 	
 	@Test(groups = {"group"})
-	public void testGroupultipleIgnores()
+	public void testGroupIgnoresWithSpecialChars()
+	{
+		CliWrapper cli = new CliWrapper();
+		
+		JSHintUtils.shell = new JSHintUtils.ShellUtils()
+		{
+			@Override
+			public String cwd()
+			{
+				return JSHintUtils.path.resolve(System.getProperty("user.dir"), "special++chars");
+			}
+			
+			@Override
+			public boolean exists(String path)
+			{
+				if (".".equals(path)) return true;
+				return false;
+			}
+			
+			@Override
+			public boolean isDirectory(String path)
+			{
+				if (".".equals(path)) return true;
+				return false;
+			}
+			
+			@Override
+			public List<String> ls(String path)
+			{
+				if (".".equals(path)) return new ArrayList<String>();
+				return null;
+			}
+		};
+		cli.interpret(".", "--exclude=exclude1.js");
+	}
+	
+	@Test(groups = {"group"})
+	public void testGroupMultipleIgnores()
 	{
 		CliWrapper cli = new CliWrapper();
 		cli.toggleRun(false);
@@ -1618,5 +1655,53 @@ public class TestCli extends Assert
 		
 		assertEquals(errors.size(), 0, "should be no errors.");
 		assertEquals(cli.getExitCode(), 0, "status code should be 0 when there is no linting error.");
+	}
+	
+	@Test(groups = {"useStdin"})
+	public void testUseStdinFileNameIgnore()
+	{
+		CliWrapper cli = new CliWrapper();
+		cli.toggleExit(false);
+		
+		final String dir = System.getProperty("user.dir") + "/src/test/resources/examples/";
+		JSHintUtils.shell = new JSHintUtils.ShellUtils()
+		{
+			@Override
+			public String cwd()
+			{
+				return dir;
+			}
+			
+			@Override
+			public String cat(String path) throws IOException
+			{
+				if (Reg.test("\\.jshintignore$", path)) return "ignore-me.js";
+				throw new IOException();
+			}
+			
+			@Override
+			public boolean exists(String path)
+			{
+				if (Reg.test("\\.jshintignore$", path)) return true;
+				return false;
+			}
+		};
+		
+		cli.interpret("--filename", "do-not-ignore-me.js", "-");
+		
+		cli.send("This is not valid JavaScript.");
+		cli.end();
+		
+		assertEquals(cli.getExitCode(), 2, "The input is linted because the specified file name is not ignored.");
+		
+		cli.restore();
+		cli.toggleExit(false);
+		
+		cli.interpret("--filename", "ignore-me.js", "-");
+		
+		cli.send("This is not valid JavaScript.");
+		cli.end();
+		
+		assertEquals(cli.getExitCode(), 0, "The input is not linted because the specified file name is ignored.");
 	}
 }

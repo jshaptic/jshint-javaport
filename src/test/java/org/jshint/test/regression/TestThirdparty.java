@@ -26,7 +26,7 @@ public class TestThirdparty extends Assert
 	}
 	
 	@Test
-	public void testBackbone()
+	public void testBackbone_0_5_3()
 	{	
 		String src = th.readFile("src/test/resources/libs/backbone.js");
 		
@@ -34,13 +34,11 @@ public class TestThirdparty extends Assert
 	    th.addError(784, "Unnecessary grouping operator.");
 	    th.addError(864, "Unnecessary grouping operator.");
 	    th.addError(685, "Missing '()' invoking a constructor.");
-	    th.addError(764, "Use '===' to compare with '0'.");
-	    th.addError(859, "Use '!==' to compare with '0'.");
 		th.test(src, new LinterOptions().set("expr", true).set("eqnull", true).set("boss", true).set("regexdash", true).set("singleGroups", true));
 	}
 	
 	@Test
-	public void testJQuery()
+	public void testJQuery_1_7()
 	{	
 		String src = th.readFile("src/test/resources/libs/jquery-1.7.js");
 		LinterGlobals globals = new LinterGlobals(false, "DOMParser", "ActiveXObject", "define");
@@ -75,7 +73,7 @@ public class TestThirdparty extends Assert
 	}
 	
 	@Test
-	public void testPrototype17()
+	public void testPrototype_1_7()
 	{	
 		String src = th.readFile("src/test/resources/libs/prototype-17.js");
 		
@@ -94,10 +92,6 @@ public class TestThirdparty extends Assert
 	    th.addError(409, "Missing semicolon.");
 	    th.addError(430, "Missing semicolon.");
 	    th.addError(451, "Missing semicolon.");
-	    th.addError(633, "Use '!==' to compare with 'undefined'.");
-	    th.addError(737, "Use '===' to compare with ''.");
-	    th.addError(807, "Use '===' to compare with ''.");
-	    th.addError(1137, "Use '===' to compare with '0'.");
 	    th.addError(1215, "Missing semicolon.");
 	    th.addError(1224, "Unnecessary semicolon.");
 	    th.addError(1916, "Missing semicolon.");
@@ -123,18 +117,12 @@ public class TestThirdparty extends Assert
 	    th.addError(4322, "'nodeCheck' used out of scope.");
 	    th.addError(4520, "'i' is already defined.");
 	    th.addError(4538, "Expected a 'break' statement before 'case'.");
-	    th.addError(4547, "Use '===' to compare with '0'.");
-	    th.addError(4565, "Use '===' to compare with '0'.");
-	    th.addError(4566, "Use '===' to compare with '0'.");
-	    th.addError(4568, "Use '===' to compare with '0'.");
 	    th.addError(4656, "'i' is already defined.");
 	    th.addError(4722, "Missing '()' invoking a constructor.");
 	    th.addError(4988, "Missing semicolon.");
 	    th.addError(4988, "Missing semicolon.");
 	    th.addError(5021, "Missing semicolon.");
 	    th.addError(5397, "Missing semicolon.");
-	    th.addError(5112, "Use '!==' to compare with 'undefined'.");
-	    th.addError(5140, "Use '!==' to compare with ''.");
 	    th.addError(5224, "'values' is already defined.");
 	    th.addError(5495, "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.");
 	    th.addError(5545, "The '__proto__' property is deprecated.");
@@ -152,7 +140,7 @@ public class TestThirdparty extends Assert
 	}
 	
 	@Test
-	public void testLodash061()
+	public void testLodash_0_6_1()
 	{	
 		String src = th.readFile("src/test/resources/libs/lodash.js");
 		LinterGlobals globals = new LinterGlobals(false, "_", "define");
@@ -169,27 +157,25 @@ public class TestThirdparty extends Assert
 			.set("evil", true)
 			.set("laxcomma", true);
 		
-		th.addError(168, "Possible strict violation.");
+		th.addError(168, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 	    th.addError(170, "Missing '()' invoking a constructor.");
 	    th.addError(632, "Missing semicolon.");
 	    th.addError(920, "Reassignment of 'isArguments', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
 	    th.addError(963, "Reassignment of 'isFunction', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
 	    th.addError(1122, "'isArr' used out of scope.");
 	    th.addError(1127, "'className' used out of scope.");
-	    th.addError(1129, "Use '===' to compare with 'true'.");
 	    th.addError(1153, "'isArr' used out of scope.");
 	    th.addError(1159, "'isArr' used out of scope.");
-	    th.addError(1490, "Use '===' to compare with '0'.");
 	    th.addError(1670, "Missing semicolon.");
-	    th.addError(3374, "Possible strict violation.");
+	    th.addError(3374, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 	    th.addError(3377, "Missing '()' invoking a constructor.");
 	    th.addError(3384, "Missing semicolon.");
 	    th.addError(3677, "Missing '()' invoking a constructor.");
 	    th.addError(3683, "Missing '()' invoking a constructor.");
-	    th.addError(3825, "Possible strict violation.");
-	    th.addError(4225, "Possible strict violation.");
-	    th.addError(4226, "Possible strict violation.");
-	    th.addError(4242, "Possible strict violation.");
+	    th.addError(3825, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+	    th.addError(4225, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+	    th.addError(4226, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+	    th.addError(4242, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 		th.test(src, options, globals);
 	}
 	
@@ -220,8 +206,7 @@ public class TestThirdparty extends Assert
 			.set("supernew", true)
 			.set("-W008", true)  // Ignore warnings about leading dots in numbers.
 			.set("-W038", true)  // Ignore scope warnings.
-			.set("-W040", true)  // Ignore possible strict violations.
-			.set("-W041", true); // Ignore poor relations warnings.
+			.set("-W040", true);  // Ignore possible strict violations.
 		
 	    th.addError(1342, "Value of 'e' may be overwritten in IE 8 and earlier.");
 	    th.addError(1526, "Value of 'e' may be overwritten in IE 8 and earlier.");

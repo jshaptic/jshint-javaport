@@ -77,8 +77,18 @@ public class Lexer
 		TEMPLATE
 	}
 	
-	//Object that handles postponed lexing verifications that checks the parsed
-	//environment state.
+	private boolean isHex(String str)
+	{
+		return Reg.test("^[0-9a-fA-F]+$", str);
+	}
+	
+	private boolean isHexDigit(char str)
+	{
+		return isHex(String.valueOf(str));
+	}
+	
+	// Object that handles postponed lexing verifications that checks the parsed
+	// environment state.
 	public static class AsyncTrigger
 	{
 		private List<ConsumerFunction> checks = new ArrayList<ConsumerFunction>();
@@ -643,9 +653,10 @@ public class Lexer
 	 * also recognizes JSHint- and JSLint-specific comments such as
 	 * /*jshint, /*jslint, /*globals and so on.
 	 * 
+	 * @param checks list of checks that should be executed during scanning.
 	 * @return lexer token.
 	 */
-	public LexerToken scanComments() throws JSHintException
+	public LexerToken scanComments(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
 		char ch1 = peek();
@@ -696,7 +707,7 @@ public class Lexer
 					
 					// If we hit EOF and our comment is still unclosed,
 					// trigger an error and end the comment implicitly.
-					if (!nextLine())
+					if (!nextLine(checks))
 					{
 						context = new EventContext();
 						context.setCode("E017");
@@ -749,11 +760,6 @@ public class Lexer
 		}
 		
 		return null;
-	}
-	
-	private boolean isHexDigit(char str)
-	{
-		return Reg.test("^[0-9a-fA-F]$", String.valueOf(str));
 	}
 	
 	private boolean isDecimalDigit(char str)
@@ -864,20 +870,18 @@ public class Lexer
 			return null;
 		}
 		
-		char ch1 = peek(identifierIndex+1);
-		char ch2 = peek(identifierIndex+2);
-		char ch3 = peek(identifierIndex+3);
-		char ch4 = peek(identifierIndex+4);
+		String sequence = "" + peek(identifierIndex + 1) + peek(identifierIndex + 2) +
+			peek(identifierIndex + 3) + peek(identifierIndex + 4);
 		int code = 0;
 		
-		if (isHexDigit(ch1) && isHexDigit(ch2) && isHexDigit(ch3) && isHexDigit(ch4))
+		if (isHex(sequence))
 		{
-			code = Integer.parseInt(String.valueOf(ch1) + String.valueOf(ch2) + String.valueOf(ch3) + String.valueOf(ch4), 16);
+			code = Integer.parseInt(sequence, 16); //TODO: maybe replace it with commons api and add validation
 			
 			if ((code < UnicodeData.identifierPartTable.length && UnicodeData.identifierPartTable[code]) || isNonAsciiIdentifierPart(code))
 			{
 				identifierIndex += 5;
-				return "\\u" + String.valueOf(ch1) + String.valueOf(ch2) + String.valueOf(ch3) + String.valueOf(ch4);
+				return "\\u" + sequence;
 			}
 			
 			return null;
@@ -968,7 +972,7 @@ public class Lexer
 	 * This method's implementation was heavily influenced by the
 	 * scanNumericLiteral function in the Esprima parser's source code.
 	 */
-	public LexerToken scanNumericLiteral() throws JSHintException
+	public LexerToken scanNumericLiteral(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
 		int index = 0;
@@ -1013,7 +1017,14 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData("Octal integer literal", "6");
-						trigger("warning", context);
+						triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 					}
 					
 					index += 1;
@@ -1032,7 +1043,14 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData("Binary integer literal", "6");
-						trigger("warning", context);
+						triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 					}
 					
 					index += 1;
@@ -1195,13 +1213,13 @@ public class Lexer
 			context.setCharacter(character);
 			context.setData("\\'");
 			triggerAsync("warning", context, checks, new PredicateFunction()
-			{
-				@Override
-				public boolean test()
 				{
-					return State.isJsonMode();
-				}
-			});
+					@Override
+					public boolean test()
+					{
+						return State.isJsonMode();
+					}
+				});
 			
 			break;
 		case 'b':
@@ -1226,12 +1244,12 @@ public class Lexer
 			// Check if the number is between 00 and 07.
 			try
 			{
-				final int n = Integer.parseInt(String.valueOf(peek(1)), 10);
+				final int n = Integer.parseInt(String.valueOf(peek(1)), 10); //TODO: check all parseInt functions
 				context = new EventContext();
 				context.setCode("W115");
 				context.setLine(line);
 				context.setCharacter(character);
-				triggerAsync("warning", context, checks, new PredicateFunction()
+				triggerAsync("warning", context, checks, new PredicateFunction() //TODO: check all indents
 					{
 						@Override
 						public boolean test()
@@ -1246,24 +1264,51 @@ public class Lexer
 			}
 			
 			break;
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+			escChr = "\\" + escChr; //TODO: check all String.valueOf()
+			context = new EventContext();
+			context.setCode("W115");
+			context.setLine(line);
+			context.setCharacter(character);
+			triggerAsync("warning", context, checks, new PredicateFunction()
+				{
+					@Override
+					public boolean test()
+					{
+						return State.isStrict();
+					}
+				});
+			break;
 		case 'u':
-			String hexCode = input.substring(1, 5);
+			String sequence = input.substring(1, 5);
 			try
 			{
-				char code = (char)Integer.parseInt(hexCode, 16);
+				char code = (char)Integer.parseInt(sequence, 16); //TODO: check if this block should be refactored
 				escChr = Character.toString(code);
 			}
 			catch (NumberFormatException e)
 			{
+				
+			}
+			if (!isHex(sequence))
+			{
+				// This condition unequivocally describes a syntax error.
+				// JSHINT_TODO: Re-factor as an "error" (not a "warning").
 				context = new EventContext();
 				context.setCode("W052");
 				context.setLine(line);
 				context.setCharacter(character);
-				context.setData("u" + hexCode);
+				context.setData("u" + sequence);
 				trigger("warning", context);
-				escChr = "u"+ hexCode;
 			}
 			
+			escChr = "u"+ sequence;
 			jump = 5;
 			break;
 		case 'v':
@@ -1346,7 +1391,14 @@ public class Lexer
 				context.setLine(line);
 				context.setCharacter(character);
 				context.setData("template literal syntax", "6");
-				trigger("warning", context);
+				triggerAsync("warning", context, checks, new PredicateFunction()
+					{
+						@Override
+						public boolean test()
+						{
+							return true;
+						}
+					});
 			}
 			// Template must start with a backtick.
 			tokenType = LexerTokenType.TEMPLATEHEAD;
@@ -1371,7 +1423,7 @@ public class Lexer
 			while ((ch = peek()) == '\0')
 			{
 				value += "\n";
-				if (!nextLine())
+				if (!nextLine(checks))
 				{
 					// Unclosed template literal --- point to the starting "`"
 					TemplateStart startPos = templateStarts.remove(templateStarts.size()-1);
@@ -1488,6 +1540,8 @@ public class Lexer
 				
 				if (!allowNewLine)
 				{
+					// This condition unequivocally describes a syntax error.
+					// JSHINT_TODO: Re-factor as an "error" (not a "warning").
 					context = new EventContext();
 					context.setCode("W112");
 					context.setLine(line);
@@ -1531,7 +1585,7 @@ public class Lexer
 				// If we get an EOF inside of an unclosed string, show an
 		        // error and implicitly close it at the EOF point.
 				
-				if (!nextLine())
+				if (!nextLine(checks))
 				{
 					context = new EventContext();
 					context.setCode("E029");
@@ -1563,7 +1617,14 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData("<non-printable>");
-					trigger("warning", context);
+					triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 				}
 				
 				// Special treatment for some escaped characters.
@@ -1600,7 +1661,7 @@ public class Lexer
 	 * rare edge cases where one JavaScript engine complains about
 	 * your regular expression while others don't.
 	 */
-	public LexerToken scanRegExp() throws JSHintException
+	public LexerToken scanRegExp(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
 		int index = 0;
@@ -1659,7 +1720,14 @@ public class Lexer
 						context.setCode("W048");
 						context.setLine(line);
 						context.setCharacter(character);
-						trigger("warning", context);
+						triggerAsync("warning", context, checks, new PredicateFunction()
+							{
+								@Override
+								public boolean test()
+								{
+									return true;
+								}
+							});
 					}
 					
 					// Unexpected escaped character
@@ -1671,7 +1739,14 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData(String.valueOf(chr));
-						trigger("warning", context);
+						triggerAsync("warning", context, checks, new PredicateFunction()
+							{
+								@Override
+								public boolean test()
+								{
+									return true;
+								}
+							});
 					}
 				}
 				
@@ -1694,7 +1769,14 @@ public class Lexer
 					context.setCode("W048");
 					context.setLine(line);
 					context.setCharacter(character);
-					trigger("warning", context);
+					triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 				}
 				
 				// Unexpected escaped character
@@ -1706,7 +1788,14 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData(String.valueOf(chr));
-					trigger("warning", context);
+					triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 				}
 				
 				if (chr == '/')
@@ -1776,7 +1865,14 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData("Sticky RegExp flag", "6");
-					trigger("warning", context);
+					triggerAsync("warning", context, checks, new PredicateFunction()
+						{
+							@Override
+							public boolean test()
+							{
+								return true;
+							}
+						});
 				}
 				if (value.indexOf("y") > -1)
 				{
@@ -1877,7 +1973,7 @@ public class Lexer
 		// Methods that work with multi-line structures and move the
 	    // character pointer.
 		
-		LexerToken match = scanComments();
+		LexerToken match = scanComments(checks);
 		if (match == null) match = scanStringLiteral(checks);
 		if (match == null) match = scanTemplateLiteral(checks);
 		
@@ -1888,11 +1984,11 @@ public class Lexer
 		
 		// Methods that don't move the character pointer.
 		
-		match = scanRegExp();
+		match = scanRegExp(checks);
 		if (match == null) match = scanPunctuator();
 		if (match == null) match = scanKeyword();
 		if (match == null) match = scanIdentifier();
-		if (match == null) match = scanNumericLiteral();
+		if (match == null) match = scanNumericLiteral(checks);
 		
 		if (match != null)
 		{
@@ -1908,7 +2004,7 @@ public class Lexer
 	 * Switch to the next line and reset all char pointers. Once
 	 * switched, this method also checks for other minor warnings.
 	 */
-	public boolean nextLine() throws JSHintException
+	public boolean nextLine(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
 		
@@ -1941,7 +2037,14 @@ public class Lexer
 			context.setCode("W125");
 			context.setLine(line);
 			context.setCharacter(chr+1);
-	    	trigger("warning", context);
+			triggerAsync("warning", context, checks, new PredicateFunction()
+				{
+					@Override
+					public boolean test()
+					{
+						return true;
+					}
+				});
 	    }
 	    
 	    input = input.replaceAll("\t", State.getTab());
@@ -1953,7 +2056,14 @@ public class Lexer
 			context.setCode("W100");
 			context.setLine(line);
 			context.setCharacter(chr);
-	    	trigger("warning", context);
+			triggerAsync("warning", context, checks, new PredicateFunction()
+				{
+					@Override
+					public boolean test()
+					{
+						return true;
+					}
+				});
 	    }
 	    
 	    // If there is a limit on line length, warn when lines get too
@@ -1973,20 +2083,18 @@ public class Lexer
 				context.setCode("W101");
 				context.setLine(line);
 				context.setCharacter(input.length());
-	    		trigger("warning", context);
+				triggerAsync("warning", context, checks, new PredicateFunction()
+					{
+						@Override
+						public boolean test()
+						{
+							return true;
+						}
+					});
 	    	}
 	    }
 	    
 	    return true;
-	}
-	
-	/*
-	 * This is simply a synonym for nextLine() method with a friendlier
-	 * public name.
-	 */
-	public void start() throws JSHintException
-	{
-		nextLine();
 	}
 	
 	private boolean isReserved(Token token, boolean isProperty)
@@ -2064,7 +2172,7 @@ public class Lexer
 		
 		if (type == TokenType.IDENTIFIER)
 		{
-			if (value.equals("return") || value.equals("case") ||
+			if (value.equals("return") || value.equals("case") || value.equals("yield") ||
 				value.equals("typeof") || value.equals("instanceof"))
 			{
 				prereg = true;
@@ -2145,7 +2253,7 @@ public class Lexer
 		{
 			if (input.length() == 0)
 			{
-				if (nextLine())
+				if (nextLine(checks))
 				{
 					return create(TokenType.ENDLINE, "", checks);
 				}
@@ -2261,6 +2369,8 @@ public class Lexer
 			case NUMERICLITERAL:
 				if (token.isMalformed())
 				{
+					// This condition unequivocally describes a syntax error.
+					// JSHINT_TODO: Re-factor as an "error" (not a "warning").
 					context = new EventContext();
 					context.setCode("W045");
 					context.setLine(line);
