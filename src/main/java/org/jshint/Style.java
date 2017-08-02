@@ -86,13 +86,13 @@ public class Style implements JSHintModule
 				}
 				
 				// If quotmark is enabled, return if this is a template literal.
-				if (quotmark.equals("single") && data.getQuote() != '\'')
+				if (quotmark.equals("single") && !data.getQuote().equals("'"))
 				{
 					code = "W109";
 				}
 				
 				// If quotmark is set to 'double' warn about all single-quotes.
-				if (quotmark.equals("double") && data.getQuote() != '"')
+				if (quotmark.equals("double") && !data.getQuote().equals("\""))
 				{
 					code = "W108";
 				}

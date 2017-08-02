@@ -6,6 +6,11 @@ compileJava.options.compilerArgs += ["-Xlint:-options"]
 compileTestJava.options.encoding = project.defaultEncoding
 compileTestJava.options.compilerArgs += ["-Xlint:-options"]
 
+// Exclude test resources because there is huge number files and none of it is needed to be copied
+processTestResources {
+	exclude "**/*"
+}
+
 // Custom task for creating source jar
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = "sources"

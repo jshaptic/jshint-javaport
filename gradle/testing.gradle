@@ -1,6 +1,24 @@
 // Use TestNG framework instead of default JUnit
 test {
-	useTestNG()
+	useTestNG() {
+		suites "src/test/resources/testng.xml"
+	}
+	
+	testLogging {
+		exceptionFormat "full"
+		events "skipped", "failed"
+	}
+}
+
+// Separate task for 262 test
+task test262(type: Test, dependsOn: testClasses, group: "verification") {
+	useTestNG() {
+		include "**/*Test262*"
+	}
+	
+	testLogging {
+		showStandardStreams = true
+	}
 }
 
 // For coveralls check jacoco xml report should be turned on

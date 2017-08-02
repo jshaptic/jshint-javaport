@@ -3600,7 +3600,7 @@ public class JSHint
 					
 					String nextVal = State.nextToken().getValue();
 					if (State.nextToken().isIdentifier() &&
-						(peekIgnoreEOL().getId().equals(",")) || peekIgnoreEOL().getId().equals("}"))
+						(peekIgnoreEOL().getId().equals(",") || peekIgnoreEOL().getId().equals("}")))
 					{
 						if (!State.inES6())
 						{
@@ -5959,7 +5959,7 @@ public class JSHint
 						// message (i.e. W133) in response to a common programming mistake.
 						do
 						{
-							if (checkPunctuators(State.nextToken(), "{", "]"))
+							if (checkPunctuators(State.nextToken(), "{", "["))
 							{
 								for (Identifier elem : destructuringPattern(false, true))
 								{

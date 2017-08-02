@@ -1,6 +1,8 @@
 package org.jshint.test.test262;
 
 import java.io.File;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.JSHint;
-import org.jshint.JSHintException;
 import org.jshint.LinterOptions;
 import org.jshint.LinterWarning;
 import org.jshint.Reg;
@@ -24,8 +26,9 @@ public class Test262 extends Assert
 {	
 	private TestHelper th = new TestHelper();
 	
-	private static final String pathTest262 = System.getProperty("user.dir") + "/src/test/resources/test262/test262/test";
-	private static final String pathExpectations = System.getProperty("user.dir") + "/src/test/resources/test262/expectations.txt";
+	private static final String pathTest262 = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/test262/test";
+	private static final String pathExpectations = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/expectations.txt";
+	private static final String pathPortExpectations = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/portExpectations.txt";
 	
 	private static final Pattern testName = Pattern.compile("^(?!.*_FIXTURE).*\\.[jJ][sS]");
 	
@@ -42,14 +45,14 @@ public class Test262 extends Assert
 	{
 		boolean isModule = Reg.test(modulePattern, src);
 		RunResult result = null;
-		JSHintException exception = null;
+		Exception exception = null;
 		
 		JSHint jshint = new JSHint();
 		try
 		{
 			jshint.lint(src, new LinterOptions().set("esversion", 6).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
 		}
-		catch(JSHintException e)
+		catch(Exception e)
 		{
 			exception = e;
 		}
@@ -197,7 +200,7 @@ public class Test262 extends Assert
 	 *
 	 * Source: https://github.com/jonschlinkert/normalize-path
 	 */
-	private String normalize(String filePath)
+	private static String normalize(String filePath)
 	{
 		return filePath.replaceAll("[\\\\\\/]+", "/");
 	}
@@ -273,7 +276,7 @@ public class Test262 extends Assert
 	{
 		if (items.size() == 0)
 		{
-			return "";
+			return null;
 		}
 		
 		List<String> result = new ArrayList<String>(); 
@@ -288,12 +291,12 @@ public class Test262 extends Assert
 	
 	private String report(long duration)
 	{
-		long seconds = (duration / 1000); //TODO: format
+		double seconds = duration / 1000.0;
 		
-		String[] lines = {
+		String[] lines = ArrayUtils.removeAllOccurences(new String[]{
 			"Results:",
 			"",
-			totalTests + " total programs parsed in " + seconds + " seconds.",
+			totalTests + " total programs parsed in " + new DecimalFormat("#0.00").format(seconds) + " seconds.",
 			"",
 			expectedSuccess.size() + " valid programs parsed successfully",
 			expectedFailure.size() + " invalid programs produced parsing errors",
@@ -305,7 +308,7 @@ public class Test262 extends Assert
 			list(unexpectedFalsePositive, "# invalid programs parsed successfully (without a corresponding entry in expectations file):"),
 			list(unexpectedFalseNegative, "# valid programs produced parsing errors (without a corresponding entry in expectations file):"),
 			list(unexpectedUnrecognized, "# programs were referenced by the expectations file but not parsed in this test run:"),
-		};
+		}, null);
 		
 		return StringUtils.join(lines, "\n");
 	}
@@ -321,18 +324,18 @@ public class Test262 extends Assert
 	{
 		File[] fileNames = directory.listFiles();
 		
-		if (fileNames.length == 0)
+		if (fileNames == null || fileNames.length == 0)
 		{
 			return;
 		}
 		
 		for (File fileName : fileNames)
 		{
-			String fullName = fileName.getAbsolutePath();
+			String fullName = normalize(fileName.getAbsolutePath());
 			if (fileName.isDirectory())
 			{
 				findTests(fileName, tests);
-				return;
+				continue;
 			}
 			
 			if (Reg.test(testName, fullName))
@@ -354,24 +357,28 @@ public class Test262 extends Assert
 		List<TestResult> results = new ArrayList<TestResult>();
 		
 		int count = 0;
-		for (String testName : testNames)
+		for (String testName : testNames) //TODO: implement parallel test execution
 		{ 
 			String src = th.readFile(testName);
 			
 			count++;
 			if (count % 1000 == 0)
 			{
-				System.out.println(count + "/" + testNames.size() + " (" + (100*count/testNames.size()) + "%)"); //TODO: implement correct formating
+				System.out.format("%d/%d (%.2f%%)%n", count, testNames.size(), (100.0*count/testNames.size()));
 			}
 			
 			TestResult result = test(src);
-			result.name = testName; //TODO: do something with relative
+			result.name = normalize(Paths.get(pathTest262).relativize(Paths.get(testName)).toString());
 			results.add(result);
 		}
 		
 		String src = th.readFile(pathExpectations);
+		Map<String, Boolean> expections = parseExpectations(src);
 		
-		interpretResults(results, parseExpectations(src));
+		// add additional expections for current java port
+		expections.putAll(parseExpectations(th.readFile(pathPortExpectations)));
+		
+		interpretResults(results, expections);
 		String output = report(new Date().getTime() - start);
 		
 		if (totalUnexpected == 0)
@@ -386,11 +393,11 @@ public class Test262 extends Assert
 	
 	private static class RunResult
 	{
-		private JSHintException exception;
+		private Exception exception;
 		private List<LinterWarning> errors;
 		private boolean parseFailure = false;
 		
-		private RunResult(JSHintException exception, List<LinterWarning> errors)
+		private RunResult(Exception exception, List<LinterWarning> errors)
 		{
 			this.exception = exception;
 			this.errors = errors;

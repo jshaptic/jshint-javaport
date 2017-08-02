@@ -82,9 +82,9 @@ public class Lexer
 		return Reg.test("^[0-9a-fA-F]+$", str);
 	}
 	
-	private boolean isHexDigit(char str)
+	private boolean isHexDigit(String str)
 	{
-		return isHex(String.valueOf(str));
+		return str.length() == 1 && isHex(str);
 	}
 	
 	// Object that handles postponed lexing verifications that checks the parsed
@@ -322,7 +322,7 @@ public class Lexer
 		this.ignoringLinterErrors = ignoringLinterErrors;
 	}
 	
-	public char peek()
+	public String peek()
 	{
 		return peek(0);
 	}
@@ -331,9 +331,9 @@ public class Lexer
 	 * Return the next i character without actually moving the
 	 * char pointer.
 	 */
-	public char peek(int i)
+	public String peek(int i)
 	{
-		return input.length() > i ? input.charAt(i) : '\0';
+		return input.length() > i ? ""+input.charAt(i) : "";
 	}
 	
 	public void skip()
@@ -408,115 +408,115 @@ public class Lexer
 	 */
 	public LexerToken scanPunctuator()
 	{
-		char ch1 = peek();
+		String ch1 = peek();
 		
 		switch (ch1)
 		{
 		// Most common single-character punctuators
-		case '.':
-			if (Character.isDigit(peek(1)))
+		case ".":
+			if (Reg.test("^[0-9]$", peek(1)))
 			{
 				return null;
 			}
-			if (peek(1) == '.' && peek(2) == '.')
+			if (peek(1).equals(".") && peek(2).equals("."))
 			{
 				return new LexerToken(LexerTokenType.PUNCTUATOR, "...");
 			}
-		case '(':
-		case ')':
-		case ';':
-		case ',':
-		case '[':
-		case ']':
-		case ':':
-		case '~':
-		case '?':
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1));
+		case "(":
+		case ")":
+		case ";":
+		case ",":
+		case "[":
+		case "]":
+		case ":":
+		case "~":
+		case "?":
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 			
 		// A block/object opener
-		case '{':
+		case "{":
 			pushContext(LexerContextType.BLOCK);
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1));
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 			
 		// A block/object closer
-		case '}':
+		case "}":
 			if (inContext(LexerContextType.BLOCK))
 			{
 				popContext();
 			}
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1));
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 			
 		// A pound sign (for Node shebangs)
-		case '#':
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1));
+		case "#":
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 			
 		// We're at the end of input
-		case '\0':
+		case "":
 			return null;
 		}
 		
 		// Peek more characters
-		char ch2 = peek(1);
-		char ch3 = peek(2);
-		char ch4 = peek(3);
+		String ch2 = peek(1);
+		String ch3 = peek(2);
+		String ch4 = peek(3);
 		
 		// 4-character punctuator: >>>=
 		
-		if (ch1 == '>' && ch2 == '>' && ch3 == '>' && ch4 == '=')
+		if (ch1.equals(">") && ch2.equals(">") && ch3.equals(">") && ch4.equals("="))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, ">>>=");
 		}
 		
 		// 3-character punctuators: === !== >>> <<= >>=
 		
-		if (ch1 == '=' && ch2 == '=' && ch3 == '=')
+		if (ch1.equals("=") && ch2.equals("=") && ch3.equals("="))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, "===");
 		}
 		
-		if (ch1 == '!' && ch2 == '=' && ch3 == '=')
+		if (ch1.equals("!") && ch2.equals("=") && ch3.equals("="))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, "!==");
 		}
 		
-		if (ch1 == '>' && ch2 == '>' && ch3 == '>')
+		if (ch1.equals(">") && ch2.equals(">") && ch3.equals(">"))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, ">>>");
 		}
 		
-		if (ch1 == '<' && ch2 == '<' && ch3 == '=')
+		if (ch1.equals("<") && ch2.equals("<") && ch3.equals("="))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, "<<=");
 		}
 		
-		if (ch1 == '>' && ch2 == '>' && ch3 == '=')
+		if (ch1.equals(">") && ch2.equals(">") && ch3.equals("="))
 		{
 			return new LexerToken(LexerTokenType.PUNCTUATOR, ">>=");
 		}
 		
 		// Fat arrow punctuator
 		
-		if (ch1 == '=' && ch2 == '>')
+		if (ch1.equals("=") && ch2.equals(">"))
 		{
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1) + String.valueOf(ch2));
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2);
 		}
 		
 		// 2-character punctuators: <= >= == != ++ -- << >> && ||
 	    // += -= *= %= &= |= ^= /=
 		
-		if (ch1 == ch2 && ("+-<>&|".indexOf(ch1) >= 0))
+		if (ch1.equals(ch2) && ("+-<>&|".indexOf(ch1) >= 0))
 		{
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1) + String.valueOf(ch2));
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2);
 		}
 		
 		if ("<>=!+-*%&|^/".indexOf(ch1) >= 0)
 		{
-			if (ch2 == '=')
+			if (ch2.equals("="))
 			{
-				return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1) + String.valueOf(ch2));
+				return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2);
 			}
 			
-			return new LexerToken(LexerTokenType.PUNCTUATOR, String.valueOf(ch1));
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 		}
 		
 		return null;
@@ -659,14 +659,14 @@ public class Lexer
 	public LexerToken scanComments(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
-		char ch1 = peek();
-		char ch2 = peek(1);
+		String ch1 = peek();
+		String ch2 = peek(1);
 		String rest = input.length() > 2 ? input.substring(2) : "";
 		int startLine = line;
 		int startChar = character;
 		
 		// End of unbegun comment. Raise an error and skip that input.
-		if (ch1 == '*' && ch2 == '/')
+		if (ch1.equals("*") && ch2.equals("/"))
 		{
 			context = new EventContext();
 			context.setCode("E018");
@@ -679,13 +679,13 @@ public class Lexer
 		}
 		
 		// Comments must start either with // or /*
-		if (ch1 != '/' || (ch2 != '*' && ch2 != '/'))
+		if (!ch1.equals("/") || (!ch2.equals("*") && !ch2.equals("/")))
 		{
 			return null;
 		}
 		
 		// One-line comment
-		if (ch2 == '/')
+		if (ch2.equals("/"))
 		{
 			skip(input.length()); // Skip to the EOL.
 			return commentToken("//", rest, false, false);
@@ -694,14 +694,14 @@ public class Lexer
 		String body = "";
 		
 		/* Multi-line comment */
-		if (ch2 == '*')
+		if (ch2.equals("*"))
 		{
 			inComment = true;
 			skip(2);
 			
-			while (peek() != '*' || peek(1) != '/')
+			while (!peek().equals("*") || !peek(1).equals("/"))
 			{
-				if (peek() == '\0') // End of Line
+				if (peek().equals("")) // End of Line
 				{
 					body += "\n";
 					
@@ -762,22 +762,22 @@ public class Lexer
 		return null;
 	}
 	
-	private boolean isDecimalDigit(char str)
+	private boolean isDecimalDigit(String str)
 	{
-		return Reg.test("^[0-9]$", String.valueOf(str));
+		return Reg.test("^[0-9]$", str);
 	}
 	
-	private boolean isOctalDigit(char str)
+	private boolean isOctalDigit(String str)
 	{
-		return Reg.test("^[0-7]$", String.valueOf(str));
+		return Reg.test("^[0-7]$", str);
 	}
 	
-	private boolean isBinaryDigit(char str)
+	private boolean isBinaryDigit(String str)
 	{
-		return Reg.test("^[01]$", String.valueOf(str));
+		return Reg.test("^[01]$", str);
 	}
 	
-	private boolean isAllowedDigit(int base, char str)
+	private boolean isAllowedDigit(int base, String str)
 	{
 		switch (base)
 		{
@@ -794,10 +794,10 @@ public class Lexer
 		}
 	}
 	
-	private boolean isIdentifierStart(char ch)
+	private boolean isIdentifierStart(String ch)
 	{
-		return (ch == '&') || (ch == '_') || (ch == '\\') ||
-			   (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+		return (ch.equals("&")) || (ch.equals("_")) || (ch.equals("\\")) ||
+			   (ch.length() > 0 && ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z') || (ch.length() > 0 && ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z');
 	}
 	
 	/*
@@ -865,12 +865,12 @@ public class Lexer
 	{
 		identifierIndex += 1;
 		
-		if (peek(identifierIndex) != 'u')
+		if (!peek(identifierIndex).equals("u"))
 		{
 			return null;
 		}
 		
-		String sequence = "" + peek(identifierIndex + 1) + peek(identifierIndex + 2) +
+		String sequence = peek(identifierIndex + 1) + peek(identifierIndex + 2) +
 			peek(identifierIndex + 3) + peek(identifierIndex + 4);
 		int code = 0;
 		
@@ -892,8 +892,9 @@ public class Lexer
 	
 	private String getIdentifierStart()
 	{
-		char chr = peek(identifierIndex);
-		int code = chr;
+		String chr = peek(identifierIndex);
+		if (chr.length() == 0) return null;
+		int code = chr.charAt(0);
 		
 		if (code == 92)
 		{
@@ -905,7 +906,7 @@ public class Lexer
 			if (UnicodeData.identifierStartTable[code])
 			{
 				identifierIndex += 1;
-				return String.valueOf(chr);
+				return chr;
 			}
 			
 			return null;
@@ -914,7 +915,7 @@ public class Lexer
 		if (isNonAsciiIdentifierStart(code))
 		{
 			identifierIndex += 1;
-			return String.valueOf(chr);
+			return chr;
 		}
 		
 		return null;
@@ -922,8 +923,9 @@ public class Lexer
 	
 	private String getIdentifierPart()
 	{
-		char chr = peek(identifierIndex);
-		int code = chr;
+		String chr = peek(identifierIndex);
+		if (chr.length() == 0) return null;
+		int code = chr.charAt(0);
 		
 		if (code == 92)
 		{
@@ -935,7 +937,7 @@ public class Lexer
 			if (UnicodeData.identifierPartTable[code])
 			{
 				identifierIndex += 1;
-				return String.valueOf(chr);
+				return chr;
 			}
 			
 			return null;
@@ -944,7 +946,7 @@ public class Lexer
 		if (isNonAsciiIdentifierPart(code))
 		{
 			identifierIndex += 1;
-			return String.valueOf(chr);
+			return chr;
 		}
 		
 		return null;
@@ -978,26 +980,26 @@ public class Lexer
 		int index = 0;
 		String value = "";
 		int length = input.length();
-		char chr = peek(index);
+		String chr = peek(index);
 		int base = 10;
 		boolean isLegacy = false;
 		
 		// Numbers must start either with a decimal digit or a point.
-		if (chr != '.' && !isDecimalDigit(chr))
+		if (!chr.equals(".") && !isDecimalDigit(chr))
 		{
 			return null;
 		}
 		
-		if (chr != '.')
+		if (!chr.equals("."))
 		{
-			value = String.valueOf(peek(index));
+			value = peek(index);
 			index += 1;
 			chr = peek(index);
 			
 			if (value.equals("0"))
 			{
 				// Base-16 numbers.
-				if (chr == 'x' || chr == 'X')
+				if (chr.equals("x") || chr.equals("X"))
 				{
 					base = 16;
 					
@@ -1006,7 +1008,7 @@ public class Lexer
 				}
 				
 				// Base-8 numbers.
-				if (chr == 'o' || chr == 'O')
+				if (chr.equals("o") || chr.equals("O"))
 				{
 					base = 8;
 					
@@ -1018,13 +1020,13 @@ public class Lexer
 						context.setCharacter(character);
 						context.setData("Octal integer literal", "6");
 						triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
 							{
-								return true;
-							}
-						});
+								@Override
+								public boolean test()
+								{
+									return true;
+								}
+							});
 					}
 					
 					index += 1;
@@ -1032,7 +1034,7 @@ public class Lexer
 				}
 				
 				// Base-2 numbers.
-				if (chr == 'b' || chr == 'B')
+				if (chr.equals("b") || chr.equals("B"))
 				{
 					base = 2;
 					
@@ -1044,13 +1046,13 @@ public class Lexer
 						context.setCharacter(character);
 						context.setData("Binary integer literal", "6");
 						triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
 							{
-								return true;
-							}
-						});
+								@Override
+								public boolean test()
+								{
+									return true;
+								}
+							});
 					}
 					
 					index += 1;
@@ -1124,7 +1126,7 @@ public class Lexer
 		
 		// Decimal digits.
 		
-		if (chr == '.')
+		if (chr.equals("."))
 		{
 			value += chr;
 			index += 1;
@@ -1143,13 +1145,13 @@ public class Lexer
 		
 		// Exponent part.
 		
-		if (chr == 'e' || chr == 'E')
+		if (chr.equals("e") || chr.equals("E"))
 		{
 			value += chr;
 			index += 1;
 			chr = peek(index);
 			
-			if (chr == '+' || chr == '-')
+			if (chr.equals("+") || chr.equals("-"))
 			{
 				value += peek(index);
 				index += 1;
@@ -1201,12 +1203,11 @@ public class Lexer
 		boolean allowNewLine = false;
 		int jump = 1;
 		skip();
-		char chr = peek();
-		String escChr = "";
+		String chr = peek();
 		
 		switch (chr)
 		{
-		case '\'':
+		case "'":
 			context = new EventContext();
 			context.setCode("W114");
 			context.setLine(line);
@@ -1222,29 +1223,29 @@ public class Lexer
 				});
 			
 			break;
-		case 'b':
-			escChr = "\\b";
+		case "b":
+			chr = "\\b";
 			break;
-		case 'f':
-			escChr = "\\f";
+		case "f":
+			chr = "\\f";
 			break;
-		case 'n':
-			escChr = "\\n";
+		case "n":
+			chr = "\\n";
 			break;
-		case 'r':
-			escChr = "\\r";
+		case "r":
+			chr = "\\r";
 			break;
-		case 't':
-			escChr = "\\t";
+		case "t":
+			chr = "\\t";
 			break;
-		case '0':
-			escChr = "\\0";
+		case "0":
+			chr = "\\0";
 
 			// Octal literals fail in strict mode.
 			// Check if the number is between 00 and 07.
 			try
 			{
-				final int n = Integer.parseInt(String.valueOf(peek(1)), 10); //TODO: check all parseInt functions
+				final int n = Integer.parseInt(peek(1), 10); //TODO: check all parseInt functions
 				context = new EventContext();
 				context.setCode("W115");
 				context.setLine(line);
@@ -1264,14 +1265,14 @@ public class Lexer
 			}
 			
 			break;
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-			escChr = "\\" + escChr; //TODO: check all String.valueOf()
+		case "1":
+		case "2":
+		case "3":
+		case "4":
+		case "5":
+		case "6":
+		case "7":
+			chr = "\\" + chr;
 			context = new EventContext();
 			context.setCode("W115");
 			context.setLine(line);
@@ -1285,12 +1286,12 @@ public class Lexer
 					}
 				});
 			break;
-		case 'u':
+		case "u":
 			String sequence = input.substring(1, 5);
 			try
 			{
 				char code = (char)Integer.parseInt(sequence, 16); //TODO: check if this block should be refactored
-				escChr = Character.toString(code);
+				chr = "" + code; //TODO: check all String.valueOf()
 			}
 			catch (NumberFormatException e)
 			{
@@ -1308,10 +1309,10 @@ public class Lexer
 				trigger("warning", context);
 			}
 			
-			escChr = "u"+ sequence;
+			chr = "u"+ sequence; //TODO: not sure about this
 			jump = 5;
 			break;
-		case 'v':
+		case "v":
 			context = new EventContext();
 			context.setCode("W114");
 			context.setLine(line);
@@ -1327,9 +1328,9 @@ public class Lexer
 					}
 				});
 			
-			escChr = Character.toString('\u000B');
+			chr = "\u000B";
 			break;
-		case 'x':
+		case "x":
 			int x = Integer.parseInt(input.substring(1, 2), 16);
 			
 			context = new EventContext();
@@ -1346,24 +1347,24 @@ public class Lexer
 					}
 				});
 			
-			escChr = Character.toString((char)x);
+			chr = Character.toString((char)x);
 			jump = 3;
 			break;
-		case '\\':
-			escChr = "\\\\";
+		case "\\":
+			chr = "\\\\";
 			break;
-		case '"':
-			escChr = "\\\"";
+		case "\"":
+			chr = "\\\"";
 			break;
-		case '/':
+		case "/":
 			break;
-		case '\0':
+		case "":
 			allowNewLine = true;
-			escChr = "";
+			chr = "";
 			break;
 		}
 		
-		return ContainerFactory.createObject("char", escChr, "jump", jump, "allowNewLine", allowNewLine);
+		return ContainerFactory.createObject("char", chr, "jump", jump, "allowNewLine", allowNewLine);
 	}
 	
 	/*
@@ -1377,12 +1378,12 @@ public class Lexer
 		EventContext context;
 		LexerTokenType tokenType = LexerTokenType.NONE;
 		String value = "";
-		char ch = '\0';
+		String ch = "";
 		int startLine = line;
 		int startChar = character;
 		int depth = templateStarts.size();
 		
-		if (peek() == '`')
+		if (peek().equals("`"))
 		{
 			if (!State.inES6(true))
 			{
@@ -1407,7 +1408,7 @@ public class Lexer
 			skip(1);
 			pushContext(LexerContextType.TEMPLATE);
 		}
-		else if (inContext(LexerContextType.TEMPLATE) && peek() == '}')
+		else if (inContext(LexerContextType.TEMPLATE) && peek().equals("}"))
 		{
 			// If we're in a template context, and we have a '}', lex a TemplateMiddle.
 			tokenType = LexerTokenType.TEMPLATEMIDDLE;
@@ -1418,9 +1419,9 @@ public class Lexer
 			return null;
 		}
 		
-		while (peek() != '`')
+		while (!peek().equals("`"))
 		{
-			while ((ch = peek()) == '\0')
+			while ((ch = peek()).equals(""))
 			{
 				value += "\n";
 				if (!nextLine(checks))
@@ -1443,7 +1444,7 @@ public class Lexer
 				}
 			}
 			
-			if (ch == '$' && peek(1) == '{')
+			if (ch.equals("$") && peek(1).equals("{"))
 			{
 				value += "${";
 				skip(2);
@@ -1456,13 +1457,13 @@ public class Lexer
 				token.setContext(currentContext());
 				return token;
 			}
-			else if (ch == '\\')
+			else if (ch.equals("\\"))
 			{
 				UniversalContainer escape = scanEscapeSequence(checks);
 				value += escape.asString("char");
 				skip(escape.asInt("jump"));
 			}
-			else if (ch != '`')
+			else if (!ch.equals("`"))
 			{
 				// Otherwise, append the value and continue.
 				value += ch;
@@ -1498,10 +1499,10 @@ public class Lexer
 	public LexerToken scanStringLiteral(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
-		final char quote = peek();
+		final String quote = peek();
 		
 		// String must start with a quote.
-		if (quote != '"' && quote != '\'')
+		if (!quote.equals("\"") && !quote.equals("'"))
 		{
 			return null;
 		}
@@ -1516,7 +1517,7 @@ public class Lexer
 				@Override
 				public boolean test()
 				{
-					return State.isJsonMode() && quote != '"';
+					return State.isJsonMode() && !quote.equals("\"");
 				}
 			});
 		
@@ -1527,9 +1528,9 @@ public class Lexer
 		
 		skip();
 		
-		while (peek() != quote)
+		while (!peek().equals(quote))
 		{
-			if (peek() == '\0') // End Of Line
+			if (peek().equals("")) // End Of Line
 			{
 				// If an EOL is not preceded by a backslash, show a warning
 		        // and proceed like it was a legit multi-line string where
@@ -1604,12 +1605,11 @@ public class Lexer
 			else // Any character other than End Of Line
 			{
 				allowNewLine = false;
-				char chr = peek();
-				String escChr = String.valueOf(chr);
+				String chr = peek();
 				int jump = 1; 	// A length of a jump, after we're done
 								// parsing this character.
 				
-				if (chr < ' ')
+				if (chr.length() > 0 && chr.charAt(0) < ' ')
 				{
 					// Warn about a control character in a string.
 					context = new EventContext();
@@ -1628,15 +1628,15 @@ public class Lexer
 				}
 				
 				// Special treatment for some escaped characters.
-				if (chr == '\\')
+				if (chr.equals("\\"))
 				{
 					UniversalContainer parsed = scanEscapeSequence(checks);
-					escChr = parsed.asString("char");
+					chr = parsed.asString("char");
 					jump = parsed.asInt("jump");
 					allowNewLine = parsed.asBoolean("allowNewLine");
 				}
 				
-				value += escChr;
+				value += chr;
 				skip(jump);
 			}
 		}
@@ -1666,17 +1666,17 @@ public class Lexer
 		EventContext context;
 		int index = 0;
 		int length = input.length();
-		char chr = peek();
-		String value = String.valueOf(chr);
+		String chr = peek();
+		String value = chr;
 		String body = "";
-		List<Character> flags = new ArrayList<Character>();
+		List<String> flags = new ArrayList<String>();
 		boolean malformed = false;
 		boolean isCharSet = false;
 		boolean terminated = false;
 		String malformedDesc = "";
 		
 		// Regular expressions must start with '/'
-		if (!prereg || chr != '/')
+		if (!prereg || !chr.equals("/"))
 		{
 			return null;
 		}
@@ -1697,15 +1697,15 @@ public class Lexer
 			
 			if (isCharSet)
 			{
-				if (chr == ']')
+				if (chr.equals("]"))
 				{
-					if (peek(index-1) != '\\' || peek(index-2) == '\\')
+					if (!peek(index - 1).equals("\\") || peek(index - 2).equals("\\"))
 					{
 						isCharSet = false;
 					}
 				}
 				
-				if (chr == '\\')
+				if (chr.equals("\\"))
 				{
 					index += 1;
 					chr = peek(index);
@@ -1713,7 +1713,7 @@ public class Lexer
 					value += chr;
 					
 					// Unexpected control character
-					if (chr < ' ')
+					if (chr.length() > 0 && chr.charAt(0) < ' ')
 					{
 						malformed = true;
 						context = new EventContext();
@@ -1731,14 +1731,14 @@ public class Lexer
 					}
 					
 					// Unexpected escaped character
-					if (chr == '<')
+					if (chr.equals("<"))
 					{
 						malformed = true;
 						context = new EventContext();
 						context.setCode("W049");
 						context.setLine(line);
 						context.setCharacter(character);
-						context.setData(String.valueOf(chr));
+						context.setData(chr);
 						triggerAsync("warning", context, checks, new PredicateFunction()
 							{
 								@Override
@@ -1754,7 +1754,7 @@ public class Lexer
 				continue;
 			}
 				
-			if (chr == '\\')
+			if (chr.equals("\\"))
 			{
 				index += 1;
 				chr = peek(index);
@@ -1762,7 +1762,7 @@ public class Lexer
 				value += chr;
 				
 				// Unexpected control character
-				if (chr < ' ')
+				if (chr.length() > 0 && chr.charAt(0) < ' ')
 				{
 					malformed = true;
 					context = new EventContext();
@@ -1780,14 +1780,14 @@ public class Lexer
 				}
 				
 				// Unexpected escaped character
-				if (chr == '<')
+				if (chr.equals("<"))
 				{
 					malformed = true;
 					context = new EventContext();
 					context.setCode("W049");
 					context.setLine(line);
 					context.setCharacter(character);
-					context.setData(String.valueOf(chr));
+					context.setData(chr);
 					triggerAsync("warning", context, checks, new PredicateFunction()
 						{
 							@Override
@@ -1798,27 +1798,27 @@ public class Lexer
 						});
 				}
 				
-				if (chr == '/')
+				if (chr.equals("/"))
 				{
 					index += 1;
 					continue;
 				}
 				
-				if (chr == '[')
+				if (chr.equals("["))
 				{
 					index += 1;
 					continue;
 				}
 			}
 			
-			if (chr == '[')
+			if (chr.equals("["))
 			{
 				isCharSet = true;
 				index += 1;
 				continue;
 			}
 			
-			if (chr == '/')
+			if (chr.equals("/"))
 			{
 				body = body.substring(0, body.length()-1);
 				terminated = true;
@@ -1852,11 +1852,11 @@ public class Lexer
 		while (index < length)
 		{
 			chr = peek(index);
-			if (!Reg.test("[gimy]", String.valueOf(chr)))
+			if (!Reg.test("[gimy]", chr))
 			{
 				break;
 			}
-			if (chr == 'y')
+			if (chr.equals("y"))
 			{
 				if (!State.inES6(true))
 				{
@@ -1964,7 +1964,7 @@ public class Lexer
 		from = character;
 		
 		// Move to the next non-space character.
-		while (Reg.test("[\\p{Z}\\s]", String.valueOf(peek())))
+		while (Reg.test("[\\p{Z}\\s]", peek()))
 		{
 			from += 1;
 			skip();
@@ -2278,7 +2278,7 @@ public class Lexer
 					context.setCode("E024");
 					context.setLine(line);
 					context.setCharacter(character);
-					context.setData(String.valueOf(peek()));
+					context.setData(peek());
 					trigger("error", context);
 					
 					input = "";
@@ -2455,7 +2455,7 @@ public class Lexer
 		private int base = 0;
 		private boolean isLegacy = false;
 		private boolean isUnclosed = false;
-		private char quote;
+		private String quote;
 		private int startLine = 0;
 		private int startChar = 0;
 		private int depth = 0;
@@ -2577,12 +2577,12 @@ public class Lexer
 			this.isUnclosed = isUnclosed;
 		}
 
-		public char getQuote()
+		public String getQuote()
 		{
 			return quote;
 		}
 
-		private void setQuote(char quote)
+		private void setQuote(String quote)
 		{
 			this.quote = quote;
 		}

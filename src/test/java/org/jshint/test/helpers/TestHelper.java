@@ -364,7 +364,7 @@ public class TestHelper extends Assert
 		}
 		catch (IOException e)
 		{
-			assertTrue(false, "Cannot read file " + filename);
+			fail("Cannot read file " + filename);
 		}
 		
 		return "";

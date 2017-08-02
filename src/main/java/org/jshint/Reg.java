@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Regular expressions. Some of these are stupidly long.
  */
@@ -36,9 +38,19 @@ public final class Reg
 	// to relax the maxlen option
 	static final Pattern MAXLEN_EXCEPTION = Pattern.compile("^(?:(?:\\/\\/|\\/\\*|\\*) ?)?[^ ]+$");
 	
+	public static String replaceAll(String regexp, String input, Replacer replacer)
+	{
+		return replaceAll(Pattern.compile(regexp), input, replacer);
+	}
+	
+	public static String replaceAll(String regexp, int flags, String input, Replacer replacer)
+	{
+		return replaceAll(Pattern.compile(regexp, flags), input, replacer);
+	}
+	
 	public static String replaceAll(Pattern p, String input, Replacer replacer)
 	{
-		Matcher m = p.matcher(input);
+		Matcher m = p.matcher(StringUtils.defaultString(input));
 		StringBuffer buffer = new StringBuffer();
 		
 		List<String> groups = null;
@@ -57,16 +69,6 @@ public final class Reg
 		return buffer.toString();
 	}
 	
-	public static String replaceAll(String regexp, String input, Replacer replacer)
-	{
-		return replaceAll(Pattern.compile(regexp), input, replacer);
-	}
-	
-	public static String replaceAll(String regexp, int flags, String input, Replacer replacer)
-	{
-		return replaceAll(Pattern.compile(regexp, flags), input, replacer);
-	}
-	
 	public static boolean test(String regexp, String input)
 	{
 		return test(Pattern.compile(regexp), input);
@@ -79,7 +81,7 @@ public final class Reg
 	
 	public static boolean test(Pattern p, String input)
 	{
-		return p.matcher(input).find();
+		return p.matcher(StringUtils.defaultString(input)).find();
 	}
 	
 	public static String[] exec(String regexp, String input)
@@ -91,7 +93,7 @@ public final class Reg
 	{
 		String[] result;
 		
-		Matcher m = p.matcher(input);
+		Matcher m = p.matcher(StringUtils.defaultString(input));
 		if (m.find())
 		{
 			int groupCount = m.groupCount() + 1;
@@ -109,7 +111,7 @@ public final class Reg
 	
 	public static int indexOf(Pattern p, String input)
 	{
-		Matcher m = p.matcher(input);
+		Matcher m = p.matcher(StringUtils.defaultString(input));
 		if (m.find())
 			return m.start();
 		else

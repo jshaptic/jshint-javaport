@@ -9,7 +9,7 @@ public class EventContext
 {
 	private String code = "";
 	private String value = "";
-	private char quote = '\0';
+	private String quote = "";
 	private String name = "";
 	private String raw_name = "";
 	
@@ -51,12 +51,12 @@ public class EventContext
 		this.value = StringUtils.defaultString(value);
 	}
 
-	public char getQuote()
+	public String getQuote()
 	{
 		return quote;
 	}
 
-	public void setQuote(char quote)
+	public void setQuote(String quote)
 	{
 		this.quote = quote;
 	}
