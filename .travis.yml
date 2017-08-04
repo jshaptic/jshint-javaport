@@ -9,7 +9,8 @@ env:
     - secure: t0xtj9AA5GyRB9D3PrwR8SavkCXAj50p4RMmpKxHq/jX98iF5N/opGHUVshmExG68XbSZsA5GRLeIjYcCjvWtoY6FAYIzymVKV+mAd0l47M5Xj0BXndZ9bCd2aiRyZh/+nIDFwYZxR6pBfJ6cs/Xg4PaqE3OVJdeVz23JBPe2PED4OSykIiyaI6WF58a/aU8h7isTl2pfy8rVDccvexCiFpsq/Mn45bIfJXoD64d7xawLBx8SJmM9TrrQxEuVUdMRzb7FirvM+B2X9zaKY8o/y7pdCaEw0dc+O+uHZOoGe3lML036ApFGJTaTwe0toWFh/zr+niWmeIyS+hg+vtThf1sjTWAIAs8GE8gxxsb0xee42wUCDKtbMRoSbRlVfrQUOO8FchnebGpT4T5M/Lw08iGfCOZMk/IfPsffpGQapLGYjYxWtHc46BlgXxs9ESzmbXapcJ/Irl8MsGHHdWplg3XEApQ8ojXue8woqffTtEd462skuD8opwfo/QhrLJlG/nLYJ4IYTVGa20LvTp8Pu/Aq0OX/g8wlyVxpvbVWaFlXjMs8ZnChXcUgJsvhZsxCccAm7ZTOh6zdyGnFEdRoe6X8PgUfIwE7BgezLmKIpGliJ9jEkHt3Df1mfnSFet82ZpU3Pujd/oq5JKOOJ3RMZ6C09vS4k3eQQUjT+wIjj8=
   
 # Build settings
-sudo: true
+sudo: required
+dist: trusty
 addons:
   apt:
     packages:
@@ -18,6 +19,7 @@ notifications:
   email:
     on_failure: always
 
+# Stop all services to free some memory space
 before_script:
   - sudo service postgresql stop || true
   - sudo service mysql stop || true
@@ -32,7 +34,7 @@ before_script:
   - sudo service x11-common stop || true
 
 # Execute custom script instead of default travis execution
-script: ./gradlew build test test262 --info
+script: ./gradlew build test test262
 branches:
   only:
   - develop

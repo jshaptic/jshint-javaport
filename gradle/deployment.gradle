@@ -11,9 +11,6 @@ gradle.taskGraph.whenReady { taskGraph ->
 		if (project.version.endsWith("SNAPSHOT"))
 			bintrayUpload.enabled = false
 		
-		if (System.getenv("TRAVIS_BRANCH") != gitMasterBranch)
-			bintrayUpload.enabled = false
-		
 		if (!project.version.endsWith("SNAPSHOT"))
 			artifactoryPublish.enabled = false
 	}
