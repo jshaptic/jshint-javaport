@@ -1318,7 +1318,6 @@ public class Lexer
 			context.setLine(line);
 			context.setCharacter(character);
 			context.setData("\\v");
-			trigger("warning", context);
 			triggerAsync("warning", context, checks, new PredicateFunction()
 				{
 					@Override

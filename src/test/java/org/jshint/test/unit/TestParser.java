@@ -50,6 +50,49 @@ public class TestParser extends Assert
 	}
 	
 	@Test
+	public void testPeekOverDirectives()
+	{
+		String code = th.readFile("src/test/resources/fixtures/peek-over-directives.js");
+		
+		// Within object literal;
+		th.addError(18, "This character may get silently deleted by one or more browsers.");
+		th.addError(18, "Unexpected control character in regular expression.");
+		th.addError(19, "Unexpected escaped character '<' in regular expression.");
+		th.addError(20, "Line is too long.");
+		th.addError(21, "Control character in string: <non-printable>.");
+		th.addError(21, "This character may get silently deleted by one or more browsers.");
+		th.addError(22, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(23, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(24, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+		th.addError(25, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		
+		// Within array literal:;
+		th.addError(44, "This character may get silently deleted by one or more browsers.");
+		th.addError(44, "Unexpected control character in regular expression.");
+		th.addError(45, "Unexpected escaped character '<' in regular expression.");
+		th.addError(46, "Line is too long.");
+		th.addError(47, "Control character in string: <non-printable>.");
+		th.addError(47, "This character may get silently deleted by one or more browsers.");
+		th.addError(48, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(49, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(50, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+		th.addError(51, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		
+		// Within grouping operator:;
+		th.addError(70, "This character may get silently deleted by one or more browsers.");
+		th.addError(70, "Unexpected control character in regular expression.");
+		th.addError(71, "Unexpected escaped character '<' in regular expression.");
+		th.addError(72, "Line is too long.");
+		th.addError(73, "Control character in string: <non-printable>.");
+		th.addError(73, "This character may get silently deleted by one or more browsers.");
+		th.addError(74, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(75, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+		th.addError(76, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+		th.addError(77, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		th.test(code);
+	}
+	
+	@Test
 	public void testOther()
 	{
 		String[] code = {
@@ -659,10 +702,19 @@ public class TestParser extends Assert
 	public void testBadStrings()
 	{
 		String[] code = {
-			"var a = '\\uNOTHEX';"
+			"var a = '\\uNOTHEX';",
+			"void '\\u0000';",
+			"void '\\ug000';",
+			"void '\\u0g00';",
+			"void '\\u00g0';",
+			"void '\\u000g';"
 		};
 		
 		th.addError(1, "Unexpected 'uNOTH'.");
+		th.addError(3, "Unexpected 'ug000'.");
+		th.addError(4, "Unexpected 'u0g00'.");
+		th.addError(5, "Unexpected 'u00g0'.");
+		th.addError(6, "Unexpected 'u000g'.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -964,7 +1016,6 @@ public class TestParser extends Assert
 	    th.reset();
 	    th.addError(1, "Expected an identifier and instead saw 'if'.");
 	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
-	    th.addError(1, "Use '===' to compare with 'true'.");
 	    th.test(new String[] {
 	    	"true == if"
 	    }, new LinterOptions());
@@ -972,7 +1023,6 @@ public class TestParser extends Assert
 	    th.reset();
 	    th.addError(1, "Expected an identifier and instead saw 'if'.");
 	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
-	    th.addError(1, "Use '!==' to compare with 'true'.");
 	    th.test(new String[] {
 	    	"true != if"
 	    }, new LinterOptions());
@@ -3282,7 +3332,7 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(7, "A generator function shall contain a yield statement.");
+		th.addError(7, "A generator function should contain at least one yield expression.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3310,7 +3360,7 @@ public class TestParser extends Assert
 		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
 	    th.addError(2, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 	    th.addError(2, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "A generator function shall contain a yield statement.");
+	    th.addError(2, "A generator function should contain at least one yield expression.");
 		th.test(code);
 		
 		th.reset();
@@ -3355,14 +3405,14 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(4, "A yield statement shall be within a generator function (with syntax: `function*`)");
+		th.addError(4, "Yield expressions may only occur within generator functions.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print", "Iterator"));
 		
 		th.test(code, new LinterOptions().set("esnext", true).set("moz", true));
 	}
 	
 	@Test
-	public void testYieldStatementWithinTryCatch()
+	public void testYieldExpressionWithinTryCatch()
 	{
 		// see issue: https://github.com/jshint/jshint/issues/1505
 		String[] code = {
@@ -3602,7 +3652,7 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(3, "A yield statement shall be within a generator function (with syntax: `function*`)");
+		th.addError(3, "Yield expressions may only occur within generator functions.");
 	    th.addError(6, "Expected 'for' and instead saw 'i'.");
 	    th.addError(6, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 	    th.addError(7, "Expected 'for' and instead saw 'i'.");
@@ -3610,7 +3660,7 @@ public class TestParser extends Assert
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 		
 		th.reset();
-		th.addError(3, "A yield statement shall be within a generator function (with syntax: `function*`)");
+		th.addError(3, "Yield expressions may only occur within generator functions.");
 		th.test(code, new LinterOptions().set("esnext", true).set("moz", true));
 	}
 	
@@ -4087,6 +4137,20 @@ public class TestParser extends Assert
 	    th.addError(18, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 	    th.addError(18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
+		
+		th.reset();
+		th.test(new String[]{
+			"for (x.y of []) {}",
+			"for (x[z] of []) {}"
+		}, new LinterOptions().set("esversion", 2015));
+		
+		th.reset();
+		th.addError(1, 10, "Bad assignment.");
+		th.addError(2, 13, "Bad assignment.");
+		th.test(new String[]{
+			"for (x+y of {}) {}",
+			"for ((this) of {}) {}"
+		}, new LinterOptions().set("esversion", 2015));
 	}
 	
 	@Test
@@ -4290,7 +4354,7 @@ public class TestParser extends Assert
 		};
 		
 		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(1, "Creating global 'for' variable. Should be 'for (var i ...'.");
 		th.addError(1, "Creating global 'for' variable. Should be 'for (var v ...'.");
 		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4315,16 +4379,16 @@ public class TestParser extends Assert
 		th.reset();
 		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4394,7 +4458,7 @@ public class TestParser extends Assert
 		};
 		
 		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(1, "Creating global 'for' variable. Should be 'for (var i ...'.");
 		th.addError(1, "Creating global 'for' variable. Should be 'for (var v ...'.");
 		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4419,16 +4483,16 @@ public class TestParser extends Assert
 		th.reset();
 		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4564,8 +4628,8 @@ public class TestParser extends Assert
 		};
 		
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Creating global 'for' variable. Should be 'for (var key ...'.");
 		th.addError(4, "Creating global 'for' variable. Should be 'for (var value ...'.");
 		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4596,19 +4660,19 @@ public class TestParser extends Assert
 		th.reset();
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4692,8 +4756,8 @@ public class TestParser extends Assert
 		};
 		
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Creating global 'for' variable. Should be 'for (var key ...'.");
 		th.addError(4, "Creating global 'for' variable. Should be 'for (var value ...'.");
 		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -4724,19 +4788,20 @@ public class TestParser extends Assert
 		th.reset();
 		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
 		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
@@ -5007,8 +5072,8 @@ public class TestParser extends Assert
 		th.test(code);
 	}
 	
-	@Test
-	public void testAutomaticCommaInsertionGH950()
+	@Test(groups = {"ASI"})
+	public void testASIGH950()
 	{
 		String[] code = {
 			"var a = b",
@@ -5033,8 +5098,8 @@ public class TestParser extends Assert
 		    "a"
 		};
 		
-		th.addError(2, "Bad line breaking before 'instanceof'.");
-	    th.addError(6, "Bad line breaking before '&&'.");
+		th.addError(2, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
+	    th.addError(6, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
 	    th.addError(8, "Line breaking error 'return'.");
 	    th.addError(9, "Label 'a' on 1 statement.");
 	    th.addError(9, "Expected an assignment or function call and instead saw an expression.");
@@ -5047,10 +5112,10 @@ public class TestParser extends Assert
 		th.test(code, new LinterOptions().set("moz", true).set("asi", true));
 		
 		th.reset();
-		th.addError(2, "Bad line breaking before 'instanceof'.");
+		th.addError(2, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
 	    th.addError(3, "Missing semicolon.");
 	    th.addError(4, "Missing semicolon.");
-	    th.addError(6, "Bad line breaking before '&&'.");
+	    th.addError(6, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
 	    th.addError(8, "Line breaking error 'return'.");
 	    th.addError(8, "Missing semicolon.");
 	    th.addError(9, "Label 'a' on 1 statement.");
@@ -5067,6 +5132,43 @@ public class TestParser extends Assert
 		th.test(code, new LinterOptions().set("asi", false)); // es5
 		th.test(code, new LinterOptions().set("esnext", true).set("asi", false));
 		th.test(code, new LinterOptions().set("moz", true).set("asi", false));
+	}
+	
+	// gh-3037 - weird behaviour (yield related)
+	// https://github.com/jshint/jshint/issues/3037
+	@Test(groups = {"ASI"})
+	public void testASIFollowingYield()
+	{
+		String[] code = {
+			"function* g() {",
+			"  void 0",
+			"  yield;",
+			"}"
+		};
+		
+		th.addError(2, "Missing semicolon.");
+		th.test(code, new LinterOptions().set("esversion", 6));
+		
+		th.reset();
+		th.test(code, new LinterOptions().set("esversion", 6).set("asi", true));
+	}
+	
+	@Test(groups = {"ASI"})
+	public void testASIFollowingPostfix()
+	{
+		String[] code = {
+			"x++",
+			"void 0;",
+			"x--",
+			"void 0;"
+		};
+		
+		th.addError(1, "Missing semicolon.");
+		th.addError(3, "Missing semicolon.");
+		th.test(code);
+		
+		th.reset();
+		th.test(code, new LinterOptions().set("asi", true));
 	}
 	
 	@Test
@@ -5850,7 +5952,7 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.addError(10, "Possible strict violation.");
+		th.addError(10, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 	    th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -6213,7 +6315,6 @@ public class TestParser extends Assert
 		th.test("function* g() { yield* ? null : null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { (yield ? 1 : 1); }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { (yield* ? 1 : 1); }", new LinterOptions().set("esversion", 6).set("expr", true));
-		th.test("function* g() { yield / 1; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		
 		th.reset();
 		th.addError(1, "Unclosed regular expression.");
@@ -6319,7 +6420,7 @@ public class TestParser extends Assert
 	    th.addError(4, "Expected an assignment or function call and instead saw an expression.");
 	    th.addError(5, "Missing semicolon.");
 	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(7, "Bad line breaking before ','.");
+	    th.addError(7, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(8, "Comma warnings can be turned off with 'laxcomma'.");
 	    th.addError(9, "Missing semicolon.");
 	    th.addError(10, "Expected an identifier and instead saw '?'.");
@@ -6348,7 +6449,7 @@ public class TestParser extends Assert
 	    th.addError(4, "Expected an assignment or function call and instead saw an expression.");
 	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
 	    th.addError(8, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(7, "Bad line breaking before ','.");
+	    th.addError(7, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(10, "Expected an identifier and instead saw '?'.");
 	    th.addError(10, "Missing semicolon.");
 	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
@@ -6381,16 +6482,66 @@ public class TestParser extends Assert
 	    };
 	    
 	    th.reset();
-	    th.addError(5, "Bad line breaking before 'fn'.");
+	    th.addError(5, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
 	    th.test(code2, new LinterOptions().set("esnext", true).set("undef", false).set("asi", true));
 	    
 	    th.reset();
 	    th.addError(2, "Missing semicolon.");
-	    th.addError(5, "Bad line breaking before 'fn'.");
+	    th.addError(5, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
 	    th.test(code2, new LinterOptions().set("esnext", true).set("undef", false));
 	}
 	
+	// Regression test for gh-2956
 	@Test
+	public void testYieldRegExp()
+	{
+		String[] code = {
+			"function* g() {",
+			"  yield /./;",
+			"  yield/./;",
+			"  yield",
+			"  /./;",
+			"  yield /* comment */;",
+			"  yield /* comment *//./;",
+			"  yield 1 / 1;",
+			"}"
+		};
+		
+		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, "Missing semicolon.");
+		th.addError(5, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(6, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.test(code);
+		
+		th.reset();
+		th.addError(4, "Missing semicolon.");
+		th.addError(5, "Expected an assignment or function call and instead saw an expression.");
+		th.test(code, new LinterOptions().set("esversion", 6));
+		
+		code = new String[] {
+			"function* g() {",
+			"  yield / 2;",
+			"}"
+		};
+		
+		th.reset();
+		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, "Unclosed regular expression.");
+		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
+		th.test(code);
+		
+		th.reset();
+		th.addError(2, "Unclosed regular expression.");
+		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
+		th.test(code, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test(groups = {"unreachable"})
 	public void testUnreachableRegressionForGH1227()
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh1227.js");
@@ -6399,7 +6550,7 @@ public class TestParser extends Assert
 	    th.test(src);
 	}
 	
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableBreak()
 	{
 		String[] src = {
@@ -6414,7 +6565,7 @@ public class TestParser extends Assert
 	    th.test(src);
 	}
 	
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableContinue()
 	{
 		String[] src = {
@@ -6429,7 +6580,7 @@ public class TestParser extends Assert
 	    th.test(src);
 	}
 	
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableReturn()
 	{
 		String[] src = {
@@ -6444,7 +6595,7 @@ public class TestParser extends Assert
 	    th.test(src);
 	}
 	
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableThrow()
 	{
 		String[] src = {
@@ -6456,7 +6607,7 @@ public class TestParser extends Assert
 	    th.test(src);
 	}
 	
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableBraceless()
 	{
 		String[] src = {
@@ -6472,7 +6623,7 @@ public class TestParser extends Assert
 	}
 	
 	// Regression test for GH-1387 "false positive: Unreachable 'x' after 'return'"
-	@Test
+	@Test(groups = {"unreachable"})
 	public void testUnreachableNestedBraceless()
 	{
 		String[] src = {
@@ -6568,7 +6719,11 @@ public class TestParser extends Assert
 	{
 		String code = th.readFile("src/test/resources/fixtures/gh826.js");
 		
-		th.addError(34, "Use '===' to compare with '0'.");
+		/**
+		 * This test previously asserted the issuance of warning W041.
+		 * W041 has since been removed, but the test is maintained in
+		 * order to discourage regressions.
+		 */
 		th.test(code);
 	}
 	
@@ -6669,7 +6824,6 @@ public class TestParser extends Assert
 	public void testRegressionForGH1431()
 	{
 		// The code is invalid but it should not crash JSHint.
-		th.addError(1, "Use '!==' to compare with 'null'.");
 	    th.addError(1, "Expected ';' and instead saw ')'.");
 	    th.addError(1, "Expected ')' and instead saw ';'.");
 	    th.addError(1, "Expected an identifier and instead saw ';'.");
@@ -6848,6 +7002,20 @@ public class TestParser extends Assert
 	public void testForOfShouldntBeSubjectToForInRules()
 	{
 		th.test("for (let x of [1, 2, 3]) { console.log(x); }", new LinterOptions().set("forin", true).set("esnext", true));
+	}
+	
+	// See gh-3099, "TypeError: Cannot read property 'type' of undefined"
+	@Test
+	public void testEnforcementOfForinOptionShouldBeTolerantOfInvalidSyntax()
+	{
+		th.addError(1, "Creating global 'for' variable. Should be 'for (var x ...'.");
+		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
+		th.addError(3, "Expected an identifier and instead saw '}'.");
+		th.test(new String[] {
+			"for (x in x) {",
+			"  if (",
+			"}"
+		}, new LinterOptions().set("forin", true));
 	}
 	
 	@Test
@@ -7041,7 +7209,7 @@ public class TestParser extends Assert
 	    th.test("'use strict'\n!x;", options);
 	    
 	    th.reset();
-	    th.addError(2, "Bad line breaking before '+'.");
+	    th.addError(2, "Misleading line break before '+'; readers may interpret this as an expression boundary.");
 	    th.addError(2, "Missing \"use strict\" statement.");
 	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
 	    th.test("'use strict'\n+x;", options);
@@ -7206,7 +7374,9 @@ public class TestParser extends Assert
 		th.addError(1, "Unexpected '...'.");
 		th.addError(2, "Unexpected '...'.");
 		th.addError(3, "Unexpected '...'.");
+		th.addError(3, "Unexpected ')'.");
 		th.addError(4, "Unexpected '...'.");
+		th.addError(4, "Unexpected ')'.");
 		th.addError(5, "Unexpected '...'.");
 		th.addError(6, "Unexpected '...'.");
 		th.addError(7, "Unexpected '...'.");
@@ -7240,16 +7410,16 @@ public class TestParser extends Assert
 		    "arrow4([1, 2, 3]);"
 		};
 		
-		th.addError(1, "Unexpected '...'.");
-		th.addError(2, "Unexpected '...'.");
-		th.addError(3, "Unexpected '...'.");
-		th.addError(4, "Unexpected '...'.");
-		th.addError(5, "Unexpected '...'.");
-		th.addError(6, "Unexpected '...'.");
-		th.addError(7, "Unexpected '...'.");
-		th.addError(8, "Unexpected '...'.");
-		th.addError(9, "Unexpected '...'.");
-		th.addError(10, "Unexpected '...'.");
+		th.addError(1, "Unexpected ']'.");
+		th.addError(2, "Unexpected ']'.");
+		th.addError(3, "Unexpected ')'.");
+		th.addError(4, "Unexpected ')'.");
+		th.addError(5, "Unexpected ']'.");
+		th.addError(6, "Unexpected ']'.");
+		th.addError(7, "Unexpected ')'.");
+		th.addError(8, "Unexpected ')'.");
+		th.addError(9, "Unexpected ']'.");
+		th.addError(10, "Unexpected ']'.");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -7434,7 +7604,7 @@ public class TestParser extends Assert
 		
 		th.addError(2, "Unexpected ','.");
 	    th.addError(2, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(1, "Bad line breaking before ','.");
+	    th.addError(1, "Misleading line break before ','; readers may interpret this as an expression boundary.");
 	    th.addError(2, "Expected an identifier and instead saw ';'.");
 	    th.addError(2, "Expected an identifier and instead saw ')'.");
 	    th.addError(2, "Expected ';' and instead saw '{'.");
@@ -7515,6 +7685,12 @@ public class TestParser extends Assert
 	    th.addError(28, warningMessage);
 	    
 	    th.test(code, new LinterOptions().set("esversion", 6));
+	    
+	    th.reset();
+	    th.addError(1, "Expected an identifier and instead saw ';'.");
+	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, "Missing semicolon.");
+	    th.test("0 instanceof;");
 	}
 	
 	@Test
@@ -7532,5 +7708,54 @@ public class TestParser extends Assert
 	    	"for (var x in [], []) {}",
 	        "for (var x of {}, {}) {}"
 		}, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test
+	public void testOctalEscape()
+	{
+		th.addError(3, "Octal literals are not allowed in strict mode.");
+		th.addError(4, "Octal literals are not allowed in strict mode.");
+		th.addError(5, "Octal literals are not allowed in strict mode.");
+		th.addError(6, "Octal literals are not allowed in strict mode.");
+		th.addError(7, "Octal literals are not allowed in strict mode.");
+		th.addError(8, "Octal literals are not allowed in strict mode.");
+		th.addError(9, "Octal literals are not allowed in strict mode.");
+		th.test(new String[] {
+			"'use strict';",
+			"void '\\0';",
+			"void '\\1';",
+			"void '\\2';",
+			"void '\\3';",
+			"void '\\4';",
+			"void '\\5';",
+			"void '\\6';",
+			"void '\\7';",
+			"void '\\8';",
+			"void '\\9';",
+		}, new LinterOptions().set("strict", "global"));
+		
+		th.reset();
+		th.test(new String[] {
+			"void '\\0';",
+			"void '\\1';",
+			"void '\\2';",
+			"void '\\3';",
+			"void '\\4';",
+			"void '\\5';",
+			"void '\\6';",
+			"void '\\7';",
+			"void '\\8';",
+			"void '\\9';",
+		});
+	}
+	
+	// See gh-3004, "Starting jsdoc comment causes 'Unclosed regular expression'
+	// error"
+	@Test
+	public void testLookaheadBeyondEnd()
+	{
+		th.addError(1, "Unmatched '{'.");
+		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.test("({ a: {");
 	}
 }

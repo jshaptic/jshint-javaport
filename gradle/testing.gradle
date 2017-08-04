@@ -12,6 +12,7 @@ test {
 
 // Separate task for 262 test
 task test262(type: Test, dependsOn: testClasses, group: "verification") {
+	mustRunAfter test
 	useTestNG() {
 		include "**/*Test262*"
 	}

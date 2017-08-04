@@ -19,16 +19,15 @@ notifications:
     on_failure: always
 
 # Execute custom script instead of default travis execution
-script:
-  - ./gradlew --rerun-tasks test jacocoTestReport coveralls -x classes
+script ./gradlew build test test262
 branches:
   only:
   - develop
   - master
   
-# Output all test results in case of the build failure
-after_failure:
-  - cat build/test-results/test/*.xml
+# If build was finished successfully run coverage report
+after_success:
+  - ./gradlew jacocoTestReport coveralls
 
 # Deploy snapshot version or release version, depending on the branch (that is decided in gradle, see deployment.gradle)
 # TODO if deployment failed do something and add task to redeploy package if it was successfully compiled and tested 
