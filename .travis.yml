@@ -19,7 +19,7 @@ notifications:
     on_failure: always
 
 # Execute custom script instead of default travis execution
-script: ./gradlew build test test262
+script: ./gradlew build test test262 --stacktrace
 branches:
   only:
   - develop
