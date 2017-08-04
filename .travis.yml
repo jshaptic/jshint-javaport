@@ -17,6 +17,7 @@ addons:
       - oracle-java8-installer
 notifications:
   email:
+    on_success: never
     on_failure: always
 
 # Stop all services to free some memory space

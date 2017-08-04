@@ -1,17 +1,59 @@
 # Java
 *.class
+*.log
 *.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Gradle
+.gradle
+/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
 
 # TestNG
 test-output/
 
-# Gradle
-/build
-.gradle
-!gradle-wrapper.jar
-
 # Eclipse
+.metadata
 bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
 .settings/
-.project
-.classpath
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+.factorypath
+.target
+.springBeans
+.recommenders/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*

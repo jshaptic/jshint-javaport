@@ -37,7 +37,6 @@ import org.jshint.utils.JSHintUtils;
 import org.jshint.utils.Minimatch;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.JsonParser;
-import com.github.jshaptic.js4j.JsonParserException;
 import com.github.jshaptic.js4j.Lodash;
 import com.github.jshaptic.js4j.UniversalContainer;
 import com.github.jshaptic.js4j.ValueCustomizer;
@@ -518,14 +517,7 @@ public class Cli
 		LinterGlobals globals = new LinterGlobals();
 		List<String> buffer = new ArrayList<String>();
 		
-		try
-		{
-			config = JsonParser.parse(JsonParser.stringify(config));
-		}
-		catch (JsonParserException e)
-		{
-			e.printStackTrace();
-		}
+		config = JsonParser.parse(JsonParser.stringify(config));
 		
 		if (config.test("prereq"))
 		{

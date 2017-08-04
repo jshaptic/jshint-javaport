@@ -3,7 +3,7 @@ repositories {
 }
 
 dependencies {
-	compile "com.github.jshaptic:js4j:+"
+	compile "com.github.jshaptic:js4j:0.1.1"
 	compile "org.apache.commons:commons-lang3:3.6"
 	compile "commons-cli:commons-cli:1.4"
 	compile "com.google.guava:guava:20.0"
