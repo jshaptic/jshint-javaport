@@ -21,6 +21,7 @@ import org.jshint.utils.EventContext;
 import org.jshint.utils.PredicateFunction;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
+import com.google.common.primitives.Ints;
 
 /*
  * Lexer for JSHint.
@@ -872,16 +873,18 @@ public class Lexer
 		
 		String sequence = peek(identifierIndex + 1) + peek(identifierIndex + 2) +
 			peek(identifierIndex + 3) + peek(identifierIndex + 4);
-		int code = 0;
 		
 		if (isHex(sequence))
 		{
-			code = Integer.parseInt(sequence, 16); //TODO: maybe replace it with commons api and add validation
+			Integer code = Ints.tryParse(sequence, 16);
 			
-			if ((code < UnicodeData.identifierPartTable.length && UnicodeData.identifierPartTable[code]) || isNonAsciiIdentifierPart(code))
+			if (code != null)
 			{
-				identifierIndex += 5;
-				return "\\u" + sequence;
+				if ((code < UnicodeData.identifierPartTable.length && UnicodeData.identifierPartTable[code]) || isNonAsciiIdentifierPart(code))
+				{
+					identifierIndex += 5;
+					return "\\u" + sequence;
+				}
 			}
 			
 			return null;
@@ -959,7 +962,6 @@ public class Lexer
 			@Override
 			public String apply(String str, List<String> groups)
 			{
-				
 				return Character.toString((char)Integer.parseInt(groups.get(0), 16));
 			}
 		});
@@ -1243,27 +1245,19 @@ public class Lexer
 
 			// Octal literals fail in strict mode.
 			// Check if the number is between 00 and 07.
-			try
-			{
-				final int n = Integer.parseInt(peek(1), 10); //TODO: check all parseInt functions
-				context = new EventContext();
-				context.setCode("W115");
-				context.setLine(line);
-				context.setCharacter(character);
-				triggerAsync("warning", context, checks, new PredicateFunction() //TODO: check all indents
+			final Integer n = Ints.tryParse(peek(1), 10);
+			context = new EventContext();
+			context.setCode("W115");
+			context.setLine(line);
+			context.setCharacter(character);
+			triggerAsync("warning", context, checks, new PredicateFunction()
+				{
+					@Override
+					public boolean test()
 					{
-						@Override
-						public boolean test()
-						{
-							return n >= 0 && n <= 7 && State.isStrict();
-						}
-					});
-			}
-			catch (NumberFormatException e)
-			{
-				//skip error
-			}
-			
+						return n != null && n >= 0 && n <= 7 && State.isStrict();
+					}
+				});
 			break;
 		case "1":
 		case "2":
@@ -1288,15 +1282,7 @@ public class Lexer
 			break;
 		case "u":
 			String sequence = input.substring(1, 5);
-			try
-			{
-				char code = (char)Integer.parseInt(sequence, 16); //TODO: check if this block should be refactored
-				chr = "" + code; //TODO: check all String.valueOf()
-			}
-			catch (NumberFormatException e)
-			{
-				
-			}
+			Integer code = Ints.tryParse(sequence, 16);
 			if (!isHex(sequence))
 			{
 				// This condition unequivocally describes a syntax error.
@@ -1309,7 +1295,7 @@ public class Lexer
 				trigger("warning", context);
 			}
 			
-			chr = "u"+ sequence; //TODO: not sure about this
+			chr = (code != null ? Character.toString((char)code.intValue()) : "\0");
 			jump = 5;
 			break;
 		case "v":
@@ -1330,7 +1316,7 @@ public class Lexer
 			chr = "\u000B";
 			break;
 		case "x":
-			int x = Integer.parseInt(input.substring(1, 2), 16);
+			Integer x = Ints.tryParse(input.substring(1, 2), 16);
 			
 			context = new EventContext();
 			context.setCode("W114");
@@ -1346,7 +1332,7 @@ public class Lexer
 					}
 				});
 			
-			chr = Character.toString((char)x);
+			chr = (x != null ? Character.toString((char)x.intValue()) : "\0");
 			jump = 3;
 			break;
 		case "\\":

@@ -23,6 +23,7 @@ import com.github.jshaptic.js4j.UniversalContainer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Ints;
 
 /**
  * Based on JSHint 2.9.5
@@ -766,7 +767,7 @@ public class JSHint
 					case "6":
 					case "2015":
 						State.getOption().set("moz", false);
-						State.getOption().set("esversion", Integer.parseInt(val));
+						State.getOption().set("esversion", Ints.tryParse(val));
 						break;
 					default:
 						error("E002", directiveToken);

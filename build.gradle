@@ -13,7 +13,6 @@ apply from: "gradle/credentials.gradle"		// setup sensitive properties
 apply from: "gradle/compile.gradle"			// setup compile settings and tasks
 apply from: "gradle/javadoc.gradle"			// setup javadoc settings and tasks
 apply from: "gradle/testing.gradle"			// setup testing settings and tasks
-apply from: "gradle/git.gradle"				// setup git tasks
 apply from: "gradle/publishing.gradle"		// setup maven publishing settings and tasks
 apply from: "gradle/artifactory.gradle"		// setup jfrog artifactory settings and tasks 
 apply from: "gradle/bintray.gradle"			// setup jfrog bintray settings and tasks

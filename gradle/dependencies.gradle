@@ -12,10 +12,6 @@ dependencies {
     // TODO: try to replace it with nashhorn or v8
     compile "org.mozilla:rhino:1.7.7.1"
     
-    // TODO: try to avoid these two libraries and create own json parser
-    compile "com.eclipsesource.minimal-json:minimal-json:0.9.4"
-    compile "com.google.code.gson:gson:2.3.1"
-    
     // Dependecies during testing stage
     testCompile "org.testng:testng:6.11"
 }
