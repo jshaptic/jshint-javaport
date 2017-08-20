@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
+//TODO: make State object nonstatic so it was possible to execute linting in parallel
 public final class State
 {
 	private static Map<String, Token> syntax = new HashMap<String, Token>();
