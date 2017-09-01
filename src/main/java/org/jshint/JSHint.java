@@ -3274,7 +3274,7 @@ public class JSHint
 					}
 					if (!left.isIdentifier() && !left.getId().equals(".") && !left.getId().equals("[") && !left.getId().equals("=>") &&
 						!left.getId().equals("(") && !left.getId().equals("&&") && !left.getId().equals("||") && !left.getId().equals("?") &&
-						!(State.inES6() && isFunctor(left))) //JSHINT_BUG: it's better to use function isFunctor here and move this condition in the first place
+						!(State.inES6() && isFunctor(left))) //JSHINT_BUG: it's better to use function isFunctor here
 					{
 						warning("W067", that);
 					}
@@ -3770,7 +3770,6 @@ public class JSHint
 			{
 				nobreaknonadjacent(State.currToken(), State.nextToken());
 				
-				//JSHINT_BUG: in this place it's better to store token in a separate variable and use it instead of this.first
 				Token t = expression(10);
 				_this.setFirstTokens(t);
 				
@@ -6211,7 +6210,6 @@ public class JSHint
 				{
 					if (!State.nextToken().getId().equals(";") && !State.nextToken().isReach())
 					{
-						//JSHINT_BUG: in this place it's better to store token in a separate variable and use it instead of this.first 
 						Token t = expression(0);
 						_this.setFirstTokens(t);
 						

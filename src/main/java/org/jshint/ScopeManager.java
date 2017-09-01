@@ -94,7 +94,7 @@ public class ScopeManager
 		context.setCode(code);
 		context.setToken(token);
 		context.setData(data);
-		emitter.emit("warning", context); //JSHINT_BUG: copypaste bug, shouldn't it be an "error"?
+		emitter.emit("warning", context);
 	}
 	
 	private void setupUsages(String labelName)

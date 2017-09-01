@@ -690,8 +690,6 @@ public class TestCli extends Assert
 		assertEquals(cli.getIgnores().get(0), JSHintUtils.path.resolve(dir, "exclude.js"));
 		assertEquals(cli.getIgnores().get(1), JSHintUtils.path.resolve(dir, "ignored.js"));
 		assertEquals(cli.getIgnores().get(2), JSHintUtils.path.resolve(dir, "another.js"));
-		
-		//JSHINT_BUG: probably a bug here because stub cat is not tested
 	}
 	
 	@Test(groups = {"group"})
@@ -772,8 +770,6 @@ public class TestCli extends Assert
 		
 		cli.interpret("file.js", "--exclude-path=../examples/.customignore");
 		assertEquals(cli.getIgnores().get(0), JSHintUtils.path.resolve(dir, "exclude.js"));
-		
-		//JSHINT_BUG: probably a bug here because stub cat is not tested
 	}
 	
 	@Test(groups = {"group"})

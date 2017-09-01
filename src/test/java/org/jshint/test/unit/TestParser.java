@@ -6735,7 +6735,7 @@ public class TestParser extends Assert
 		    "var a = {",
 		    // The following line ends in a sequence of characters that, if parsed
 		    // naively, could be interpreted as an "end multiline comment" token.
-		    "  a: /\\s*/", //JSHINT_BUG: \s doesn't work as expected, should be \\s
+		    "  a: /\\s*/",
 		    "};",
 		    "/*jshint ignore: end*/"
 		};
