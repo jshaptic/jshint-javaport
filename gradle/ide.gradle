@@ -1,0 +1,9 @@
+eclipse {
+	classpath {
+		file {
+			whenMerged {
+				it.entries.removeAll { it.path.startsWith('src/test/resources') }
+			}
+		}
+	}
+}
