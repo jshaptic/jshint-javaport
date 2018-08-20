@@ -1,3 +1,6 @@
 [submodule "src/test/resources/test262"]
 	path = src/test/resources/test262/test262
 	url = https://github.com/tc39/test262
+[submodule "src/test/resources/test262/test262"]
+	path = src/test/resources/test262/test262
+	url = https://github.com/tc39/test262
