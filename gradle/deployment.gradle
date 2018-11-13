@@ -1,3 +1,4 @@
+//TODO: add check if this task was run from local computer (by checking empty credentials for example)
 task travisDeploy(group: "release") {
 	description "Publishes assembled archives to public repositories."
 	dependsOn artifactoryPublish
