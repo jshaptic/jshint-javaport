@@ -37,9 +37,7 @@ before_script:
 # Execute custom script instead of default travis execution
 script: ./gradlew build test test262
 branches:
-  only:
-  - develop
-  - master
+  only: master
   
 # If build was finished successfully run coverage report
 after_success:
