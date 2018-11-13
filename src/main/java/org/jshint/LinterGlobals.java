@@ -24,11 +24,6 @@ public class LinterGlobals extends HashMap<String, Boolean>
 		}
 	}
 	
-	public LinterGlobals(UniversalContainer globals)
-	{
-		putAll(globals);
-	}
-	
 	public void putAll(UniversalContainer globals)
 	{
 		if (globals == null || !globals.isObject()) return;
