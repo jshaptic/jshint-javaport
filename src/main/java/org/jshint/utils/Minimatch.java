@@ -57,6 +57,8 @@ public class Minimatch
 	// normalizes slashes.
 	private final static String slashSplit = "\\/+";
 	
+	private Minimatch() {}
+	
 	private static String[] balanced(String a, String b, String pattern)
 	{
 		String[] result = null;
