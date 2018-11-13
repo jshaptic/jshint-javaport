@@ -16,7 +16,7 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.commons.lang3.ArrayUtils;
 
 /**
- * Port of a minimatch library.
+ * Port of a minimatch library. Based on version 3.0.2
  */
 //TODO: extract this class as a separate project and add testcases from minimatch library
 public class Minimatch
@@ -582,7 +582,7 @@ public class Minimatch
 						// can't swallow "." or ".." ever.
 						// can only swallow ".foo" when explicitly asked.
 						if (swallowee.equals(".") || swallowee.equals("..") ||
-							(!isOption(options, DOT) && swallowee.charAt(0) == '.'))
+							(!isOption(options, DOT) && swallowee.startsWith(".")))
 						{
 							debug(options, false, "dot detected!", Arrays.toString(file), fr, Arrays.toString(pattern), pr);
 							break;
