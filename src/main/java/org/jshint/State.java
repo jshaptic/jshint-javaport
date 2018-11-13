@@ -27,6 +27,7 @@ public final class State
 	private static NameStack nameStack = null;
 	private static boolean inClassBody = false;
 	
+	// JSHINT_BUG: this variable isn't used anywhere, can be removed
 	private static boolean condition = false;
 	private static List<Token> forinifchecks = null;
 	
@@ -34,10 +35,7 @@ public final class State
 	private static Token next = null;
 	private static Token curr = null;
 	
-	private State ()
-	{
-		
-	}
+	private State () {}
 	
 	static Map<String, Token> getSyntax()
 	{
