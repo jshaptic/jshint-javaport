@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Unit Test">
+  <test name="Core">
+    <classes>
+      <class name="org.jshint.test.unit.TestCore"/>
+    </classes>
+  </test>
+  <test name="Parser">
+    <classes>
+      <class name="org.jshint.test.unit.TestParser"/>
+    </classes>
+  </test>
+  <test name="Environments">
+    <classes>
+      <class name="org.jshint.test.unit.TestEnvs"/>
+    </classes>
+  </test>
+  <test name="Options">
+    <classes>
+      <class name="org.jshint.test.unit.TestOptions"/>
+    </classes>
+  </test>
+  <test name="Module API">
+    <classes>
+      <class name="org.jshint.test.unit.TestModuleApi"/>
+    </classes>
+  </test>
+  <test name="Thirdparty">
+    <classes>
+      <class name="org.jshint.test.regression.TestThirdparty"/>
+    </classes>
+  </test>
+  <test name="Cli">
+    <classes>
+      <class name="org.jshint.test.TestCli"/>
+    </classes>
+  </test>
+</suite>

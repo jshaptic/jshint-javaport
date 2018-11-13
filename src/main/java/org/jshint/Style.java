@@ -1,7 +1,5 @@
 package org.jshint;
 
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.utils.JSHintModule;
 import org.jshint.utils.EventContext;
@@ -64,7 +62,8 @@ public class Style implements JSHintModule
 					return;
 				}
 				
-				if (data.getName().replaceAll("^_+|_+$", "").indexOf("_") > -1 && !Reg.test("^[A-Z0-9_]*$", data.getName()))
+				// PORT INFO: replaced regexp /^[A-Z0-9_]*$/ with StringUtils.containsOnly method
+				if (data.getName().replaceAll("^_+|_+$", "").indexOf("_") > -1 && !StringUtils.containsOnly(data.getName(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))
 				{
 					linter.warn("W106", data.getLine(), data.getCharacter(), new String[]{data.getName()});
 				}
@@ -136,7 +135,8 @@ public class Style implements JSHintModule
 					linter.warn("W047", data.getLine(), data.getCharacter(), new String[]{data.getValue()});
 				}
 				
-				if (Reg.test("^00+", data.getValue()))
+				// PORT INFO: replaced regexp /^00+/ with startsWith method
+				if (data.getValue().startsWith("00"))
 				{
 					// Multiple leading zeroes.
 					linter.warn("W046", data.getLine(), data.getCharacter(), new String[]{data.getValue()});
@@ -150,14 +150,14 @@ public class Style implements JSHintModule
 			@Override
 			public void accept(EventContext data) throws JSHintException
 			{
-				String re = "^(?:javascript|jscript|ecmascript|vbscript|livescript)\\s*:";
-				
 				if (linter.getOption("scripturl").test())
 				{
 					return;
 				}
 				
-				if (Reg.test(re, Pattern.CASE_INSENSITIVE, data.getValue()))
+				// PORT INFO: replaced regexp /^(?:javascript|jscript|ecmascript|vbscript|livescript)\s*:/i with several functions
+				int colon = data.getValue().indexOf(':');
+				if (colon != -1 && StringUtils.equalsAny(data.getValue().substring(0, colon).trim().toLowerCase(), "javascript", "jscript", "ecmascript", "vbscript", "livescript"))
 				{
 					linter.warn("W107", data.getLine(), data.getCharacter(), new String[]{});
 				}

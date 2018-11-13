@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Test262">
+  <test name="Test262">
+    <classes>
+      <class name="org.jshint.test.test262.Test262"/>
+    </classes>
+  </test>
+</suite>

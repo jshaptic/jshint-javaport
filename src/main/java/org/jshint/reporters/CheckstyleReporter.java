@@ -19,6 +19,7 @@ public class CheckstyleReporter implements JSHintReporter
 		int column = 0;
 		String message = "";
 		String source = "";
+		
 		public Issue(String severity, int line, int column, String message, String source)
 		{
 			this.severity = severity;

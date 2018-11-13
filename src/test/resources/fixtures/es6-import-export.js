@@ -65,3 +65,12 @@ if (newImport) {
 import newImport from 'newImport';
 
 export function* gen() { yield 1; }
+
+// Trailing comma
+export { a, };
+import { x, } from "source";
+
+// Empty
+export {};
+export {} from "source";
+import {} from "source";

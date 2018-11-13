@@ -7,18 +7,20 @@ package org.jshint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.function.BooleanSupplier;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jshint.data.ES5IdentifierNames;
 import org.jshint.data.NonAsciiIdentifierPartTable;
 import org.jshint.data.NonAsciiIdentifierStartTable;
 import org.jshint.data.UnicodeData;
 import org.jshint.utils.EventEmitter;
-import org.jshint.utils.ConsumerFunction;
 import org.jshint.utils.EventContext;
-import org.jshint.utils.PredicateFunction;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 import com.google.common.primitives.Ints;
@@ -51,6 +53,9 @@ import com.google.common.primitives.Ints;
  */
 public class Lexer
 {	
+	// PORT INFO: Static javascript engine, which is used to validate regexps
+	private static final ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
+	
 	// Some of these token types are from JavaScript Parser API
 	// while others are specific to JSHint parser.
 	// JS Parser API: https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API
@@ -63,8 +68,6 @@ public class Lexer
 		STRINGLITERAL,
 		COMMENT,
 		KEYWORD,
-		NULLLITERAL,
-		BOOLEANLITERAL,
 		REGEXP,
 		TEMPLATEHEAD,
 		TEMPLATEMIDDLE,
@@ -78,9 +81,43 @@ public class Lexer
 		TEMPLATE
 	}
 	
+	// PORT INFO: replaced regexp /^[0-9a-fA-F]+$/ with straight check
 	private boolean isHex(String str)
 	{
-		return Reg.test("^[0-9a-fA-F]+$", str);
+		if (str == null || str.length() == 0) return false;
+		
+		for (int i = 0; i < str.length(); i++)
+		{
+			switch (str.charAt(i))
+			{
+	        case '0':
+	        case '1':
+	        case '2':
+	        case '3':
+	        case '4':
+	        case '5':
+	        case '6':
+	        case '7':
+	        case '8':
+	        case '9':
+	        case 'a':
+	        case 'b':
+	        case 'c':
+	        case 'd':
+	        case 'e':
+	        case 'f':
+	        case 'A':
+	        case 'B':
+	        case 'C':
+	        case 'D':
+	        case 'E':
+	        case 'F':
+	        	continue;
+			}
+			return false;
+		}
+		
+		return true;
 	}
 	
 	private boolean isHexDigit(String str)
@@ -92,33 +129,23 @@ public class Lexer
 	// environment state.
 	public static class AsyncTrigger
 	{
-		private List<ConsumerFunction> checks = new ArrayList<ConsumerFunction>();
+		private List<Runnable> checks = new ArrayList<Runnable>();
 		
-		private AsyncTrigger()
-		{
-			
-		}
+		private AsyncTrigger() {}
 		
-		private void push(ConsumerFunction fn)
+		private void push(Runnable fn)
 		{
 			checks.add(fn);
 		}
 		
-		private ConsumerFunction check()
+		private void check()
 		{
-			return new ConsumerFunction()
+			for (int check = 0; check < checks.size(); ++check)
 			{
-				@Override
-				public void accept() throws JSHintException
-				{
-					for (int check = 0; check < checks.size(); ++check)
-					{
-						checks.get(check).accept();
-					}
-					
-					checks.clear();
-				}
-			};
+				checks.get(check).run();
+			}
+			
+			checks.clear();
 		}
 	}
 	
@@ -137,7 +164,7 @@ public class Lexer
 	
 	public Lexer(String source)
 	{
-		this(source.replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n", -1));
+		this(StringUtils.replaceEach(source, new String[]{"\r\n", "\r"}, new String[]{"\n", "\n"}).split("\n", -1));
 	}
 	
 	public Lexer(String[] lines)
@@ -271,11 +298,6 @@ public class Lexer
 		return context.size() > 0 ? context.remove(context.size() - 1) : null;
 	}
 	
-	public boolean isContext(LexerContext context)
-	{
-		return this.context.size() > 0 && this.context.get(this.context.size() - 1) == context;
-	}
-	
 	public LexerContext currentContext()
 	{
 		return context.size() > 0 ? context.get(context.size() - 1) : null;
@@ -334,7 +356,7 @@ public class Lexer
 	 */
 	public String peek(int i)
 	{
-		return input.length() > i ? ""+input.charAt(i) : "";
+		return input.length() > i ? String.valueOf(input.charAt(i)) : "";
 	}
 	
 	public void skip()
@@ -385,17 +407,12 @@ public class Lexer
 	 * by the parser. This avoids parser's peek() to give the lexer
 	 * a false context.
 	 */
-	public void triggerAsync(final String type, final EventContext args, AsyncTrigger checks, final PredicateFunction fn)
+	public void triggerAsync(String type, EventContext args, AsyncTrigger checks, BooleanSupplier fn)
 	{
-		checks.push(new ConsumerFunction()
-		{
-			@Override
-			public void accept() throws JSHintException
+		checks.push(() -> {
+			if (fn.getAsBoolean())
 			{
-				if (fn.test())
-				{
-					trigger(type, args);
-				}
+				trigger(type, args);
 			}
 		});
 	}
@@ -415,7 +432,8 @@ public class Lexer
 		{
 		// Most common single-character punctuators
 		case ".":
-			if (Reg.test("^[0-9]$", peek(1)))
+			// PORT INFO: replaced regexp /^[0-9]$/ with isDecimalDigit method to improve performance
+			if (isDecimalDigit(peek(1)))
 			{
 				return null;
 			}
@@ -538,7 +556,7 @@ public class Lexer
 			value += "*/";
 		}
 		
-		body = body.replaceAll("\\n", " ");
+		body = StringUtils.replace(body, "\n", " ");
 		
 		if (label.equals("/*") && Reg.test(Reg.FALLS_THROUGH, body))
 		{
@@ -573,6 +591,19 @@ public class Lexer
 				isSpecial = true;
 				label = label + " " + str;
 				body = body.substring(str.length()+1);
+			}
+			
+			// To handle rarer case when special word is separated from label by
+			// multiple spaces or tabs
+			int strIndex = body.indexOf(str);
+			if (!isSpecial && strIndex >= 0 && body.charAt(strIndex + str.length()) == ' ')
+			{
+				boolean isAllWhitespace = body.substring(0, strIndex).trim().length() == 0;
+				if (isAllWhitespace)
+				{
+					isSpecial = true;
+					body = body.substring(str.length()+strIndex);
+				}
 			}
 			
 			if (!isSpecial)
@@ -639,7 +670,6 @@ public class Lexer
 		token.setCommentType(commentType);
 		token.setBody(body);
 		token.setSpecial(isSpecial);
-		//token.setMultiline(isMultiline); //JSHINT_BUG: variable isMultiline is not used anywhere can be removed
 		token.setMalformed(isMalformed);
 		return token; 
 	}
@@ -743,7 +773,8 @@ public class Lexer
 	 */
 	public LexerToken scanKeyword()
 	{
-		String[] result = Reg.exec(Pattern.compile("^[a-zA-Z_$][a-zA-Z0-9_$]*"), input);
+		// PORT INFO: replaced regexp /^[a-zA-Z_$][a-zA-Z0-9_$]*/ with custom function Reg.getIdentifier
+		String result = Reg.getIdentifier(input);
 		String[] keywords = {
 			"if", "in", "do", "var", "for", "new",
 			"try", "let", "this", "else", "case",
@@ -752,30 +783,71 @@ public class Lexer
 			"super", "return", "typeof", "delete",
 			"switch", "export", "import", "default",
 			"finally", "extends", "function", "continue",
-			"debugger", "instanceof"
+			"debugger", "instanceof", "true", "false", "null"
 		};
 		
-		if (result != null && result.length > 0 && ArrayUtils.indexOf(keywords, result[0]) >= 0)
+		if (!result.isEmpty() && ArrayUtils.indexOf(keywords, result) >= 0)
 		{
-			return new LexerToken(LexerTokenType.KEYWORD, result[0]);
+			return new LexerToken(LexerTokenType.KEYWORD, result);
 		}
 		
 		return null;
 	}
 	
+	// PORT INFO: replaced regexp /^[0-9]$/ with straight check
 	private boolean isDecimalDigit(String str)
 	{
-		return Reg.test("^[0-9]$", str);
+		if (str.length() != 1) return false;
+		switch (str.charAt(0))
+		{
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            return true;
+        default:
+            return false;
+		}
 	}
 	
+	// PORT INFO: replaced regexp /^[0-7]$/ with straight check
 	private boolean isOctalDigit(String str)
 	{
-		return Reg.test("^[0-7]$", str);
+		if (str.length() != 1) return false;
+		switch (str.charAt(0))
+		{
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+            return true;
+        default:
+            return false;
+		}
 	}
 	
+	// PORT INFO: replaced regexp /^[01]$/ with straight check
 	private boolean isBinaryDigit(String str)
 	{
-		return Reg.test("^[01]$", str);
+		if (str.length() != 1) return false;
+		switch (str.charAt(0))
+		{
+        case '0':
+        case '1':
+            return true;
+        default:
+            return false;
+		}
 	}
 	
 	private boolean isAllowedDigit(int base, String str)
@@ -803,12 +875,10 @@ public class Lexer
 	
 	/*
 	 * Extract a JavaScript identifier out of the next sequence of
-	 * characters or return 'null' if its not possible. In addition,
-	 * to Identifier this method can also produce BooleanLiteral
-	 * (true/false) and NullLiteral (null).
+	 * characters or return 'null' if its not possible.
 	 */
 	private int identifierIndex;
-	public LexerToken scanIdentifier()
+	public LexerToken scanIdentifier(AsyncTrigger checks)
 	{
 		identifierIndex = 0;
 		
@@ -831,22 +901,23 @@ public class Lexer
 			id += chr;
 		}
 		
-		LexerTokenType type = LexerTokenType.NONE;
+		String value = removeEscapeSequences(id);
 		
-		switch (id)
+		if (!State.inES6(true))
 		{
-		case "true":
-		case "false":
-			type = LexerTokenType.BOOLEANLITERAL;
-			break;
-		case "null":
-			type = LexerTokenType.NULLLITERAL;
-			break;
-		default:
-			type = LexerTokenType.IDENTIFIER;
+			if (!ES5IdentifierNames.test(value))
+			{
+				EventContext context = new EventContext();
+				context.setCode("W119");
+				context.setLine(line);
+				context.setCharacter(character);
+				context.setData("unicode 8", "6");
+				triggerAsync("warning", context, checks, () -> true);
+			}
 		}
 		
-		LexerToken token = new LexerToken(type, removeEscapeSequences(id));
+		
+		LexerToken token = new LexerToken(LexerTokenType.IDENTIFIER, value);
 		token.setText(id);
 		token.setTokenLength(id.length());
 		return token;
@@ -955,16 +1026,56 @@ public class Lexer
 		return null;
 	}
 	
+	// PORT INFO: replaced regexp /\\u([0-9a-fA-F]{4})/g with straight logic
 	private String removeEscapeSequences(String id)
 	{
-		return Reg.replaceAll("\\\\u([0-9a-fA-F]{4})", id, new Reg.Replacer()
+		StringBuilder result = new StringBuilder(id);
+		int uIndex = result.indexOf("\\u");
+		int cIndex = uIndex + 2;
+		
+		while (uIndex != -1 && result.length() >= cIndex + 4)
 		{
-			@Override
-			public String apply(String str, List<String> groups)
+			boolean replace = true;
+			for (int i = 0; i < 4; i++)
 			{
-				return Character.toString((char)Integer.parseInt(groups.get(0), 16));
+				switch (result.charAt(cIndex + i))
+				{
+		        case '0':
+		        case '1':
+		        case '2':
+		        case '3':
+		        case '4':
+		        case '5':
+		        case '6':
+		        case '7':
+		        case '8':
+		        case '9':
+		        case 'a':
+		        case 'b':
+		        case 'c':
+		        case 'd':
+		        case 'e':
+		        case 'f':
+		        case 'A':
+		        case 'B':
+		        case 'C':
+		        case 'D':
+		        case 'E':
+		        case 'F':
+		            continue;
+				}
+				replace = false;
+				break;
 			}
-		});
+			
+			if (replace)
+				result.replace(uIndex, cIndex + 4, String.valueOf((char)Integer.parseInt(result.substring(cIndex, cIndex + 4), 16)));
+			
+			uIndex = result.indexOf("\\u", uIndex + 1);
+			cIndex = uIndex + 2;
+		}
+		
+		return result.toString();
 	}
 	
 	/*
@@ -1021,14 +1132,7 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData("Octal integer literal", "6");
-						triggerAsync("warning", context, checks, new PredicateFunction()
-							{
-								@Override
-								public boolean test()
-								{
-									return true;
-								}
-							});
+						triggerAsync("warning", context, checks, () -> true);
 					}
 					
 					index += 1;
@@ -1047,14 +1151,7 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData("Binary integer literal", "6");
-						triggerAsync("warning", context, checks, new PredicateFunction()
-							{
-								@Override
-								public boolean test()
-								{
-									return true;
-								}
-							});
+						triggerAsync("warning", context, checks, () -> true);
 					}
 					
 					index += 1;
@@ -1066,7 +1163,6 @@ public class Lexer
 				{
 					base = 8;
 					isLegacy = true;
-					//bad = false; //JSHINT_BUG: this variable is not used anywhere, can be removed
 					
 					index += 1;
 					value += chr;
@@ -1085,13 +1181,9 @@ public class Lexer
 			{
 				chr = peek(index);
 				
-				if (isLegacy && isDecimalDigit(chr))
-				{
-					// Numbers like '019' (note the 9) are not valid octals
-					// but we still parse them and mark as malformed.
-					//bad = true; //JSHINT_BUG: this variable is not used anywhere, can be removed
-				}
-				else if (!isAllowedDigit(base, chr))
+				// Numbers like '019' (note the 9) are not valid octals
+				// but we still parse them and mark as malformed.
+				if (!(isLegacy && isDecimalDigit(chr)) && !isAllowedDigit(base, chr))
 				{
 					break;
 				}
@@ -1215,15 +1307,7 @@ public class Lexer
 			context.setLine(line);
 			context.setCharacter(character);
 			context.setData("\\'");
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return State.isJsonMode();
-					}
-				});
-			
+			triggerAsync("warning", context, checks, () -> State.isJsonMode());
 			break;
 		case "b":
 			chr = "\\b";
@@ -1250,14 +1334,7 @@ public class Lexer
 			context.setCode("W115");
 			context.setLine(line);
 			context.setCharacter(character);
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return n != null && n >= 0 && n <= 7 && State.isStrict();
-					}
-				});
+			triggerAsync("warning", context, checks, () -> n != null && n >= 0 && n <= 7 && State.isStrict());
 			break;
 		case "1":
 		case "2":
@@ -1271,14 +1348,7 @@ public class Lexer
 			context.setCode("W115");
 			context.setLine(line);
 			context.setCharacter(character);
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return State.isStrict();
-					}
-				});
+			triggerAsync("warning", context, checks, () -> State.isStrict());
 			break;
 		case "u":
 			String sequence = input.substring(1, 5);
@@ -1304,14 +1374,7 @@ public class Lexer
 			context.setLine(line);
 			context.setCharacter(character);
 			context.setData("\\v");
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return State.isJsonMode();
-					}
-				});
+			triggerAsync("warning", context, checks, () -> State.isJsonMode());
 			
 			chr = "\u000B";
 			break;
@@ -1323,14 +1386,7 @@ public class Lexer
 			context.setLine(line);
 			context.setCharacter(character);
 			context.setData("\\x-");
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return State.isJsonMode();
-					}
-				});
+			triggerAsync("warning", context, checks, () -> State.isJsonMode());
 			
 			chr = (x != null ? Character.toString((char)x.intValue()) : "\0");
 			jump = 3;
@@ -1377,14 +1433,7 @@ public class Lexer
 				context.setLine(line);
 				context.setCharacter(character);
 				context.setData("template literal syntax", "6");
-				triggerAsync("warning", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return true;
-						}
-					});
+				triggerAsync("warning", context, checks, () -> true);
 			}
 			// Template must start with a backtick.
 			tokenType = LexerTokenType.TEMPLATEHEAD;
@@ -1484,7 +1533,7 @@ public class Lexer
 	public LexerToken scanStringLiteral(AsyncTrigger checks) throws JSHintException
 	{
 		EventContext context;
-		final String quote = peek();
+		String quote = peek();
 		
 		// String must start with a quote.
 		if (!quote.equals("\"") && !quote.equals("'"))
@@ -1497,14 +1546,7 @@ public class Lexer
 		context.setCode("W108");
 		context.setLine(line);
 		context.setCharacter(character);
-		triggerAsync("warning", context, checks, new PredicateFunction()
-			{
-				@Override
-				public boolean test()
-				{
-					return State.isJsonMode() && !quote.equals("\"");
-				}
-			});
+		triggerAsync("warning", context, checks, () -> State.isJsonMode() && !quote.equals("\""));
 		
 		String value = "";
 		int startLine = line;
@@ -1527,7 +1569,7 @@ public class Lexer
 				if (!allowNewLine)
 				{
 					// This condition unequivocally describes a syntax error.
-					// JSHINT_TODO: Re-factor as an "error" (not a "warning").
+					// JSHINT_TODO: Emit error E029 and remove W112.
 					context = new EventContext();
 					context.setCode("W112");
 					context.setLine(line);
@@ -1545,40 +1587,20 @@ public class Lexer
 					context.setCode("W043");
 					context.setLine(line);
 					context.setCharacter(character);
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return !State.getOption().test("multistr");
-							}
-						});
+					triggerAsync("warning", context, checks, () -> !State.getOption().test("multistr"));
 					
 					context = new EventContext();
 					context.setCode("W042");
 					context.setLine(line);
 					context.setCharacter(character);
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return State.isJsonMode() && State.getOption().test("multistr");
-							}
-						});
+					triggerAsync("warning", context, checks, () -> State.isJsonMode() && State.getOption().test("multistr"));
 				}
 				
 				// If we get an EOF inside of an unclosed string, show an
 		        // error and implicitly close it at the EOF point.
 				
 				if (!nextLine(checks))
-				{
-					context = new EventContext();
-					context.setCode("E029");
-					context.setLine(startLine);
-					context.setCharacter(startChar);
-					trigger("error", context);
-					
+				{	
 					LexerToken token = new LexerToken(LexerTokenType.STRINGLITERAL, value);
 					token.setStartLine(startLine);
 					token.setStartChar(startChar);
@@ -1602,14 +1624,7 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData("<non-printable>");
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return true;
-							}
-						});
+					triggerAsync("warning", context, checks, () -> true);
 				}
 				
 				// Special treatment for some escaped characters.
@@ -1621,8 +1636,14 @@ public class Lexer
 					allowNewLine = parsed.asBoolean("allowNewLine");
 				}
 				
-				value += chr;
-				skip(jump);
+				// If char is the empty string, end of the line has been reached. In
+				// this case, `this.char` should not be incremented so that warnings
+				// and errors reported in the subsequent loop iteration have the
+				// correct character column offset.
+				if (!chr.equals("")) {
+					value += chr;
+					skip(jump);
+				}
 			}
 		}
 		
@@ -1705,14 +1726,7 @@ public class Lexer
 						context.setCode("W048");
 						context.setLine(line);
 						context.setCharacter(character);
-						triggerAsync("warning", context, checks, new PredicateFunction()
-							{
-								@Override
-								public boolean test()
-								{
-									return true;
-								}
-							});
+						triggerAsync("warning", context, checks, () -> true);
 					}
 					
 					// Unexpected escaped character
@@ -1724,14 +1738,7 @@ public class Lexer
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData(chr);
-						triggerAsync("warning", context, checks, new PredicateFunction()
-							{
-								@Override
-								public boolean test()
-								{
-									return true;
-								}
-							});
+						triggerAsync("warning", context, checks, () -> true);
 					}
 				}
 				
@@ -1754,14 +1761,7 @@ public class Lexer
 					context.setCode("W048");
 					context.setLine(line);
 					context.setCharacter(character);
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return true;
-							}
-						});
+					triggerAsync("warning", context, checks, () -> true);
 				}
 				
 				// Unexpected escaped character
@@ -1773,14 +1773,7 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData(chr);
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return true;
-							}
-						});
+					triggerAsync("warning", context, checks, () -> true);
 				}
 				
 				if (chr.equals("/"))
@@ -1827,7 +1820,7 @@ public class Lexer
 			
 			context = new EventContext();
 			context.setLine(line);
-			context.setCharacter(from);
+			context.setFrom(from);
 			trigger("fatal", context);
 			return null;
 		}
@@ -1837,7 +1830,8 @@ public class Lexer
 		while (index < length)
 		{
 			chr = peek(index);
-			if (!Reg.test("[gimy]", chr))
+			// PORT INFO: replaced regexp /[gimy]/ with StringUtils.containsAny function
+			if (!StringUtils.containsAny(chr, "gimy"))
 			{
 				break;
 			}
@@ -1850,14 +1844,7 @@ public class Lexer
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData("Sticky RegExp flag", "6");
-					triggerAsync("warning", context, checks, new PredicateFunction()
-						{
-							@Override
-							public boolean test()
-							{
-								return true;
-							}
-						});
+					triggerAsync("warning", context, checks, () -> true);
 				}
 				if (value.indexOf("y") > -1)
 				{
@@ -1873,22 +1860,34 @@ public class Lexer
 		}
 		
 		// Check regular expression for correctness.
-		// FIXME: 1) forced to use rhino javascript engine to be able to parse regular expressions
-		// FIXME: 2) added temp variable to hold original regexp value and for parsing "y" flag is removed
-		// FIXME: 3) added check for flags duplication, since java doesn't throw error on such cases
-		String temp = value;
-		String fstr = value.substring(value.lastIndexOf("/"));
+		
+		// PORT INFO: tried several JAVA RE engines to parse javascript regexps:
+		// 	* org.jruby.joni:joni:2.1.25 - produced infinite loop on regexps like /\u0000/
+		//  * com.google.re2j:re2j:1.2 - there were a lot of errors on valid js regexps
+		//	* com.basistech.tclre:tcl-regex:0.14.0 - there were many errors on valid js regexps, but much better than re2j
+		//	* com.github.florianingerl.util:regex:1.1.6 - slightly better than tcl-regex
+		//	* xerces:xercesImpl:2.12.0 - slightly better than florianingerl.util.regex
+		//	* java.util.regex.Pattern - slightly better than xercesImpl
+		//	* org.mozilla:rhino:1.7.10 - very good compatibility, only several valid js regexps weren't parsed
+		//	* javax.script.ScriptEngine - slightly better than rhino
+		// 
+		// RegExp engine inside Nashorn engine very close to original JS RegExp engine
+		// and it doesn't require external dependency so it's used as a validator of javascript regular expressions
 		try
 		{
-			org.mozilla.javascript.Context cx = org.mozilla.javascript.Context.enter();
-			
-			if (fstr.indexOf("g") != fstr.lastIndexOf("g") || fstr.indexOf("y") != fstr.lastIndexOf("y"))
+			// PORT INFO: separate check for flags is needed since nashorn engine doesn't throw
+			// error on duplicated flags
+			String flagsString = value.substring(value.lastIndexOf("/") + 1);
+			if (StringUtils.countMatches(flagsString, 'g') > 1
+				|| StringUtils.countMatches(flagsString, 'i') > 1
+				|| StringUtils.countMatches(flagsString, 'm') > 1
+				|| StringUtils.countMatches(flagsString, 'u') > 1
+				|| StringUtils.countMatches(flagsString, 'y') > 1
+				)
 				throw new Exception("Invalid regular expression flags");
 			
-			value = value.substring(0, value.lastIndexOf("/")) + fstr.replaceAll("y", "");
-			
-			
-			cx.evaluateString(cx.initStandardObjects(), value, "", 1, null);
+			// PORT INFO: regular expression is checked without flags, since flags are checked separatelly
+			jsEngine.eval(value.substring(0, value.lastIndexOf("/") + 1));
 		}
 		catch (Exception err)
 		{
@@ -1898,11 +1897,6 @@ public class Lexer
 		     * property on the error object) is platform dependent.
 		     */
 			malformedDesc = err.getMessage();
-		}
-		finally
-		{
-			org.mozilla.javascript.Context.exit();
-			value = temp;
 		}
 		
 		if (StringUtils.isNotEmpty(malformedDesc))
@@ -1917,7 +1911,6 @@ public class Lexer
 		}
 		
 		LexerToken token = new LexerToken(LexerTokenType.REGEXP, value);
-		//token.setFlags(flags) //JSHINT_BUG: variable flags is not used anywhere, can be removed
 		token.setMalformed(malformed);
 		return token;
 	}
@@ -1933,14 +1926,6 @@ public class Lexer
 	}
 	
 	/*
-	 * Scan for characters that get silently deleted by one or more browsers.
-	 */
-	public int scanUnsafeChars()
-	{
-		return Reg.indexOf(Reg.UNSAFE_CHARS, input);
-	}
-	
-	/*
 	 * Produce the next raw token or return 'null' if no tokens can be matched.
 	 * This method skips over all space characters.
 	 */
@@ -1949,7 +1934,8 @@ public class Lexer
 		from = character;
 		
 		// Move to the next non-space character.
-		while (Reg.test("[\\p{Z}\\s]", peek()))
+		// PORT INFO: replaced whitespace regexp with StringUtils.isWhitespace and StringUtils.isNotEmpty functions
+		while (Reg.isWhitespace(peek()))
 		{
 			from += 1;
 			skip();
@@ -1972,7 +1958,7 @@ public class Lexer
 		match = scanRegExp(checks);
 		if (match == null) match = scanPunctuator();
 		if (match == null) match = scanKeyword();
-		if (match == null) match = scanIdentifier();
+		if (match == null) match = scanIdentifier(checks);
 		if (match == null) match = scanNumericLiteral(checks);
 		
 		if (match != null)
@@ -2022,34 +2008,10 @@ public class Lexer
 			context.setCode("W125");
 			context.setLine(line);
 			context.setCharacter(chr+1);
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return true;
-					}
-				});
+			triggerAsync("warning", context, checks, () -> true);
 	    }
 	    
-	    input = input.replaceAll("\t", State.getTab());
-	    chr = scanUnsafeChars();
-	    
-	    if (chr >= 0)
-	    {
-	    	context = new EventContext();
-			context.setCode("W100");
-			context.setLine(line);
-			context.setCharacter(chr);
-			triggerAsync("warning", context, checks, new PredicateFunction()
-				{
-					@Override
-					public boolean test()
-					{
-						return true;
-					}
-				});
-	    }
+	    input = StringUtils.replace(input, "\t", State.getTab());
 	    
 	    // If there is a limit on line length, warn when lines get too
 	    // long.
@@ -2068,14 +2030,7 @@ public class Lexer
 				context.setCode("W101");
 				context.setLine(line);
 				context.setCharacter(input.length());
-				triggerAsync("warning", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return true;
-						}
-					});
+				triggerAsync("warning", context, checks, () -> true);
 	    	}
 	    }
 	    
@@ -2084,6 +2039,8 @@ public class Lexer
 	
 	private boolean isReserved(Token token, boolean isProperty)
 	{
+		// At present all current identifiers have reserved set.
+		// Preserving check anyway, for future-proofing.
 		if (!token.isReserved())
 		{
 			return false;
@@ -2142,6 +2099,7 @@ public class Lexer
 	        case "~":
 	        case "#":
 	        case "]":
+	        case "}":
 	        case "++":
 	        case "--":
 	        	prereg = false;
@@ -2150,24 +2108,30 @@ public class Lexer
 	        	prereg = true;
 			}
 			
-			if (State.getSyntax().get(value) != null) obj = new Token(State.getSyntax().get(value));
-			else if (State.getSyntax().get("(error)") != null) obj = new Token(State.getSyntax().get("(error)"));
-			else obj = new Token();
+			obj = State.getSyntax().get(value);
+			if (obj == null)
+				obj = State.getSyntax().get("(error)");
+			if (obj != null)
+				obj = new Token(obj);
+			else
+				obj = new Token();
 		}
 		
 		if (type == TokenType.IDENTIFIER)
 		{
 			if (value.equals("return") || value.equals("case") || value.equals("yield") ||
-				value.equals("typeof") || value.equals("instanceof"))
+				value.equals("typeof") || value.equals("instanceof") || value.equals("void"))
 			{
 				prereg = true;
 			}
 			
 			if (State.getSyntax().containsKey(value))
 			{
-				if (State.getSyntax().get(value) != null) obj = new Token(State.getSyntax().get(value));
-				else if (State.getSyntax().get("(error)") != null) obj = new Token(State.getSyntax().get("(error)"));
-				else obj = new Token();
+				obj = State.getSyntax().get(value);
+				if (obj != null)
+					obj = new Token(obj);
+				else
+					obj = new Token();
 				
 				// If this can't be a reserved keyword, reset the object.
 				if (!isReserved(obj, isProperty && type == TokenType.IDENTIFIER))
@@ -2184,7 +2148,11 @@ public class Lexer
 		
 		if (obj == null)
 		{
-			obj = State.getSyntax().get(type.toString()) != null ? new Token(State.getSyntax().get(type.toString())) : new Token();
+			obj = State.getSyntax().get(type.toString());
+			if (obj != null)
+				obj = new Token(obj);
+			else
+				obj = new Token();
 		}
 		
 		obj.setIdentifier(type == TokenType.IDENTIFIER);
@@ -2220,7 +2188,7 @@ public class Lexer
 			obj.setProperty(isProperty);
 		}
 		
-		obj.setCheck(checks.check());
+		obj.setCheck(checks::check);
 		
 		return obj;
 	}
@@ -2282,14 +2250,7 @@ public class Lexer
 				context.setStartChar(token.getStartChar());
 				context.setValue(token.getValue());
 				context.setQuote(token.getQuote());
-				triggerAsync("String", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return true;
-						}
-					});
+				triggerAsync("String", context, checks, () -> true);
 				return create(TokenType.STRING, token.getValue(), false, token, checks);
 			case TEMPLATEHEAD:
 				context = new EventContext();
@@ -2339,17 +2300,8 @@ public class Lexer
 				context.setName(token.getValue());
 				context.setRawName(token.getText());
 				context.setProperty(State.currToken().getId().equals("."));
-				triggerAsync("Identifier", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return true;
-						}
-					});
+				triggerAsync("Identifier", context, checks, () -> true);
 			case KEYWORD:
-			case NULLLITERAL:
-			case BOOLEANLITERAL:
 				return create(TokenType.IDENTIFIER, token.getValue(), State.currToken().getId().equals("."), token, checks);
 			case NUMERICLITERAL:
 				if (token.isMalformed())
@@ -2369,27 +2321,13 @@ public class Lexer
 				context.setLine(line);
 				context.setCharacter(character);
 				context.setData("0x-");
-				triggerAsync("warning", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return token.getBase() == 16 && State.isJsonMode();
-						}
-					});
+				triggerAsync("warning", context, checks, () -> token.getBase() == 16 && State.isJsonMode());
 				
 				context = new EventContext();
 				context.setCode("W115");
 				context.setLine(line);
 				context.setCharacter(character);
-				triggerAsync("warning", context, checks, new PredicateFunction()
-					{
-						@Override
-						public boolean test()
-						{
-							return State.isStrict() && token.getBase() == 8 && token.isLegacy();
-						}
-					});
+				triggerAsync("warning", context, checks, () -> State.isStrict() && token.getBase() == 8 && token.isLegacy());
 				
 				context = new EventContext();
 				context.setLine(line);
@@ -2397,14 +2335,13 @@ public class Lexer
 				context.setFrom(from);
 				context.setValue(token.getValue());
 				context.setBase(token.getBase());
-				context.setMalformed(token.isMalformed()); //JSHINT_BUG: typo, must be isMalformed intead of malformed
+				context.setMalformed(token.isMalformed());
 				trigger("Number", context);
 				
 				return create(TokenType.NUMBER, token.getValue(), checks);
 			case REGEXP:
 				return create(TokenType.REGEXP, token.getValue(), checks);
 			case COMMENT:
-				//State.tokens.curr.comment = true; //JSHINT_BUG: "comment" property is not used anywhere, can be removed
 				if (token.isSpecial())
 				{
 					Token t = new Token();
@@ -2418,8 +2355,6 @@ public class Lexer
 					t.setFrom(from);
 					return t;
 				}
-				break;
-			case NONE:
 				break;
 			default:
 				return create(TokenType.PUNCTUATOR, token.getValue(), checks);

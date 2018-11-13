@@ -1,0 +1,18 @@
+# This file lists tests that are known to produce incorrect results when parsed
+# with JSHint Java Port:
+#
+# - Tests that are expected to parse successfully but for which JSHint Java Port reports
+#   a syntax error
+# - Tests that contain invalid syntax but for which JSHint Java Port reports no syntax
+#   errors
+#
+# Entries should be removed incrementally as JSHint Java Port is improved.
+
+test/annexB/language/literals/regexp/non-empty-class-ranges-no-dash.js(default)
+test/annexB/language/literals/regexp/non-empty-class-ranges-no-dash.js(strict mode)
+test/annexB/language/literals/regexp/non-empty-class-ranges.js(default)
+test/annexB/language/literals/regexp/non-empty-class-ranges.js(strict mode)
+test/annexB/language/literals/regexp/quantifiable-assertion-followed-by.js(default)
+test/annexB/language/literals/regexp/quantifiable-assertion-followed-by.js(strict mode)
+test/annexB/language/literals/regexp/quantifiable-assertion-not-followed-by.js(default)
+test/annexB/language/literals/regexp/quantifiable-assertion-not-followed-by.js(strict mode)

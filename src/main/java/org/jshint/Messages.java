@@ -6,6 +6,8 @@ import com.google.common.collect.ImmutableMap;
 
 public class Messages
 {
+	private Messages() {}
+	
 	//ERROR MESSAGES
 	public static final Map<String, String> errors = ImmutableMap.<String, String>builder()
 	
@@ -83,6 +85,9 @@ public class Messages
 		.put("E059", "Incompatible values for the '{a}' and '{b}' linting options.")
 		.put("E060", "Non-callable values cannot be used as the second operand to instanceof.")
 		.put("E061", "Invalid position for 'yield' expression (consider wrapping in parenthesis).")
+		.put("E062", "Rest parameter does not a support default value.")
+		.put("E063", "Super property may only be used within method bodies.")
+		.put("E064", "Super call may only be used within class method bodies.")
 		.build();
 	
 	//WARNING MESSAGES
@@ -107,9 +112,9 @@ public class Messages
 		.put("W018", "Confusing use of '{a}'.")
 		.put("W019", "Use the isNaN function to compare with NaN.")
 		.put("W020", "Read only.")
-		.put("W021", "Reassignment of '{a}', which is is a {b}. Use 'var' or 'let' to declare bindings that may change.")
+		.put("W021", "Reassignment of '{a}', which is a {b}. Use 'var' or 'let' to declare bindings that may change.")
 		.put("W022", "Do not assign to the exception parameter.")
-		.put("W023", "Expected an identifier in an assignment and instead saw a function invocation.")
+		.put("W023", "")
 		.put("W024", "Expected an identifier and instead saw '{a}' (a reserved word).")
 		.put("W025", "Missing name in function declaration.")
 		.put("W026", "Inner functions should be listed at the top of the outer function.")
@@ -168,7 +173,7 @@ public class Messages
 		.put("W080", "It's not necessary to initialize '{a}' to 'undefined'.")
 		.put("W081", "")
 		.put("W082", "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.")
-		.put("W083", "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics.")
+		.put("W083", "Functions declared within loops referencing an outer scoped variable may lead to confusing semantics. ({a})")
 		.put("W084", "Expected a conditional expression and instead saw an assignment.")
 		.put("W085", "Don't use 'with'.")
 		.put("W086", "Expected a 'break' statement before '{a}'.")
@@ -184,7 +189,7 @@ public class Messages
 		.put("W097", "Use the function form of \"use strict\".")
 		.put("W098", "'{a}' is defined but never used.")
 		.put("W099", "")
-		.put("W100", "This character may get silently deleted by one or more browsers.")
+		.put("W100", "")
 		.put("W101", "Line is too long.")
 		.put("W102", "")
 		.put("W103", "The '{a}' property is deprecated.")
@@ -220,10 +225,13 @@ public class Messages
 		.put("W134", "The '{a}' option is only available when linting ECMAScript {b} code.")
 		.put("W135", "{a} may not be supported by non-browser environments.")
 		.put("W136", "'{a}' must be in function scope.")
-		.put("W137", "Empty destructuring.")
+		.put("W137", "Empty destructuring: this is unnecessary and can be removed.")
 		.put("W138", "Regular parameters should not come after default parameters.")
 		.put("W139", "Function expressions should not be used as the second operand to instanceof.")
 		.put("W140", "Missing comma.")
+		.put("W141", "Empty {a}: this is unnecessary and can be removed.")
+		.put("W142", "Empty {a}: consider replacing with `import '{b}';`.")
+		.put("W143", "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.")
 		.build();
 	
 	//INFO MESSAGES

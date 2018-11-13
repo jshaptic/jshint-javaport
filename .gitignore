@@ -7,6 +7,7 @@
 *.zip
 *.tar.gz
 *.rar
+*.jfr
 hs_err_pid*
 
 # Gradle

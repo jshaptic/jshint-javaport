@@ -1,3 +1,6 @@
+## 2.9.6
+##### Released: 12 Novemeber 2018
+  * New version of JSHint v2.9.6 is ported
 ## 2.9.5.3
 ##### Released: 20 August 2018
   * Upgraded dependency libraries and gradle

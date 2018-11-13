@@ -11,11 +11,9 @@ import org.jshint.Token;
 import org.jshint.DataSummary;
 import org.jshint.ImpliedGlobal;
 import org.jshint.test.helpers.TestHelper;
-import org.jshint.utils.JSHintUtils;
 
 import com.github.jshaptic.js4j.UniversalContainer;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -26,18 +24,16 @@ public class TestParser extends Assert
 {
 	private TestHelper th = new TestHelper();
 	
-	@BeforeClass
-	private void setupBeforeClass()
-	{
-		JSHintUtils.reset();
-	}
-	
 	@BeforeMethod
 	private void setupBeforeMethod()
 	{
-		th.reset();
+		th.newTest();
 	}
 	
+	/**
+	 * The warning for this input was intentionally disabled after research into
+	 * its justification produced no results.
+	 */
 	@Test
 	public void testUnsafe()
 	{
@@ -45,7 +41,6 @@ public class TestParser extends Assert
 			"var a\n = 'Here is a unsafe character';"
 		};
 		
-		th.addError(1, "This character may get silently deleted by one or more browsers.");
 		th.test(code, new LinterOptions().set("es3", true));
 	}
 	
@@ -54,41 +49,35 @@ public class TestParser extends Assert
 	{
 		String code = th.readFile("src/test/resources/fixtures/peek-over-directives.js");
 		
-		// Within object literal;
-		th.addError(18, "This character may get silently deleted by one or more browsers.");
-		th.addError(18, "Unexpected control character in regular expression.");
-		th.addError(19, "Unexpected escaped character '<' in regular expression.");
-		th.addError(20, "Line is too long.");
-		th.addError(21, "Control character in string: <non-printable>.");
-		th.addError(21, "This character may get silently deleted by one or more browsers.");
-		th.addError(22, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(23, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(24, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
-		th.addError(25, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		// Within object literal
+		th.addError(18, 14, "Unexpected control character in regular expression.");
+	    th.addError(19, 14, "Unexpected escaped character '<' in regular expression.");
+	    th.addError(20, 81, "Line is too long.");
+	    th.addError(21, 15, "Control character in string: <non-printable>.");
+	    th.addError(22, 14, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(23, 14, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(24, 14, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(25, 14, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
 		
-		// Within array literal:;
-		th.addError(44, "This character may get silently deleted by one or more browsers.");
-		th.addError(44, "Unexpected control character in regular expression.");
-		th.addError(45, "Unexpected escaped character '<' in regular expression.");
-		th.addError(46, "Line is too long.");
-		th.addError(47, "Control character in string: <non-printable>.");
-		th.addError(47, "This character may get silently deleted by one or more browsers.");
-		th.addError(48, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(49, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(50, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
-		th.addError(51, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		// Within array literal:
+		th.addError(44, 3, "Unexpected control character in regular expression.");
+	    th.addError(45, 3, "Unexpected escaped character '<' in regular expression.");
+	    th.addError(46, 81, "Line is too long.");
+	    th.addError(47, 4, "Control character in string: <non-printable>.");
+	    th.addError(48, 3, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(49, 3, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(50, 3, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(51, 3, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
 		
-		// Within grouping operator:;
-		th.addError(70, "This character may get silently deleted by one or more browsers.");
-		th.addError(70, "Unexpected control character in regular expression.");
-		th.addError(71, "Unexpected escaped character '<' in regular expression.");
-		th.addError(72, "Line is too long.");
-		th.addError(73, "Control character in string: <non-printable>.");
-		th.addError(73, "This character may get silently deleted by one or more browsers.");
-		th.addError(74, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(75, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
-		th.addError(76, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
-		th.addError(77, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		// Within grouping operator:
+		th.addError(70, 3, "Unexpected control character in regular expression.");
+	    th.addError(71, 3, "Unexpected escaped character '<' in regular expression.");
+	    th.addError(72, 81, "Line is too long.");
+	    th.addError(73, 4, "Control character in string: <non-printable>.");
+	    th.addError(74, 3, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(75, 3, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(76, 3, "'template literal syntax' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(77, 3, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
 		th.test(code);
 	}
 	
@@ -100,25 +89,25 @@ public class TestParser extends Assert
 			"!"
 		};
 		
-		th.addError(1, "Unexpected '\\'.");
-	    th.addError(2, "Unexpected early end of program.");
-	    th.addError(2, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 1, "Unexpected '\\'.");
+	    th.addError(2, 1, "Unexpected early end of program.");
+	    th.addError(2, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test(code, new LinterOptions().set("es3", true));
 		
 		// GH-818
-		th.reset();
-		th.addError(1, "Expected an identifier and instead saw ')'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 15, "Expected an identifier and instead saw ')'.");
+	    th.addError(1, 15, "Unrecoverable syntax error. (100% scanned).");
 	    th.test("if (product < ) {}", new LinterOptions().set("es3", true));
 	    
 	    // GH-2506
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw ';'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+	    th.newTest();
+	    th.addError(1, 7, "Expected an identifier and instead saw ';'.");
+	    th.addError(1, 1, "Unrecoverable syntax error. (100% scanned).");
 	    th.test("typeof;");
 	    
-	    th.reset();
-	    th.addError(1, "Unrecoverable syntax error. (0% scanned).");
+	    th.newTest();
+	    th.addError(1, 1, "Unrecoverable syntax error. (0% scanned).");
 	    th.test("}");
 	}
 	
@@ -134,10 +123,10 @@ public class TestParser extends Assert
 		    "a = a++ + 3;"  // this is not confusing?!
 		};
 		
-		th.addError(1, "Confusing minuses.");
-	    th.addError(2, "Confusing plusses.");
-	    th.addError(3, "Confusing minuses.");
-	    th.addError(4, "Confusing plusses.");
+		th.addError(1, 13, "Confusing minuses.");
+	    th.addError(2, 13, "Confusing plusses.");
+	    th.addError(3, 9, "Confusing minuses.");
+	    th.addError(4, 9, "Confusing plusses.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -164,18 +153,29 @@ public class TestParser extends Assert
 	{
 		String[] code = {
 			"var a = ++[2];",
-		    "var b = --(2);"
+		    "var b = --(2);",
+		    "var c = [2]++;",
+		    "var d = (2)--;"
 		};
 		
-		th.addError(1, "Unexpected use of '++'.");
-	    th.addError(2, "Unexpected use of '--'.");
+		th.addError(1, 9, "Unexpected use of '++'.");
+	    th.addError(1, 9, "Bad assignment.");
+	    th.addError(2, 9, "Unexpected use of '--'.");
+	    th.addError(2, 9, "Bad assignment.");
+	    th.addError(3, 12, "Unexpected use of '++'.");
+	    th.addError(3, 12, "Bad assignment.");
+	    th.addError(4, 12, "Unexpected use of '--'.");
+	    th.addError(4, 12, "Bad assignment.");
 		th.test(code, new LinterOptions().set("plusplus", true).set("es3", true));
 		th.test(code, new LinterOptions().set("plusplus", true)); // es5
 		th.test(code, new LinterOptions().set("plusplus", true).set("esnext", true));
 		th.test(code, new LinterOptions().set("plusplus", true).set("moz", true));
 		
-		th.reset();
-		th.addError(2, "Bad operand.");
+		th.newTest();
+		th.addError(1, 9, "Bad assignment.");
+	    th.addError(2, 9, "Bad assignment.");
+	    th.addError(3, 12, "Bad assignment.");
+	    th.addError(4, 12, "Bad assignment.");
 		th.test(code, new LinterOptions().set("plusplus", false).set("es3", true));
 		th.test(code, new LinterOptions().set("plusplus", false)); // es5
 		th.test(code, new LinterOptions().set("plusplus", false).set("esnext", true));
@@ -202,11 +202,11 @@ public class TestParser extends Assert
 		    "a() = 2;"
 		};
 		
-		th.addError(2, "Bad assignment.");
-	    th.addError(3, "Bad assignment.");
-	    th.addError(4, "Bad assignment.");
-	    th.addError(5, "Bad assignment.");
-	    th.addError(14, "Bad assignment.");
+		th.addError(2, 20, "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.");
+	    th.addError(3, 16, "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.");
+	    th.addError(4, 20, "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.");
+	    th.addError(5, 16, "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.");
+	    th.addError(14, 5, "Bad assignment.");
 		th.test(code, new LinterOptions().set("plusplus", true).set("es3", true));
 		th.test(code, new LinterOptions().set("plusplus", true)); // es5
 		th.test(code, new LinterOptions().set("plusplus", true).set("esnext", true));
@@ -229,8 +229,8 @@ public class TestParser extends Assert
 		    "var i = (!([]) instanceof Array);"
 		};
 		
-		th.addError(1, "Use the isNaN function to compare with NaN.");
-	    th.addError(2, "Use the isNaN function to compare with NaN.");
+		th.addError(1, 11, "Use the isNaN function to compare with NaN.");
+	    th.addError(2, 13, "Use the isNaN function to compare with NaN.");
 	    th.addError(3, 9, "Confusing use of '!'.");
 	    th.addError(4, 13, "Confusing use of '!'.");
 	    th.addError(5, 10, "Confusing use of '!'.");
@@ -268,50 +268,50 @@ public class TestParser extends Assert
 		    "/*jshint toString: true */"
 		};
 		
-		th.addError(3, "Unexpected /*member 'c'.");
-	    th.addError(4, "Bad option: '++'.");
-	    th.addError(5, "Expected a small integer or 'false' and instead saw '0'.");
-	    th.addError(6, "Expected a small integer or 'false' and instead saw '-2'.");
-	    th.addError(7, "Expected a small integer or 'false' and instead saw '100.4'.");
-	    th.addError(8, "Expected a small integer or 'false' and instead saw '200.4'.");
-	    th.addError(9, "Expected a small integer or 'false' and instead saw '300.4'.");
-	    th.addError(10, "Expected a small integer or 'false' and instead saw '0'.");
-	    th.addError(13, "Bad option: 'd'.");
-	    th.addError(15, "Read only.");
-	    th.addError(16, "Bad option: 'relaxing'.");
-	    th.addError(17, "Bad option: 'toString'.");
+		th.addError(3, 14, "Unexpected /*member 'c'.");
+	    th.addError(4, 1, "Bad option: '++'.");
+	    th.addError(5, 1, "Expected a small integer or 'false' and instead saw '0'.");
+	    th.addError(6, 1, "Expected a small integer or 'false' and instead saw '-2'.");
+	    th.addError(7, 1, "Expected a small integer or 'false' and instead saw '100.4'.");
+	    th.addError(8, 1, "Expected a small integer or 'false' and instead saw '200.4'.");
+	    th.addError(9, 1, "Expected a small integer or 'false' and instead saw '300.4'.");
+	    th.addError(10, 1, "Expected a small integer or 'false' and instead saw '0'.");
+	    th.addError(13, 1, "Bad option: 'd'.");
+	    th.addError(15, 1, "Read only.");
+	    th.addError(16, 1, "Bad option: 'relaxing'.");
+	    th.addError(17, 1, "Bad option: 'toString'.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
 		th.test(code, new LinterOptions().set("moz", true));
 		
-		th.reset();
+		th.newTest();
 		th.test(th.readFile("src/test/resources/fixtures/gh988.js"));
 	}
 	
 	@Test
 	public void testEmptyDirectives()
 	{
-	    th.addError(1, "Bad option value.");
+	    th.addError(1, 1, "Bad option value.");
 	    th.test("/* global */");
 	    th.test("/* global : */");
 	    th.test("/* global -: */");
 	    
-	    th.reset();
+	    th.newTest();
 	    th.test("/* global foo, bar, baz, */");
 	    
-	    th.addError(1, "Bad option value.");
+	    th.addError(1, 1, "Bad option value.");
 	    th.test("/* globals */");
 	    th.test("/* globals : */");
 	    th.test("/* globals -: */");
 	    
-	    th.reset();
+	    th.newTest();
 	    th.test("/* globals foo, bar, baz, */");
 
-	    th.addError(1, "Bad option value.");
+	    th.addError(1, 1, "Bad option value.");
 	    th.test("/* exported */");
 
-	    th.reset();
+	    th.newTest();
 	    th.test("/* exported foo, bar, baz, */");
 	}
 	
@@ -344,7 +344,7 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh1768-4.js");
 		
-		th.addError(4, "'foo' is not defined.");
+		th.addError(4, 1, "'foo' is not defined.");
 		th.test(src);
 	}
 	
@@ -353,7 +353,7 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh1768-5.js");
 		
-		th.addError(3, "'foo' is not defined.");
+		th.addError(3, 1, "'foo' is not defined.");
 		th.test(src);
 	}
 	
@@ -362,7 +362,18 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh1768-6.js");
 		
-		th.addError(4, "'foo' is not defined.");
+		th.addError(4, 1, "'foo' is not defined.");
+		th.test(src);
+	}
+	
+	@Test
+	public void testJshintOptionInlineCommentsLeadingAndTrailingTabsAndSpaces()
+	{
+		String src = th.readFile("src/test/resources/fixtures/inline-tabs-spaces.js");
+		
+		th.addError(3, 9, "'x' is defined but never used.");
+	    th.addError(10, 9, "'y' is defined but never used.");
+	    th.addError(17, 9, "'z' is defined but never used.");
 		th.test(src);
 	}
 	
@@ -375,10 +386,12 @@ public class TestParser extends Assert
 		    "#!test"
 		};
 		
-		th.addError(3, "Expected an identifier and instead saw '#'.");
-	    th.addError(3, "Expected an operator and instead saw '!'.");
-	    th.addError(3, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(3, "Missing semicolon.");
+		th.addError(3, 1, "Expected an identifier and instead saw '#'.");
+	    th.addError(3, 2, "Expected an operator and instead saw '!'.");
+	    th.addError(3, 2, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(3, 3, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(3, 3, "Missing semicolon.");
+	    th.addError(3, 7, "Missing semicolon.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -419,30 +432,31 @@ public class TestParser extends Assert
 		    "var q = 1x;"
 		};
 		
-		th.addError(2, "Bad number '10e308'.");
-	    th.addError(5, "A leading decimal point can be confused with a dot: '.3'.");
-	    th.addError(6, "Unexpected '0'.");
-	    th.addError(7, "Expected an identifier and instead saw 'var'.");
-	    th.addError(7, "Missing semicolon.");
-	    th.addError(7, "Don't use extra leading zeros '0033'.");
-	    th.addError(8, "A trailing decimal point can be confused with a dot: '3.'.");
-	    th.addError(9, "A dot following a number can be confused with a decimal point.");
-	    th.addError(11, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(12, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(13, "Bad number '0x'.");
-	    th.addError(15, "Unexpected '1'.");
-	    th.addError(16, "Expected an identifier and instead saw ';'.");
-	    th.addError(16, "Expected an identifier and instead saw 'var'.");
-	    th.addError(16, "Missing semicolon.");
-	    th.addError(17, "Unexpected '1'.");
-	    th.addError(17, "Unexpected early end of program.");
-	    th.addError(17, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(2, 15, "Bad number '10e308'.");
+	    th.addError(5, 11, "A leading decimal point can be confused with a dot: '.3'.");
+	    th.addError(6, 9, "Unexpected '0'.");
+	    th.addError(7, 1, "Expected an identifier and instead saw 'var'.");
+	    th.addError(7, 4, "Missing semicolon.");
+	    th.addError(7, 13, "Don't use extra leading zeros '0033'.");
+	    th.addError(8, 11, "A trailing decimal point can be confused with a dot: '3.'.");
+	    th.addError(9, 9, "A dot following a number can be confused with a decimal point.");
+	    th.addError(11, 9, "'Octal integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(12, 9, "'Binary integer literal' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(13, 11, "Bad number '0x'.");
+	    th.addError(15, 9, "Unexpected '1'.");
+	    th.addError(16, 11, "Expected an identifier and instead saw ';'.");
+	    th.addError(16, 1, "Expected an identifier and instead saw 'var'.");
+	    th.addError(16, 4, "Missing semicolon.");
+	    th.addError(16, 12, "Missing semicolon.");
+	    th.addError(17, 9, "Unexpected '1'.");
+	    th.addError(17, 7, "Unexpected early end of program.");
+	    th.addError(17, 9, "Unrecoverable syntax error. (100% scanned).");
 		th.test(code, new LinterOptions().set("es3", true));
 		
 		// Octals are prohibited in strict mode.
 				
-		th.reset();
-		th.addError(3, "Octal literals are not allowed in strict mode.");
+		th.newTest();
+		th.addError(3, 11, "Octal literals are not allowed in strict mode.");
 		th.test(new String[]{
 			"(function () {",
 		    "'use strict';",
@@ -451,19 +465,19 @@ public class TestParser extends Assert
 		});
 		
 		// GitHub #751 - an expression containing a number with a leading decimal point should be parsed in its entirety
-		th.reset();
-		th.addError(1, "A leading decimal point can be confused with a dot: '.3'.");
-	    th.addError(2, "A leading decimal point can be confused with a dot: '.3'.");
+		th.newTest();
+		th.addError(1, 11, "A leading decimal point can be confused with a dot: '.3'.");
+	    th.addError(2, 15, "A leading decimal point can be confused with a dot: '.3'.");
 	    th.test(new String[]{
     		"var a = .3 + 1;",
     	    "var b = 1 + .3;"
 		});
 	    
-	    th.reset();
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(6, "Missing semicolon.");
-	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
+	    th.newTest();
+	    th.addError(5, 18, "Missing semicolon.");
+	    th.addError(5, 18, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(6, 14, "Missing semicolon.");
+	    th.addError(6, 14, "Expected an assignment or function call and instead saw an expression.");
 	    th.test(new String[]{
     		"var a = 0o1234567;",
     	    "var b = 0O1234567;",
@@ -473,7 +487,7 @@ public class TestParser extends Assert
     	    "var f = 0b1012;"
 		}, new LinterOptions().set("esnext", true));
 	    
-	    th.reset();
+	    th.newTest();
 	    th.test(new String[] {
 	    	"// jshint esnext: true",
 	        "var a = 0b0 + 0o0;"
@@ -490,21 +504,21 @@ public class TestParser extends Assert
 		    "/* unclosed .."
 		};
 		
-		th.addError(3, "Unbegun comment.");
-	    th.addError(4, "Unclosed comment.");
+		th.addError(3, 1, "Unbegun comment.");
+	    th.addError(4, 1, "Unclosed comment.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
 		th.test(code, new LinterOptions().set("moz", true));
 		
 		String src = "/* this is a comment /* with nested slash-start */";
-		th.reset();
+		th.newTest();
 		th.test(src);
 		th.test(th.readFile("src/test/resources/fixtures/gruntComment.js"));
 		
-		th.reset();
-		th.addError(1, "Unmatched '{'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 2, "Unmatched '{'.");
+	    th.addError(1, 2, "Unrecoverable syntax error. (100% scanned).");
 	    th.test("({");
 	}
 	
@@ -543,81 +557,82 @@ public class TestParser extends Assert
 		    "var x = w - /s/;",
 		    "var y = typeof /[a-z]/;", // GH-657
 		    "var z = /a/ instanceof /a/.constructor;", // GH-2773
+		    "void /./;",
 		    "var v = /dsdg;"
 		};
 		
-		th.addError(1, "This character may get silently deleted by one or more browsers.");
-	    th.addError(1, "Unexpected control character in regular expression.");
-	    th.addError(2, "This character may get silently deleted by one or more browsers.");
-	    th.addError(2, "Unexpected control character in regular expression.");
-	    th.addError(3, "Unexpected escaped character '<' in regular expression.");
-	    th.addError(4, "Unexpected escaped character '<' in regular expression.");
-	    th.addError(5, "Invalid regular expression.");
-	    th.addError(6, "Invalid regular expression.");
-	    th.addError(11, "Invalid regular expression.");
-	    th.addError(12, "Invalid regular expression.");
-	    th.addError(14, "Invalid regular expression.");
-	    th.addError(15, "Invalid regular expression.");
-	    th.addError(17, "Invalid regular expression.");
-	    th.addError(20, "Invalid regular expression.");
-	    th.addError(21, "Invalid regular expression.");
-	    th.addError(28, "Unclosed regular expression.");
-	    th.addError(28, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 10, "Unexpected control character in regular expression.");
+		th.addError(2, 10, "Unexpected control character in regular expression.");
+		th.addError(3, 10, "Unexpected escaped character '<' in regular expression.");
+		th.addError(4, 10, "Unexpected escaped character '<' in regular expression.");
+		th.addError(5, 9, "Invalid regular expression.");
+		th.addError(6, 9, "Invalid regular expression.");
+		th.addError(11, 9, "Invalid regular expression.");
+		th.addError(12, 9, "Invalid regular expression.");
+		th.addError(14, 9, "Invalid regular expression.");
+		th.addError(15, 9, "Invalid regular expression.");
+		th.addError(17, 9, "Invalid regular expression.");
+		th.addError(20, 9, "Invalid regular expression.");
+		th.addError(21, 9, "Invalid regular expression.");
+		th.addError(29, 9, "Unclosed regular expression.");
+		th.addError(29, 9, "Unrecoverable syntax error. (100% scanned).");
 	    
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
 		th.test(code, new LinterOptions().set("moz", true));
 		
-		th.reset();
+		th.newTest();
 		th.test("var a = `${/./}${/./}`;", new LinterOptions().set("esversion", 6));
 		
 		// Pre Regular Expression Punctuation
 		//  (See: token method, create function in lex.js)
 		//
 		// "."
-		th.reset();
-		th.addError(1, "A trailing decimal point can be confused with a dot: '10.'.");
+		th.newTest();
+		th.addError(1, 12, "A trailing decimal point can be confused with a dot: '10.'.");
 		th.test("var y = 10. / 1;", new LinterOptions().set("es3", true));
 		th.test("var y = 10. / 1;", new LinterOptions()); // es5
 		th.test("var y = 10. / 1;", new LinterOptions().set("esnext", true));
 		th.test("var y = 10. / 1;", new LinterOptions().set("moz", true));
 		
 		// ")"
-		th.reset();
+		th.newTest();
 		th.test("var y = Math.sqrt(16) / 180;", new LinterOptions().set("es3", true));
 		th.test("var y = Math.sqrt(16) / 180;", new LinterOptions()); // es5
 		th.test("var y = Math.sqrt(16) / 180;", new LinterOptions().set("esnext", true));
 		th.test("var y = Math.sqrt(16) / 180;", new LinterOptions().set("moz", true));
 		
 		// "~"
-		//JSHINT_BUG: duplicate code, tilde must be tested
-		th.reset();
+		th.newTest();
 		th.test("var y = ~16 / 180;", new LinterOptions().set("es3", true));
 		th.test("var y = ~16 / 180;", new LinterOptions()); // es5
 		th.test("var y = ~16 / 180;", new LinterOptions().set("esnext", true));
 		th.test("var y = ~16 / 180;", new LinterOptions().set("moz", true));
 		
 		// "]" (GH-803)
-		th.reset();
+		th.newTest();
 		th.test("var x = [1]; var y = x[0] / 180;", new LinterOptions().set("es3", true));
 		th.test("var x = [1]; var y = x[0] / 180;", new LinterOptions()); // es5
 		th.test("var x = [1]; var y = x[0] / 180;", new LinterOptions().set("esnext", true));
 		th.test("var x = [1]; var y = x[0] / 180;", new LinterOptions().set("moz", true));
 		
 		// "++" (GH-1787)
-		th.reset();
+		th.newTest();
 		th.test("var a = 1; var b = a++ / 10;", new LinterOptions().set("es3", true));
 		th.test("var a = 1; var b = a++ / 10;", new LinterOptions()); // es5
 		th.test("var a = 1; var b = a++ / 10;", new LinterOptions().set("esnext", true));
 		th.test("var a = 1; var b = a++ / 10;", new LinterOptions().set("moz", true));
 		
 		// "--" (GH-1787)
-		th.reset();
+		th.newTest();
 		th.test("var a = 1; var b = a-- / 10;", new LinterOptions().set("es3", true));
 		th.test("var a = 1; var b = a-- / 10;", new LinterOptions()); // es5
 		th.test("var a = 1; var b = a-- / 10;", new LinterOptions().set("esnext", true));
 		th.test("var a = 1; var b = a-- / 10;", new LinterOptions().set("moz", true));
+		
+		th.newTest("gh-3308");
+		th.test("void (function() {} / 0);");
 	}
 	
 	@Test
@@ -654,21 +669,25 @@ public class TestParser extends Assert
 	@Test
 	public void testRegexpSticky()
 	{
-		th.addError(1, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
+		th.addError(1, 11, "'Sticky RegExp flag' is only available in ES6 (use 'esversion: 6').");
 		th.test("var exp = /./y;", new LinterOptions().set("esversion", 5));
 		
-		th.reset();
+		th.newTest();
 		th.test("var exp = /./y;", new LinterOptions().set("esversion", 6));
 		th.test("var exp = /./gy;", new LinterOptions().set("esversion", 6));
 		th.test("var exp = /./yg;", new LinterOptions().set("esversion", 6));
 		
-		th.addError(1, "Invalid regular expression.");
-		th.addError(2, "Invalid regular expression.");
+		th.newTest("Invalid due to repetition");
+		th.addError(1, 11, "Invalid regular expression.");
+		th.addError(2, 11, "Invalid regular expression.");
 		th.test(new String[] {
 			"var exp = /./yy;",
 		    "var exp = /./ygy;"
 		}, new LinterOptions().set("esversion", 6));
 		
+		th.newTest("Invalid due to other conditions");
+		th.addError(1, 11, "Invalid regular expression.");
+		th.addError(2, 11, "Invalid regular expression.");
 		th.test(new String[] {
 			"var exp = /./gyg;",
 		    "var exp = /?/y;"
@@ -689,9 +708,8 @@ public class TestParser extends Assert
 		};
 		
 		th.addError(1, 10, "Control character in string: <non-printable>.");
-	    th.addError(1, "This character may get silently deleted by one or more browsers.");
-	    th.addError(7, "Unclosed string.");
-	    th.addError(7, "Missing semicolon.");
+	    th.addError(7, 12, "Unclosed string.");
+	    th.addError(7, 12, "Missing semicolon.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -710,11 +728,11 @@ public class TestParser extends Assert
 			"void '\\u000g';"
 		};
 		
-		th.addError(1, "Unexpected 'uNOTH'.");
-		th.addError(3, "Unexpected 'ug000'.");
-		th.addError(4, "Unexpected 'u0g00'.");
-		th.addError(5, "Unexpected 'u00g0'.");
-		th.addError(6, "Unexpected 'u000g'.");
+		th.addError(1, 11, "Unexpected 'uNOTH'.");
+	    th.addError(3, 8, "Unexpected 'ug000'.");
+	    th.addError(4, 8, "Unexpected 'u0g00'.");
+	    th.addError(5, 8, "Unexpected 'u00g0'.");
+	    th.addError(6, 8, "Unexpected 'u000g'.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -731,10 +749,10 @@ public class TestParser extends Assert
 		    "function test() { var hasOwnProperty = {}.hasOwnProperty; }"
 		};
 		
-		th.addError(1, "'hasOwnProperty' is a really bad name.");
-	    th.addError(2, "'hasOwnProperty' is a really bad name.");
-	    th.addError(3, "'hasOwnProperty' is a really bad name.");
-	    th.addError(3, "['hasOwnProperty'] is better written in dot notation.");
+		th.addError(1, 27, "'hasOwnProperty' is a really bad name.");
+	    th.addError(2, 20, "'hasOwnProperty' is a really bad name.");
+	    th.addError(3, 23, "'hasOwnProperty' is a really bad name.");
+	    th.addError(3, 4, "['hasOwnProperty'] is better written in dot notation.");
 		th.test(code, new LinterOptions().set("es3", true));
 		th.test(code, new LinterOptions()); // es5
 		th.test(code, new LinterOptions().set("esnext", true));
@@ -756,16 +774,16 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(2, "Expected a string and instead saw a.");
-	    th.addError(3, "Strings must use doublequote.");
-	    th.addError(3, "Avoid \\v.");
-	    th.addError(3, "Avoid \\x-.");
-	    th.addError(3, "Avoid \\'.");
-	    th.addError(4, "Avoid \\v.");
-	    th.addError(4, "Avoid \\x-.");
-	    th.addError(4, "Strings must use doublequote.");
-	    th.addError(5, "Avoid EOL escaping.");
-	    th.addError(7, "Avoid 0x-.");
+		th.addError(2, 3, "Expected a string and instead saw a.");
+	    th.addError(3, 3, "Strings must use doublequote.");
+	    th.addError(3, 17, "Avoid \\v.");
+	    th.addError(3, 19, "Avoid \\x-.");
+	    th.addError(3, 23, "Avoid \\'.");
+	    th.addError(4, 8, "Avoid \\v.");
+	    th.addError(4, 10, "Avoid \\x-.");
+	    th.addError(4, 16, "Strings must use doublequote.");
+	    th.addError(5, 11, "Avoid EOL escaping.");
+	    th.addError(7, 13, "Avoid 0x-.");
 		th.test(code, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(code, new LinterOptions().set("multistr", true)); // es5
 		th.test(code, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -795,13 +813,13 @@ public class TestParser extends Assert
 	}
 	
 	@Test(groups = {"json"})
-	public void testJsonBad()
+	public void testJsonErrors()
 	{
 		String[] objTrailingComma = {
 			"{ \"key\" : \"value\", }"
 		};
 		
-		th.addError(1, "Unexpected comma.");
+		th.addError(1, 18, "Unexpected comma.");
 		th.test(objTrailingComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objTrailingComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(objTrailingComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -811,10 +829,10 @@ public class TestParser extends Assert
 			"{ \"key\" : [,] }"
 		};
 		
-		th.reset();
-		th.addError(1, "Illegal comma.");
-		th.addError(1, "Expected a JSON value.");
-		th.addError(1, "Unexpected comma.");
+		th.newTest();
+		th.addError(1, 12, "Illegal comma.");
+		th.addError(1, 12, "Expected a JSON value.");
+		th.addError(1, 12, "Unexpected comma.");
 		th.test(arrayTrailingComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(arrayTrailingComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(arrayTrailingComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -824,9 +842,9 @@ public class TestParser extends Assert
 			"{ \"k1\":\"v1\" \"k2\":\"v2\" }"
 		};
 		
-		th.reset();
-		th.addError(1, "Expected '}' and instead saw 'k2'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 13, "Expected '}' and instead saw 'k2'.");
+		th.addError(1, 13, "Unrecoverable syntax error. (100% scanned).");
 		th.test(objMissingComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objMissingComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(objMissingComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -836,9 +854,9 @@ public class TestParser extends Assert
 			"[ \"v1\" \"v2\" ]"
 		};
 		
-		th.reset();
-		th.addError(1, "Expected ']' and instead saw 'v2'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 8, "Expected ']' and instead saw 'v2'.");
+		th.addError(1, 8, "Unrecoverable syntax error. (100% scanned).");
 		th.test(arrayMissingComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(arrayMissingComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(arrayMissingComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -848,12 +866,12 @@ public class TestParser extends Assert
 			"{ \"k1\":\"v1\",, \"k2\":\"v2\" }"
 		};
 		
-		th.reset();
-		th.addError(1, "Illegal comma.");
-		th.addError(1, "Expected ':' and instead saw 'k2'.");
-		th.addError(1, "Expected a JSON value.");
-		th.addError(1, "Expected '}' and instead saw ':'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 13, "Illegal comma.");
+		th.addError(1, 15, "Expected ':' and instead saw 'k2'.");
+		th.addError(1, 19, "Expected a JSON value.");
+		th.addError(1, 19, "Expected '}' and instead saw ':'.");
+		th.addError(1, 19, "Unrecoverable syntax error. (100% scanned).");
 		th.test(objDoubleComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objDoubleComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(objDoubleComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -863,9 +881,9 @@ public class TestParser extends Assert
 			"[ \"v1\",, \"v2\" ]"
 		};
 		
-		th.reset();
-		th.addError(1, "Illegal comma.");
-		th.addError(1, "Expected a JSON value.");
+		th.newTest();
+		th.addError(1, 8, "Illegal comma.");
+		th.addError(1, 8, "Expected a JSON value.");
 		th.test(arrayDoubleComma, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(arrayDoubleComma, new LinterOptions().set("multistr", true)); // es5
 		th.test(arrayDoubleComma, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -875,9 +893,9 @@ public class TestParser extends Assert
 			"{ \"k1\":\"v1\""
 		};
 		
-		th.reset();
-		th.addError(1, "Expected '}' and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 8, "Expected '}' and instead saw ''.");
+		th.addError(1, 8, "Unrecoverable syntax error. (100% scanned).");
 		th.test(objUnclosed, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objUnclosed, new LinterOptions().set("multistr", true)); // es5
 		th.test(objUnclosed, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -887,9 +905,9 @@ public class TestParser extends Assert
 			"[ \"v1\""
 		};
 		
-		th.reset();
-		th.addError(1, "Expected ']' and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 3, "Expected ']' and instead saw ''.");
+		th.addError(1, 3, "Unrecoverable syntax error. (100% scanned).");
 		th.test(arrayUnclosed, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(arrayUnclosed, new LinterOptions().set("multistr", true)); // es5
 		th.test(arrayUnclosed, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -899,9 +917,9 @@ public class TestParser extends Assert
 			"{"
 		};
 		
-		th.reset();
-		th.addError(1, "Missing '}' to match '{' from line 1.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 1, "Missing '}' to match '{' from line 1.");
+		th.addError(1, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test(objUnclosed2, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objUnclosed2, new LinterOptions().set("multistr", true)); // es5
 		th.test(objUnclosed2, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -911,11 +929,11 @@ public class TestParser extends Assert
 			"["
 		};
 		
-		th.reset();
-		th.addError(1, "Missing ']' to match '[' from line 1.");
-		th.addError(1, "Expected a JSON value.");
-		th.addError(1, "Expected ']' and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 1, "Missing ']' to match '[' from line 1.");
+		th.addError(1, 1, "Expected a JSON value.");
+		th.addError(1, 1, "Expected ']' and instead saw ''.");
+		th.addError(1, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test(arrayUnclosed2, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(arrayUnclosed2, new LinterOptions().set("multistr", true)); // es5
 		th.test(arrayUnclosed2, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -925,8 +943,8 @@ public class TestParser extends Assert
 			"{ \"k1\":\"v1\", \"k1\":\"v1\" }"
 		};
 		
-		th.reset();
-		th.addError(1, "Duplicate key 'k1'.");
+		th.newTest();
+		th.addError(1, 14, "Duplicate key 'k1'.");
 		th.test(objDupKeys, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objDupKeys, new LinterOptions().set("multistr", true)); // es5
 		th.test(objDupKeys, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -936,8 +954,8 @@ public class TestParser extends Assert
 			"{ k1:\"v1\" }"
 		};
 		
-		th.reset();
-		th.addError(1, "Expected a string and instead saw k1.");
+		th.newTest();
+		th.addError(1, 3, "Expected a string and instead saw k1.");
 		th.test(objBadKey, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objBadKey, new LinterOptions().set("multistr", true)); // es5
 		th.test(objBadKey, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -947,10 +965,10 @@ public class TestParser extends Assert
 			"{ \"noRegexpInJSON\": /$^/ }"
 		};
 		
-		th.reset();
-		th.addError(1, "Expected a JSON value.");
-		th.addError(1, "Expected '}' and instead saw '/$^/'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 21, "Expected a JSON value.");
+		th.addError(1, 21, "Expected '}' and instead saw '/$^/'.");
+		th.addError(1, 21, "Unrecoverable syntax error. (100% scanned).");
 		th.test(objBadValue, new LinterOptions().set("multistr", true).set("es3", true));
 		th.test(objBadValue, new LinterOptions().set("multistr", true)); // es5
 		th.test(objBadValue, new LinterOptions().set("multistr", true).set("esnext", true));
@@ -971,77 +989,99 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/comma.js");
 		
-		th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(15, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(15, "Missing semicolon.");
-	    th.addError(20, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(30, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(35, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(35, "Missing semicolon.");
-	    th.addError(36, "Unexpected 'if'.");
-	    th.addError(43, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(43, "Missing semicolon.");
-	    th.addError(44, "Unexpected '}'.");
+		th.addError(2, 92, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(15, 1, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(15, 5, "Missing semicolon.");
+	    th.addError(15, 6, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(15, 10, "Missing semicolon.");
+	    th.addError(15, 29, "Missing semicolon.");
+	    th.addError(20, 45, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(30, 69, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(35, 8, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(35, 9, "Missing semicolon.");
+	    th.addError(36, 3, "Unexpected 'if'.");
+	    th.addError(43, 10, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(43, 11, "Missing semicolon.");
+	    th.addError(44, 1, "Unexpected '}'.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		// Regression test (GH-56)
-		th.reset();
-		th.addError(4, "Expected an assignment or function call and instead saw an expression.");
+		th.newTest();
+		th.addError(4, 65, "Expected an assignment or function call and instead saw an expression.");
 		th.test(th.readFile("src/test/resources/fixtures/gh56.js"));
 		
 		// Regression test (GH-363)
-		th.reset();
-		th.addError(1, "Extra comma. (it breaks older versions of IE)");
+		th.newTest();
+		th.addError(1, 11, "Extra comma. (it breaks older versions of IE)");
 		th.test("var f = [1,];", new LinterOptions().set("es3", true));
+		
+		th.newTest();
+		th.addError(3, 6, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(3, 7, "Missing semicolon.");
+	    th.addError(3, 8, "Unexpected 'break'.");
+		th.test(new String[] {
+			"var a;",
+			"while(true) {",
+			"  a=1, break;",
+			"}"
+		}, new LinterOptions());
 	}
 	
 	@Test
 	public void testGH2587()
 	{
-		th.addError(1, "Expected an identifier and instead saw 'if'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
-	    th.addError(1, "Expected '===' and instead saw '=='.");
+		th.addError(1, 9, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 9, "Unrecoverable syntax error. (100% scanned).");
+	    th.addError(1, 8, "Expected '===' and instead saw '=='.");
 	    th.test(new String[] {
 	    	"true == if"
 	    }, new LinterOptions().set("eqeqeq", true).set("eqnull", true));
 	    
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw 'if'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
-	    th.addError(1, "Expected '!==' and instead saw '!='.");
+	    th.newTest();
+	    th.addError(1, 9, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 9, "Unrecoverable syntax error. (100% scanned).");
+	    th.addError(1, 8, "Expected '!==' and instead saw '!='.");
 	    th.test(new String[] {
 	    	"true != if"
 	    }, new LinterOptions().set("eqeqeq", true).set("eqnull", true));
 	    
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw 'if'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+	    th.newTest();
+	    th.addError(1, 9, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 9, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(new String[] {
 	    	"true == if"
 	    }, new LinterOptions());
 	    
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw 'if'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+	    th.newTest();
+	    th.addError(1, 9, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 9, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(new String[] {
 	    	"true != if"
 	    }, new LinterOptions());
 	    
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw 'if'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+	    th.newTest();
+	    th.addError(1, 10, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 10, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(new String[] {
 	    	"true === if"
 	    }, new LinterOptions());
 	    th.test(new String[] {
 	    	"true !== if"
 	    }, new LinterOptions());
+	    
+	    th.newTest();
+	    th.addError(1, 8, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 8, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(new String[] {
 	    	"true > if"
 	    }, new LinterOptions());
 	    th.test(new String[] {
 	    	"true < if"
 	    }, new LinterOptions());
+	    
+	    th.newTest();
+	    th.addError(1, 9, "Expected an identifier and instead saw 'if'.");
+	    th.addError(1, 9, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(new String[] {
 	    	"true >= if"
 	    }, new LinterOptions());
@@ -1053,16 +1093,25 @@ public class TestParser extends Assert
 	@Test
 	public void testBadAssignments()
 	{
-		th.addError(1, "Bad assignment.");
+		th.addError(1, 5, "Bad assignment.");
 	    th.test(new String[] {
 	    	"a() = 1;"
 	    }, new LinterOptions());
+	    
+	    th.newTest();
+	    th.addError(1, 7, "Bad assignment.");
 	    th.test(new String[] {
 	    	"a.a() = 1;"
 	    }, new LinterOptions());
+	    
+	    th.newTest();
+	    th.addError(1, 16, "Bad assignment.");
 	    th.test(new String[] {
 	    	"(function(){}) = 1;"
 	    }, new LinterOptions());
+	    
+	    th.newTest();
+	    th.addError(1, 7, "Bad assignment.");
 	    th.test(new String[] {
 	    	"a.a() &= 1;"
 	    }, new LinterOptions());
@@ -1073,15 +1122,15 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/with.js");
 		
-		th.addError(5, "Don't use 'with'.");
-	    th.addError(13, "'with' is not allowed in strict mode.");
+		th.addError(5, 1, "Don't use 'with'.");
+	    th.addError(13, 5, "'with' is not allowed in strict mode.");
 	    th.test(src, new LinterOptions().set("es3", true));
 		th.test(src); // es5
 		th.test(src, new LinterOptions().set("esnext", true));
 		th.test(src, new LinterOptions().set("moz", true));
 		
-		th.reset();
-		th.addError(13, "'with' is not allowed in strict mode.");
+		th.newTest();
+		th.addError(13, 5, "'with' is not allowed in strict mode.");
 	    th.test(src, new LinterOptions().set("withstmt", true).set("es3", true));
 		th.test(src, new LinterOptions().set("withstmt", true)); // es5
 		th.test(src, new LinterOptions().set("withstmt", true).set("esnext", true));
@@ -1093,8 +1142,8 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/blocks.js");
 		
-		th.addError(31, "Unmatched \'{\'.");
-	    th.addError(32, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(31, 5, "Unmatched \'{\'.");
+	    th.addError(32, 1, "Unrecoverable syntax error. (100% scanned).");
 	    th.test(src, new LinterOptions().set("es3", true));
 		th.test(src, new LinterOptions()); // es5
 		th.test(src, new LinterOptions().set("esnext", true));
@@ -1127,11 +1176,11 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/exported.js");
 		
-		th.addError(5, "'unused' is defined but never used.");
-	    th.addError(6, "'isDog' is defined but never used.");
-	    th.addError(13, "'unusedDeclaration' is defined but never used.");
-	    th.addError(14, "'unusedExpression' is defined but never used.");
-	    th.addError(17, "'cannotBeExported' is defined but never used.");
+		th.addError(5, 7, "'unused' is defined but never used.");
+	    th.addError(6, 7, "'isDog' is defined but never used.");
+	    th.addError(13, 10, "'unusedDeclaration' is defined but never used.");
+	    th.addError(14, 5, "'unusedExpression' is defined but never used.");
+	    th.addError(17, 12, "'cannotBeExported' is defined but never used.");
 	    
 	    th.test(src, new LinterOptions().set("es3", true).set("unused", true));
 		th.test(src, new LinterOptions().set("unused", true)); // es5
@@ -1139,11 +1188,11 @@ public class TestParser extends Assert
 		th.test(src, new LinterOptions().set("moz", true).set("unused", true));
 		th.test(src, new LinterOptions().set("unused", true).set("latedef", true));
 		
-		th.reset();
-		th.addError(1, "'unused' is defined but never used.");
+		th.newTest();
+		th.addError(1, 5, "'unused' is defined but never used.");
 		th.test("var unused = 1; var used = 2;", new LinterOptions().addExporteds("used").set("unused", true));
 		
-		th.reset();
+		th.newTest("exported vars aren't used before definition");
 		th.test("var a;", new LinterOptions().addExporteds("a").set("latedef", true));
 		
 		String[] code = {
@@ -1156,15 +1205,15 @@ public class TestParser extends Assert
 		    "}",
 		    "/* exported g, h */"
 		};
-		th.reset();
-		th.addError(4, "'a' is defined but never used.");
-	    th.addError(4, "'c' is defined but never used.");
-	    th.addError(4, "'e' is defined but never used.");
-	    th.addError(4, "'g' is defined but never used.");
-	    th.addError(5, "'b' is defined but never used.");
-	    th.addError(5, "'d' is defined but never used.");
-	    th.addError(5, "'f' is defined but never used.");
-	    th.addError(5, "'h' is defined but never used.");
+		th.newTest("blockscoped variables");
+		th.addError(4, 7, "'a' is defined but never used.");
+	    th.addError(4, 10, "'c' is defined but never used.");
+	    th.addError(4, 13, "'e' is defined but never used.");
+	    th.addError(4, 16, "'g' is defined but never used.");
+	    th.addError(5, 10, "'b' is defined but never used.");
+	    th.addError(5, 13, "'d' is defined but never used.");
+	    th.addError(5, 16, "'f' is defined but never used.");
+	    th.addError(5, 19, "'h' is defined but never used.");
 	    th.test(code, new LinterOptions().set("esversion", 6).set("unused", true));
 	}
 	
@@ -1175,50 +1224,46 @@ public class TestParser extends Assert
 		
 		th.test(src, new LinterOptions().set("es3", true));
 		
-		th.addError(1, "'ascii' is defined but never used.");
-	    th.addError(2, "'num1' is defined but never used.");
-	    th.addError(3, "'lifé' is defined but never used.");
-	    th.addError(4, "'π' is defined but never used.");
-	    th.addError(5, "'привет' is defined but never used.");
-	    th.addError(6, "'\\u1d44' is defined but never used.");
-	    th.addError(7, "'encoded\\u1d44' is defined but never used.");
-	    th.addError(8, "'\\uFF38' is defined but never used.");
-	    th.addError(9, "'\\uFF58' is defined but never used.");
-	    th.addError(10, "'\\u1FBC' is defined but never used.");
-	    th.addError(11, "'\\uFF70' is defined but never used.");
-	    th.addError(12, "'\\u4DB3' is defined but never used.");
-	    th.addError(13, "'\\u97CA' is defined but never used.");
-	    th.addError(14, "'\\uD7A1' is defined but never used.");
-	    th.addError(15, "'\\uFFDA' is defined but never used.");
-	    th.addError(16, "'\\uA6ED' is defined but never used.");
-	    th.addError(17, "'\\u0024' is defined but never used.");
-	    th.addError(18, "'\\u005F' is defined but never used.");
-	    th.addError(19, "'\\u0024\\uFF38' is defined but never used.");
-	    th.addError(20, "'\\u0024\\uFF58' is defined but never used.");
-	    th.addError(21, "'\\u0024\\u1FBC' is defined but never used.");
-	    th.addError(22, "'\\u0024\\uFF70' is defined but never used.");
-	    th.addError(23, "'\\u0024\\u4DB3' is defined but never used.");
-	    th.addError(24, "'\\u0024\\u97CA' is defined but never used.");
-	    th.addError(25, "'\\u0024\\uD7A1' is defined but never used.");
-	    th.addError(26, "'\\u0024\\uFFDA' is defined but never used.");
-	    th.addError(27, "'\\u0024\\uA6ED' is defined but never used.");
-	    th.addError(28, "'\\u0024\\uFE24' is defined but never used.");
-	    th.addError(29, "'\\u0024\\uABE9' is defined but never used.");
-	    th.addError(30, "'\\u0024\\uFF17' is defined but never used.");
-	    th.addError(31, "'\\u0024\\uFE4E' is defined but never used.");
-	    th.addError(32, "'\\u0024\\u200C' is defined but never used.");
-	    th.addError(33, "'\\u0024\\u200D' is defined but never used.");
-	    th.addError(34, "'\\u0024\\u0024' is defined but never used.");
-	    th.addError(35, "'\\u0024\\u005F' is defined but never used.");
+		th.addError(1, 5, "'ascii' is defined but never used.");
+	    th.addError(2, 5, "'num1' is defined but never used.");
+	    th.addError(3, 5, "'lifé' is defined but never used.");
+	    th.addError(4, 5, "'π' is defined but never used.");
+	    th.addError(5, 5, "'привет' is defined but never used.");
+	    th.addError(6, 5, "'\\u1d44' is defined but never used.");
+	    th.addError(7, 5, "'encoded\\u1d44' is defined but never used.");
+	    th.addError(8, 5, "'\\uFF38' is defined but never used.");
+	    th.addError(9, 5, "'\\uFF58' is defined but never used.");
+	    th.addError(10, 5, "'\\u1FBC' is defined but never used.");
+	    th.addError(11, 5, "'\\uFF70' is defined but never used.");
+	    th.addError(12, 5, "'\\u4DB3' is defined but never used.");
+	    th.addError(13, 5, "'\\u97CA' is defined but never used.");
+	    th.addError(14, 5, "'\\uD7A1' is defined but never used.");
+	    th.addError(15, 5, "'\\uFFDA' is defined but never used.");
+	    th.addError(16, 5, "'\\uA6ED' is defined but never used.");
+	    th.addError(17, 5, "'\\u0024' is defined but never used.");
+	    th.addError(18, 5, "'\\u005F' is defined but never used.");
+	    th.addError(19, 5, "'\\u0024\\uFF38' is defined but never used.");
+	    th.addError(20, 5, "'\\u0024\\uFF58' is defined but never used.");
+	    th.addError(21, 5, "'\\u0024\\u1FBC' is defined but never used.");
+	    th.addError(22, 5, "'\\u0024\\uFF70' is defined but never used.");
+	    th.addError(23, 5, "'\\u0024\\u4DB3' is defined but never used.");
+	    th.addError(24, 5, "'\\u0024\\u97CA' is defined but never used.");
+	    th.addError(25, 5, "'\\u0024\\uD7A1' is defined but never used.");
+	    th.addError(26, 5, "'\\u0024\\uFFDA' is defined but never used.");
+	    th.addError(27, 5, "'\\u0024\\uA6ED' is defined but never used.");
+	    th.addError(28, 5, "'\\u0024\\uFE24' is defined but never used.");
+	    th.addError(29, 5, "'\\u0024\\uABE9' is defined but never used.");
+	    th.addError(30, 5, "'\\u0024\\uFF17' is defined but never used.");
+	    th.addError(31, 5, "'\\u0024\\uFE4E' is defined but never used.");
+	    th.addError(32, 5, "'\\u0024\\u200C' is defined but never used.");
+	    th.addError(33, 5, "'\\u0024\\u200D' is defined but never used.");
+	    th.addError(34, 5, "'\\u0024\\u0024' is defined but never used.");
+	    th.addError(35, 5, "'\\u0024\\u005F' is defined but never used.");
 	    
 	    th.test(src, new LinterOptions().set("es3", true).set("unused", true));
 		th.test(src, new LinterOptions().set("unused", true)); // es5
 		th.test(src, new LinterOptions().set("esnext", true).set("unused", true));
 		th.test(src, new LinterOptions().set("moz", true).set("unused", true));
-		
-		th.reset();
-		th.addError(1, "'unused' is defined but never used.");
-		th.test("var unused = 1; var used = 2;", new LinterOptions().addExporteds("used").set("unused", true));
 	}
 	
 	@Test
@@ -1228,9 +1273,9 @@ public class TestParser extends Assert
 			"var \\uNOTHEX;"
 		};
 		
-		th.addError(1, "Unexpected '\\'.");
-		th.addError(1, "Expected an identifier and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 5, "Unexpected '\\'.");
+		th.addError(1, 1, "Expected an identifier and instead saw ''.");
+		th.addError(1, 5, "Unrecoverable syntax error. (100% scanned).");
 		th.test(badUnicode, new LinterOptions().set("es3", true));
 		th.test(badUnicode, new LinterOptions()); // es5
 		th.test(badUnicode, new LinterOptions().set("esnext", true));
@@ -1240,9 +1285,10 @@ public class TestParser extends Assert
 			"var \\u0000;"
 		};
 		
-		th.addError(1, "Unexpected '\\'.");
-		th.addError(1, "Expected an identifier and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 5, "Unexpected '\\'.");
+		th.addError(1, 1, "Expected an identifier and instead saw ''.");
+		th.addError(1, 5, "Unrecoverable syntax error. (100% scanned).");
 		th.test(invalidUnicodeIdent, new LinterOptions().set("es3", true));
 		th.test(invalidUnicodeIdent, new LinterOptions()); // es5
 		th.test(invalidUnicodeIdent, new LinterOptions().set("esnext", true));
@@ -1262,15 +1308,17 @@ public class TestParser extends Assert
 	{
 		String src = "(function () { if (true) { foo.bar + } })();";
 		
-		th.addError(1, "Expected an identifier and instead saw '}'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Missing semicolon.");
-	    th.addError(1, "Expected an identifier and instead saw ')'.");
-	    th.addError(1, "Expected an operator and instead saw '('.");
-	    th.addError(1, "Unmatched '{'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Missing semicolon.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 38, "Expected an identifier and instead saw '}'.");
+	    th.addError(1, 38, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, 39, "Missing semicolon.");
+	    th.addError(1, 41, "Expected an identifier and instead saw ')'.");
+	    th.addError(1, 42, "Expected an operator and instead saw '('.");
+	    th.addError(1, 42, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, 43, "Missing semicolon.");
+	    th.addError(1, 43, "Expected an identifier and instead saw ')'.");
+	    th.addError(1, 43, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, 14, "Unmatched '{'.");
+	    th.addError(1, 44, "Unrecoverable syntax error. (100% scanned).");
 		th.test(src, new LinterOptions().set("es3", true).set("nonew", true));
 	}
 	
@@ -1279,11 +1327,11 @@ public class TestParser extends Assert
 	{
 		String html = "<html><body>Hello World</body></html>";
 		
-		th.addError(1, "Expected an identifier and instead saw '<'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Missing semicolon.");
-	    th.addError(1, "Expected an identifier and instead saw '<'.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 1, "Expected an identifier and instead saw '<'.");
+	    th.addError(1, 1, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, 2, "Missing semicolon.");
+	    th.addError(1, 7, "Expected an identifier and instead saw '<'.");
+	    th.addError(1, 7, "Unrecoverable syntax error. (100% scanned).");
 		th.test(html, new LinterOptions());
 	}
 	
@@ -1306,36 +1354,36 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1,  "'foobar' is defined but never used.");
-	    th.addError(3,  "'a' is already defined.");
-	    th.addError(4,  "'a' is already defined.");
-	    th.addError(7,  "'a' is already defined.");
-	    th.addError(7,  "'b' is already defined.");
-	    th.addError(7,  "'c' is already defined.");
-	    th.addError(9,  "'a' is already defined.");
-	    th.addError(9,  "'bar' is already defined.");
-	    th.addError(10,  "Expected an identifier and instead saw '1'.");
-	    th.addError(11, "Expected ',' and instead saw ';'.");
-	    th.addError(11, "'a' is already defined.");
-	    th.addError(11, "'b' is already defined.");
-	    th.addError(11, "'c' is already defined.");
-	    th.addError(12, "'a' is already defined.");
-	    th.addError(12, "'b' is already defined.");
-	    th.addError(12, "'c' is already defined.");
-	    th.addError(12, "Expected ']' to match '[' from line 12 and instead saw ';'.");
-	    th.addError(12, "Missing semicolon.");
-	    th.addError(12, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(12, "Missing semicolon.");
-	    th.addError(12, "Expected an identifier and instead saw ']'.");
-	    th.addError(12, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(4,  "'z' is not defined.");
-	    th.addError(12, "'b' is defined but never used.");
-	    th.addError(12, "'c' is defined but never used.");
-	    th.addError(5,  "'h' is defined but never used.");
-	    th.addError(5,  "'w' is defined but never used.");
-	    th.addError(6,  "'o' is defined but never used.");
-	    th.addError(7,  "'d' is defined but never used.");
-	    th.addError(9,  "'bar' is defined but never used.");
+		th.addError(1, 10,  "'foobar' is defined but never used.");
+		th.addError(3, 9,  "'a' is already defined.");
+		th.addError(4, 9,  "'a' is already defined.");
+		th.addError(7, 9,  "'a' is already defined.");
+		th.addError(7, 18,  "'b' is already defined.");
+		th.addError(7, 23,  "'c' is already defined.");
+		th.addError(9, 9,  "'a' is already defined.");
+		th.addError(9, 20,  "'bar' is already defined.");
+		th.addError(10, 9,  "Expected an identifier and instead saw '1'.");
+		th.addError(11, 13, "Expected ',' and instead saw ';'.");
+		th.addError(11, 9, "'a' is already defined.");
+		th.addError(11, 12, "'b' is already defined.");
+		th.addError(11, 15, "'c' is already defined.");
+		th.addError(12, 9, "'a' is already defined.");
+		th.addError(12, 12, "'b' is already defined.");
+		th.addError(12, 15, "'c' is already defined.");
+		th.addError(12, 27, "Expected ']' to match '[' from line 12 and instead saw ';'.");
+		th.addError(12, 28, "Missing semicolon.");
+		th.addError(12, 29, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(12, 30, "Missing semicolon.");
+		th.addError(12, 31, "Expected an identifier and instead saw ']'.");
+		th.addError(12, 31, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(4, 17,  "'z' is not defined.");
+		th.addError(12, 12, "'b' is defined but never used.");
+		th.addError(12, 15, "'c' is defined but never used.");
+		th.addError(5, 9,  "'h' is defined but never used.");
+		th.addError(5, 12,  "'w' is defined but never used.");
+		th.addError(6, 9,  "'o' is defined but never used.");
+		th.addError(7, 28,  "'d' is defined but never used.");
+		th.addError(9, 20,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1353,15 +1401,15 @@ public class TestParser extends Assert
 		    "var [ a, { foo : bar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(3,  "'z' is not defined.");
-	    th.addError(8,  "'a' is defined but never used.");
-	    th.addError(6,  "'b' is defined but never used.");
-	    th.addError(6,  "'c' is defined but never used.");
-	    th.addError(4,  "'h' is defined but never used.");
-	    th.addError(4,  "'w' is defined but never used.");
-	    th.addError(5,  "'o' is defined but never used.");
-	    th.addError(6,  "'d' is defined but never used.");
-	    th.addError(8,  "'bar' is defined but never used.");
+		th.addError(3, 15,  "'z' is not defined.");
+		th.addError(8, 7,  "'a' is defined but never used.");
+		th.addError(6, 16,  "'b' is defined but never used.");
+		th.addError(6, 21,  "'c' is defined but never used.");
+		th.addError(4, 7,  "'h' is defined but never used.");
+		th.addError(4, 10,  "'w' is defined but never used.");
+		th.addError(5, 7,  "'o' is defined but never used.");
+		th.addError(6, 26,  "'d' is defined but never used.");
+		th.addError(8, 18,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1379,15 +1427,15 @@ public class TestParser extends Assert
 		    "var [ a, { foo : bar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(3,  "'z' is not defined.");
-	    th.addError(8,  "'a' is defined but never used.");
-	    th.addError(6,  "'b' is defined but never used.");
-	    th.addError(6,  "'c' is defined but never used.");
-	    th.addError(4,  "'h' is defined but never used.");
-	    th.addError(4,  "'w' is defined but never used.");
-	    th.addError(5,  "'o' is defined but never used.");
-	    th.addError(6,  "'d' is defined but never used.");
-	    th.addError(8,  "'bar' is defined but never used.");
+		th.addError(3, 15,  "'z' is not defined.");
+		th.addError(8, 7,  "'a' is defined but never used.");
+		th.addError(6, 16,  "'b' is defined but never used.");
+		th.addError(6, 21,  "'c' is defined but never used.");
+		th.addError(4, 7,  "'h' is defined but never used.");
+		th.addError(4, 10,  "'w' is defined but never used.");
+		th.addError(5, 7,  "'o' is defined but never used.");
+		th.addError(6, 26,  "'d' is defined but never used.");
+		th.addError(8, 18,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1405,26 +1453,23 @@ public class TestParser extends Assert
 		    "var [ a, { foo : bar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3,  "'z' is not defined.");
-	    th.addError(8,  "'a' is defined but never used.");
-	    th.addError(6,  "'b' is defined but never used.");
-	    th.addError(6,  "'c' is defined but never used.");
-	    th.addError(4,  "'h' is defined but never used.");
-	    th.addError(4,  "'w' is defined but never used.");
-	    th.addError(5,  "'o' is defined but never used.");
-	    th.addError(6,  "'d' is defined but never used.");
-	    th.addError(8,  "'bar' is defined but never used.");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 15,  "'z' is not defined.");
+		th.addError(8, 7,  "'a' is defined but never used.");
+		th.addError(6, 16,  "'b' is defined but never used.");
+		th.addError(6, 21,  "'c' is defined but never used.");
+		th.addError(4, 7,  "'h' is defined but never used.");
+		th.addError(4, 10,  "'w' is defined but never used.");
+		th.addError(5, 7,  "'o' is defined but never used.");
+		th.addError(6, 26,  "'d' is defined but never used.");
+		th.addError(8, 18,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true)); // es5
 	}
 	
@@ -1442,26 +1487,23 @@ public class TestParser extends Assert
 		    "var [ a, { foo : bar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3,  "'z' is not defined.");
-	    th.addError(8,  "'a' is defined but never used.");
-	    th.addError(6,  "'b' is defined but never used.");
-	    th.addError(6,  "'c' is defined but never used.");
-	    th.addError(4,  "'h' is defined but never used.");
-	    th.addError(4,  "'w' is defined but never used.");
-	    th.addError(5,  "'o' is defined but never used.");
-	    th.addError(6,  "'d' is defined but never used.");
-	    th.addError(8,  "'bar' is defined but never used.");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 15,  "'z' is not defined.");
+		th.addError(8, 7,  "'a' is defined but never used.");
+		th.addError(6, 16,  "'b' is defined but never used.");
+		th.addError(6, 21,  "'c' is defined but never used.");
+		th.addError(4, 7,  "'h' is defined but never used.");
+		th.addError(4, 10,  "'w' is defined but never used.");
+		th.addError(5, 7,  "'o' is defined but never used.");
+		th.addError(6, 26,  "'d' is defined but never used.");
+		th.addError(8, 18,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1482,22 +1524,22 @@ public class TestParser extends Assert
 		    "var [ a, b, c ] = [ 1, 2; 3 ];"
 		};
 		
-		th.addError(9,  "Expected an identifier and instead saw '1'.");
-	    th.addError(10, "Expected ',' and instead saw ';'.");
-	    th.addError(11, "Expected ']' to match '[' from line 11 and instead saw ';'.");
-	    th.addError(11, "Missing semicolon.");
-	    th.addError(11, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(11, "Missing semicolon.");
-	    th.addError(11, "Expected an identifier and instead saw ']'.");
-	    th.addError(11, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(3,  "'z' is not defined.");
-	    th.addError(11, "'b' is defined but never used.");
-	    th.addError(11, "'c' is defined but never used.");
-	    th.addError(4,  "'h' is defined but never used.");
-	    th.addError(4,  "'w' is defined but never used.");
-	    th.addError(5,  "'o' is defined but never used.");
-	    th.addError(6,  "'d' is defined but never used.");
-	    th.addError(8,  "'bar' is defined but never used.");
+		th.addError(9, 7,  "Expected an identifier and instead saw '1'.");
+		th.addError(10, 11, "Expected ',' and instead saw ';'.");
+		th.addError(11, 25, "Expected ']' to match '[' from line 11 and instead saw ';'.");
+		th.addError(11, 26, "Missing semicolon.");
+		th.addError(11, 27, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(11, 28, "Missing semicolon.");
+		th.addError(11, 29, "Expected an identifier and instead saw ']'.");
+		th.addError(11, 29, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(3, 15,  "'z' is not defined.");
+		th.addError(11, 10, "'b' is defined but never used.");
+		th.addError(11, 13, "'c' is defined but never used.");
+		th.addError(4, 7,  "'h' is defined but never used.");
+		th.addError(4, 10,  "'w' is defined but never used.");
+		th.addError(5, 7,  "'o' is defined but never used.");
+		th.addError(6, 26,  "'d' is defined but never used.");
+		th.addError(8, 18,  "'bar' is defined but never used.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1516,25 +1558,25 @@ public class TestParser extends Assert
 		    "const [ aa, bb ] = yield func();"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(1, "'b' is defined but never used.");
-	    th.addError(1, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(4, "'hel' is defined but never used.");
-	    th.addError(4, "'wor' is defined but never used.");
-	    th.addError(5, "'o' is defined but never used.");
-	    th.addError(6, "'f' is defined but never used.");
-	    th.addError(6, "'g' is defined but never used.");
-	    th.addError(6, "'h' is defined but never used.");
-	    th.addError(6, "'i' is defined but never used.");
-	    th.addError(7, "'bar' is defined but never used.");
-	    th.addError(8, "'j' is defined but never used.");
-	    th.addError(8, "'foobar' is defined but never used.");
-	    th.addError(9, "'aa' is defined but never used.");
-	    th.addError(9, "'bb' is defined but never used.");
-	    th.addError(3, "'z' is not defined.");
-	    th.addError(9, "'func' is not defined.");
+		th.addError(1, 9, "'a' is defined but never used.");
+		th.addError(1, 12, "'b' is defined but never used.");
+		th.addError(1, 15, "'c' is defined but never used.");
+		th.addError(2, 9, "'d' is defined but never used.");
+		th.addError(3, 9, "'e' is defined but never used.");
+		th.addError(4, 9, "'hel' is defined but never used.");
+		th.addError(4, 14, "'wor' is defined but never used.");
+		th.addError(5, 9, "'o' is defined but never used.");
+		th.addError(6, 9, "'f' is defined but never used.");
+		th.addError(6, 18, "'g' is defined but never used.");
+		th.addError(6, 23, "'h' is defined but never used.");
+		th.addError(6, 28, "'i' is defined but never used.");
+		th.addError(7, 15, "'bar' is defined but never used.");
+		th.addError(8, 9, "'j' is defined but never used.");
+		th.addError(8, 20, "'foobar' is defined but never used.");
+		th.addError(9, 9, "'aa' is defined but never used.");
+		th.addError(9, 13, "'bb' is defined but never used.");
+		th.addError(3, 17, "'z' is not defined.");
+		th.addError(9, 26, "'func' is not defined.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1555,23 +1597,23 @@ public class TestParser extends Assert
 		    "[j['a']] = [1];"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(1, "'b' is defined but never used.");
-	    th.addError(1, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(4, "'hel' is defined but never used.");
-	    th.addError(4, "'wor' is defined but never used.");
-	    th.addError(5, "'o' is defined but never used.");
-	    th.addError(6, "'f' is defined but never used.");
-	    th.addError(6, "'g' is defined but never used.");
-	    th.addError(6, "'h' is defined but never used.");
-	    th.addError(6, "'i' is defined but never used.");
-	    th.addError(7, "'bar' is defined but never used.");
-	    th.addError(8, "'foobar' is defined but never used.");
-	    th.addError(9, "Attempting to override 'j' which is a constant.");
-	    th.addError(11, "['a'] is better written in dot notation.");
-	    th.addError(3, "'z' is not defined.");
+		th.addError(1, 9, "'a' is defined but never used.");
+		th.addError(1, 12, "'b' is defined but never used.");
+		th.addError(1, 15, "'c' is defined but never used.");
+		th.addError(2, 9, "'d' is defined but never used.");
+		th.addError(3, 9, "'e' is defined but never used.");
+		th.addError(4, 9, "'hel' is defined but never used.");
+		th.addError(4, 14, "'wor' is defined but never used.");
+		th.addError(5, 9, "'o' is defined but never used.");
+		th.addError(6, 9, "'f' is defined but never used.");
+		th.addError(6, 18, "'g' is defined but never used.");
+		th.addError(6, 23, "'h' is defined but never used.");
+		th.addError(6, 28, "'i' is defined but never used.");
+		th.addError(7, 15, "'bar' is defined but never used.");
+		th.addError(8, 20, "'foobar' is defined but never used.");
+		th.addError(9, 2, "Attempting to override 'j' which is a constant.");
+		th.addError(11, 3, "['a'] is better written in dot notation.");
+		th.addError(3, 17, "'z' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1589,40 +1631,38 @@ public class TestParser extends Assert
 		    "const [ j, { foo : foobar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'a' is defined but never used.");
-	    th.addError(1, "'b' is defined but never used.");
-	    th.addError(1, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(4, "'hel' is defined but never used.");
-	    th.addError(4, "'wor' is defined but never used.");
-	    th.addError(5, "'o' is defined but never used.");
-	    th.addError(6, "'f' is defined but never used.");
-	    th.addError(6, "'g' is defined but never used.");
-	    th.addError(6, "'h' is defined but never used.");
-	    th.addError(6, "'i' is defined but never used.");
-	    th.addError(7, "'bar' is defined but never used.");
-	    th.addError(8, "'j' is defined but never used.");
-	    th.addError(8, "'foobar' is defined but never used.");
-	    th.addError(3, "'z' is not defined.");
+		th.addError(1, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 9, "'a' is defined but never used.");
+		th.addError(1, 12, "'b' is defined but never used.");
+		th.addError(1, 15, "'c' is defined but never used.");
+		th.addError(2, 9, "'d' is defined but never used.");
+		th.addError(3, 9, "'e' is defined but never used.");
+		th.addError(4, 9, "'hel' is defined but never used.");
+		th.addError(4, 14, "'wor' is defined but never used.");
+		th.addError(5, 9, "'o' is defined but never used.");
+		th.addError(6, 9, "'f' is defined but never used.");
+		th.addError(6, 18, "'g' is defined but never used.");
+		th.addError(6, 23, "'h' is defined but never used.");
+		th.addError(6, 28, "'i' is defined but never used.");
+		th.addError(7, 15, "'bar' is defined but never used.");
+		th.addError(8, 9, "'j' is defined but never used.");
+		th.addError(8, 20, "'foobar' is defined but never used.");
+		th.addError(3, 17, "'z' is not defined.");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true)); // es5
 	}
 	
@@ -1640,40 +1680,38 @@ public class TestParser extends Assert
 		    "const [ j, { foo : foobar } ] = [ 2, { foo : 1 } ];"
 		};
 		
-		th.addError(1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'a' is defined but never used.");
-	    th.addError(1, "'b' is defined but never used.");
-	    th.addError(1, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(4, "'hel' is defined but never used.");
-	    th.addError(4, "'wor' is defined but never used.");
-	    th.addError(5, "'o' is defined but never used.");
-	    th.addError(6, "'f' is defined but never used.");
-	    th.addError(6, "'g' is defined but never used.");
-	    th.addError(6, "'h' is defined but never used.");
-	    th.addError(6, "'i' is defined but never used.");
-	    th.addError(7, "'bar' is defined but never used.");
-	    th.addError(8, "'j' is defined but never used.");
-	    th.addError(8, "'foobar' is defined but never used.");
-	    th.addError(3, "'z' is not defined.");
+		th.addError(1, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 9, "'a' is defined but never used.");
+		th.addError(1, 12, "'b' is defined but never used.");
+		th.addError(1, 15, "'c' is defined but never used.");
+		th.addError(2, 9, "'d' is defined but never used.");
+		th.addError(3, 9, "'e' is defined but never used.");
+		th.addError(4, 9, "'hel' is defined but never used.");
+		th.addError(4, 14, "'wor' is defined but never used.");
+		th.addError(5, 9, "'o' is defined but never used.");
+		th.addError(6, 9, "'f' is defined but never used.");
+		th.addError(6, 18, "'g' is defined but never used.");
+		th.addError(6, 23, "'h' is defined but never used.");
+		th.addError(6, 28, "'i' is defined but never used.");
+		th.addError(7, 15, "'bar' is defined but never used.");
+		th.addError(8, 9, "'j' is defined but never used.");
+		th.addError(8, 20, "'foobar' is defined but never used.");
+		th.addError(3, 17, "'z' is not defined.");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1691,26 +1729,25 @@ public class TestParser extends Assert
 		    "({a:q.a} = {a:1});"
 		};
 		
-		th.addError(2, "'b' is defined but never used.");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(4, "'k' is defined but never used.");
-	    th.addError(4, "'l' is defined but never used.");
-	    th.addError(4, "'m' is defined but never used.");
-	    th.addError(5, "'n' is defined but never used.");
-	    th.addError(5, "'o' is defined but never used.");
-	    th.addError(5, "'p' is defined but never used.");
-	    th.addError(2, "'a' has already been declared.");
-	    th.addError(2, "'b' has already been declared.");
-	    th.addError(2, "'c' has already been declared.");
-	    th.addError(3, "Expected an identifier and instead saw '1'.");
-	    th.addError(4, "Expected ',' and instead saw ';'.");
-	    th.addError(5, "Expected ']' to match '[' from line 5 and instead saw ';'.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(5, "Expected an identifier and instead saw ']'.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
+		th.addError(2, 12, "'b' is defined but never used.");
+		th.addError(2, 15, "'c' is defined but never used.");
+		th.addError(4, 9, "'k' is defined but never used.");
+		th.addError(4, 12, "'l' is defined but never used.");
+		th.addError(4, 15, "'m' is defined but never used.");
+		th.addError(5, 9, "'n' is defined but never used.");
+		th.addError(5, 12, "'o' is defined but never used.");
+		th.addError(5, 15, "'p' is defined but never used.");
+		th.addError(2, 9, "'a' has already been declared.");
+		th.addError(2, 12, "'b' has already been declared.");
+		th.addError(2, 15, "'c' has already been declared.");
+		th.addError(3, 9, "Expected an identifier and instead saw '1'.");
+		th.addError(4, 13, "Expected ',' and instead saw ';'.");
+		th.addError(5, 27, "Expected ']' to match '[' from line 5 and instead saw ';'.");
+		th.addError(5, 28, "Missing semicolon.");
+		th.addError(5, 29, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(5, 30, "Missing semicolon.");
+		th.addError(5, 31, "Expected an identifier and instead saw ']'.");
+		th.addError(5, 31, "Expected an assignment or function call and instead saw an expression.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1733,10 +1770,10 @@ public class TestParser extends Assert
 		    "[,...a.b] = [1];"
 		};
 		
-		th.addError(4,  "'z' is not defined.");
-		th.addError(11, "['b'] is better written in dot notation.");
-	    th.addError(12, "['b'] is better written in dot notation.");
-	    th.addError(13, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 11,  "'z' is not defined.");
+		th.addError(11, 9, "['b'] is better written in dot notation.");
+		th.addError(12, 3, "['b'] is better written in dot notation.");
+		th.addError(13, 3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1762,11 +1799,11 @@ public class TestParser extends Assert
 		    "[...notDefined2] = [];"
 		};
 		
-		th.addError(4,  "'z' is not defined.");
-		th.addError(11, "['b'] is better written in dot notation.");
-	    th.addError(12, "['b'] is better written in dot notation.");
-	    th.addError(15, "'notDefined1' is not defined.");
-	    th.addError(16, "'notDefined2' is not defined.");
+		th.addError(4, 11,  "'z' is not defined.");
+		th.addError(11, 9, "['b'] is better written in dot notation.");
+		th.addError(12, 3, "['b'] is better written in dot notation.");
+		th.addError(15, 2, "'notDefined1' is not defined.");
+		th.addError(16, 5, "'notDefined2' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1789,22 +1826,22 @@ public class TestParser extends Assert
 		    "[,...a.b] = [1];"
 		};
 		
-		th.addError(4,  "'z' is not defined.");
-	    th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "['b'] is better written in dot notation.");
-	    th.addError(11, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(12, "['b'] is better written in dot notation.");
-	    th.addError(12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 11,  "'z' is not defined.");
+		th.addError(2, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 9, "['b'] is better written in dot notation.");
+		th.addError(11, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(12, 3, "['b'] is better written in dot notation.");
+		th.addError(12, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true)); // es5
 	}
 	
@@ -1827,22 +1864,22 @@ public class TestParser extends Assert
 		    "[,...a.b] = [1];"
 		};
 		
-		th.addError(4,  "'z' is not defined.");
-	    th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "['b'] is better written in dot notation.");
-	    th.addError(11, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(12, "['b'] is better written in dot notation.");
-	    th.addError(12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 11,  "'z' is not defined.");
+		th.addError(2, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 9, "['b'] is better written in dot notation.");
+		th.addError(11, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(12, 3, "['b'] is better written in dot notation.");
+		th.addError(12, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true));
 	}
 	
@@ -1861,47 +1898,48 @@ public class TestParser extends Assert
 		    "[ { a: a() } ] = [];"
 		};
 		
-		th.addError(3, "Bad assignment.");
-	    th.addError(4, "Expected ',' and instead saw ';'.");
-	    th.addError(5, "Expected ']' to match '[' from line 5 and instead saw ';'.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(5, "Expected an identifier and instead saw ']'.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(6, "Bad assignment.");
-	    th.addError(7, "Expected ',' and instead saw '.'.");
-	    th.addError(8, "Bad assignment.");
-	    th.addError(9, "Bad assignment.");
-	    th.addError(2,  "'z' is not defined.");
+		th.addError(3, 3, "Bad assignment.");
+		th.addError(4, 7, "Expected ',' and instead saw ';'.");
+		th.addError(5, 21, "Expected ']' to match '[' from line 5 and instead saw ';'.");
+		th.addError(5, 22, "Missing semicolon.");
+		th.addError(5, 23, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(5, 24, "Missing semicolon.");
+		th.addError(5, 25, "Expected an identifier and instead saw ']'.");
+		th.addError(5, 25, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(6, 7, "Bad assignment.");
+		th.addError(7, 6, "Expected ',' and instead saw '.'.");
+		th.addError(8, 4, "Bad assignment.");
+		th.addError(9, 9, "Bad assignment.");
+		th.addError(2, 11,  "'z' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 		
-		th.reset();
-		th.addError(1, "Expected ',' and instead saw '['.");
-	    th.addError(1, "Expected ':' and instead saw ']'.");
-	    th.addError(1, "Expected an identifier and instead saw '}'.");
-	    th.addError(1, "Expected ',' and instead saw ']'.");
-	    th.addError(1, "Expected an identifier and instead saw '{'.");
-	    th.addError(1, "Expected ',' and instead saw 'a'.");
-	    th.addError(1, "Expected an identifier and instead saw ':'.");
-	    th.addError(1, "Expected ',' and instead saw '1'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Expected an identifier and instead saw '='.");
+		th.newTest();
+		th.addError(1, 6, "Expected ',' and instead saw '['.");
+		th.addError(1, 10, "Expected ':' and instead saw ']'.");
+		th.addError(1, 12, "Expected an identifier and instead saw '}'.");
+		th.addError(1, 14, "Expected ',' and instead saw ']'.");
+		th.addError(1, 18, "Expected ',' and instead saw '['.");
+		th.addError(1, 19, "Expected an identifier and instead saw '{'.");
+		th.addError(1, 20, "Expected ',' and instead saw 'a'.");
+		th.addError(1, 21, "Expected an identifier and instead saw ':'.");
+		th.addError(1, 22, "Expected ',' and instead saw '1'.");
+		th.addError(1, 24, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(1, 16, "Expected an identifier and instead saw '='.");
 	    th.test("[ { a['b'] } ] = [{a:1}];", new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	    
-	    th.reset();
-	    th.addError(1, "Expected ',' and instead saw '('.");
-	    th.addError(1, "Expected an identifier and instead saw ')'.");
+	    th.newTest();
+	    th.addError(1, 6, "Expected ',' and instead saw '('.");
+	    th.addError(1, 7, "Expected an identifier and instead saw ')'.");
 	    th.test("[ { a() } ] = [];", new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	    
-	    th.reset();
-	    th.addError(1, "Extending prototype of native object: 'Number'.");
-	    th.addError(3, "Bad assignment.");
-	    th.addError(4, "Bad assignment.");
-	    th.addError(6, "Do not assign to the exception parameter.");
-	    th.addError(7, "Do not assign to the exception parameter.");
-	    th.addError(9, "Bad assignment.");
-	    th.addError(10, "Bad assignment.");
+	    th.newTest();
+	    th.addError(1, 19, "Extending prototype of native object: 'Number'.");
+	    th.addError(3, 9, "Bad assignment.");
+	    th.addError(4, 14, "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.");
+	    th.addError(6, 7, "Do not assign to the exception parameter.");
+	    th.addError(7, 6, "Do not assign to the exception parameter.");
+	    th.addError(9, 9, "Bad assignment.");
+	    th.addError(10, 10, "Bad assignment.");
 	    th.test(new String[]{
 	    	"[ Number.prototype.toString ] = [function(){}];",
 	        "function a() {",
@@ -1927,11 +1965,11 @@ public class TestParser extends Assert
 		    "var [ e, , f ] = [ 3, , 4 ];"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(3, "'f' is defined but never used.");
+		th.addError(1, 7, "'a' is defined but never used.");
+		th.addError(2, 7, "'c' is defined but never used.");
+		th.addError(2, 10, "'d' is defined but never used.");
+		th.addError(3, 7, "'e' is defined but never used.");
+		th.addError(3, 12, "'f' is defined but never used.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).set("laxcomma", true).set("elision", true));
 	}
 	
@@ -1944,11 +1982,11 @@ public class TestParser extends Assert
 		    "var [ e, , f ] = [ 3, , 4 ];"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(3, "'f' is defined but never used.");
+		th.addError(1, 7, "'a' is defined but never used.");
+		th.addError(2, 7, "'c' is defined but never used.");
+		th.addError(2, 10, "'d' is defined but never used.");
+		th.addError(3, 7, "'e' is defined but never used.");
+		th.addError(3, 12, "'f' is defined but never used.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).set("elision", true));
 	}
 	
@@ -1961,14 +1999,14 @@ public class TestParser extends Assert
 		    "var [ e, , f ] = [ 3, , 4 ];"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'a' is defined but never used.");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(3, "'f' is defined but never used.");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 7, "'a' is defined but never used.");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'c' is defined but never used.");
+		th.addError(2, 10, "'d' is defined but never used.");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 7, "'e' is defined but never used.");
+		th.addError(3, 12, "'f' is defined but never used.");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).set("elision", true)); // es5
 	}
 	
@@ -1981,15 +2019,15 @@ public class TestParser extends Assert
 		    "var [ e, , f ] = [ 3, , 4 ];"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'a' is defined but never used.");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'e' is defined but never used.");
-	    th.addError(3, "'f' is defined but never used.");
-	    th.addError(3, "Extra comma. (it breaks older versions of IE)");
+		th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 7, "'a' is defined but never used.");
+		th.addError(2, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'c' is defined but never used.");
+		th.addError(2, 10, "'d' is defined but never used.");
+		th.addError(3, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 7, "'e' is defined but never used.");
+		th.addError(3, 12, "'f' is defined but never used.");
+		th.addError(3, 23, "Extra comma. (it breaks older versions of IE)");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true));
 	}
 	
@@ -2013,14 +2051,14 @@ public class TestParser extends Assert
 		    "var [ ...y = 3 ] = [];"
 		};
 		
-		th.addError(4, "Expected an identifier and instead saw ','.");
-	    th.addError(4, "Expected ',' and instead saw 'g'.");
-	    th.addError(10, "Expected an identifier and instead saw ','.");
-	    th.addError(10, "Expected ',' and instead saw 't'.");
-	    th.addError(11, "It's not necessary to initialize 'u' to 'undefined'.");
-	    th.addError(12, "It's not necessary to initialize 'v' to 'undefined'.");
-	    th.addError(13, "It's not necessary to initialize 'x' to 'undefined'.");
-	    th.addError(14, "Expected ']' and instead saw '='.");
+		th.addError(4, 11, "Expected an identifier and instead saw ','.");
+		th.addError(4, 13, "Expected ',' and instead saw 'g'.");
+		th.addError(10, 11, "Expected an identifier and instead saw ','.");
+		th.addError(10, 13, "Expected ',' and instead saw 't'.");
+		th.addError(11, 7, "It's not necessary to initialize 'u' to 'undefined'.");
+		th.addError(12, 7, "It's not necessary to initialize 'v' to 'undefined'.");
+		th.addError(13, 10, "It's not necessary to initialize 'x' to 'undefined'.");
+		th.addError(14, 12, "Expected ']' and instead saw '='.");
 	    th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -2034,14 +2072,36 @@ public class TestParser extends Assert
 		    "[ new Ctor().attr ] = [];"
 		}, new LinterOptions().set("esversion", 6));
 		
-		th.addError(1, "Bad assignment.");
+		th.newTest();
+		th.addError(1, 6, "Bad assignment.");
 	    th.test("[ foo() ] = [];", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 10, "Bad assignment.");
 	    th.test("({ x: foo() } = {});", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 8, "Bad assignment.");
 	    th.test("[ true ? x : y ] = [];", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 12, "Bad assignment.");
 	    th.test("({ x: true ? x : y } = {});", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 5, "Bad assignment.");
 	    th.test("[ x || y ] = [];", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 9, "Bad assignment.");
 	    th.test("({ x: x || y } = {});", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 11, "Bad assignment.");
 	    th.test("[ new Ctor() ] = [];", new LinterOptions().set("esversion", 6));
+	    
+	    th.newTest();
+		th.addError(1, 15, "Bad assignment.");
 	    th.test("({ x: new Ctor() } = {});", new LinterOptions().set("esversion", 6));
 	}
 	
@@ -2054,15 +2114,15 @@ public class TestParser extends Assert
 		    "function fn({ 0: f, 'x': g, ['y']: h}) {}"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(1, "'b' is defined but never used.");
-	    th.addError(2, "'c' is defined but never used.");
-	    th.addError(2, "'d' is defined but never used.");
-	    th.addError(2, "'e' is defined but never used.");
-	    th.addError(3, "'fn' is defined but never used.");
-	    th.addError(3, "'f' is defined but never used.");
-	    th.addError(3, "'g' is defined but never used.");
-	    th.addError(3, "'h' is defined but never used.");
+		th.addError(1, 18, "'a' is defined but never used.");
+		th.addError(1, 28, "'b' is defined but never used.");
+		th.addError(2, 7, "'c' is defined but never used.");
+		th.addError(2, 14, "'d' is defined but never used.");
+		th.addError(2, 22, "'e' is defined but never used.");
+		th.addError(3, 10, "'fn' is defined but never used.");
+		th.addError(3, 18, "'f' is defined but never used.");
+		th.addError(3, 26, "'g' is defined but never used.");
+		th.addError(3, 36, "'h' is defined but never used.");
 	    th.test(code, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -2076,12 +2136,12 @@ public class TestParser extends Assert
 		    "var b = ({}) => ([]) => ({});"
 		};
 		
-		th.addError(1, "Empty destructuring.");
-	    th.addError(2, "Empty destructuring.");
-	    th.addError(3, "Empty destructuring.");
-	    th.addError(3, "Empty destructuring.");
-	    th.addError(4, "Empty destructuring.");
-	    th.addError(4, "Empty destructuring.");
+		th.addError(1, 5, "Empty destructuring: this is unnecessary and can be removed.");
+		th.addError(2, 5, "Empty destructuring: this is unnecessary and can be removed.");
+		th.addError(3, 12, "Empty destructuring: this is unnecessary and can be removed.");
+		th.addError(3, 16, "Empty destructuring: this is unnecessary and can be removed.");
+		th.addError(4, 10, "Empty destructuring: this is unnecessary and can be removed.");
+		th.addError(4, 18, "Empty destructuring: this is unnecessary and can be removed.");
 	    th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -2150,9 +2210,9 @@ public class TestParser extends Assert
 		    "print(x);"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2172,9 +2232,9 @@ public class TestParser extends Assert
 		    "print(x);"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2193,11 +2253,11 @@ public class TestParser extends Assert
 		    "print(y);"
 		};
 		
-		th.addError(1, "'x' is defined but never used.");
-	    th.addError(5, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(7, "'z' is not defined.");
-	    th.addError(9, "'y' is not defined.");
+		th.addError(1, 5, "'x' is defined but never used.");
+		th.addError(5, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(7, 9, "'z' is not defined.");
+		th.addError(9, 7, "'y' is not defined.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2216,11 +2276,11 @@ public class TestParser extends Assert
 		    "print(y);"
 		};
 		
-		th.addError(1, "'x' is defined but never used.");
-	    th.addError(5, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(7, "'z' is not defined.");
-	    th.addError(9, "'y' is not defined.");
+		th.addError(1, 5, "'x' is defined but never used.");
+		th.addError(5, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(7, 9, "'z' is not defined.");
+		th.addError(9, 7, "'y' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2239,14 +2299,14 @@ public class TestParser extends Assert
 		    "print(y);"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'x' is defined but never used.");
-	    th.addError(5, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(7, "'z' is not defined.");
-	    th.addError(9, "'y' is not defined.");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "'x' is defined but never used.");
+		th.addError(5, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(7, 9, "'z' is not defined.");
+		th.addError(9, 7, "'y' is not defined.");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2265,14 +2325,14 @@ public class TestParser extends Assert
 		    "print(y);"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'x' is defined but never used.");
-	    th.addError(5, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(7, "'z' is not defined.");
-	    th.addError(9, "'y' is not defined.");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "'x' is defined but never used.");
+		th.addError(5, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(7, 9, "'z' is not defined.");
+		th.addError(9, 7, "'y' is not defined.");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2336,9 +2396,9 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2360,9 +2420,9 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2384,12 +2444,12 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(6, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(4, "'bar' is defined but never used.");
-	    th.addError(8, "'z' is not defined.");
-	    th.addError(10, "'y' is not defined.");
-	    th.addError(11, "'bar' is not defined.");
+		th.addError(6, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(4, 7, "'bar' is defined but never used.");
+		th.addError(8, 9, "'z' is not defined.");
+		th.addError(10, 7, "'y' is not defined.");
+		th.addError(11, 1, "'bar' is not defined.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2411,12 +2471,12 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(6, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(4, "'bar' is defined but never used.");
-	    th.addError(8, "'z' is not defined.");
-	    th.addError(10, "'y' is not defined.");
-	    th.addError(11, "'bar' is not defined.");
+		th.addError(6, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(4, 7, "'bar' is defined but never used.");
+		th.addError(8, 9, "'z' is not defined.");
+		th.addError(10, 7, "'y' is not defined.");
+		th.addError(11, 1, "'bar' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2438,16 +2498,16 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(4, "'bar' is defined but never used.");
-	    th.addError(8, "'z' is not defined.");
-	    th.addError(10, "'y' is not defined.");
-	    th.addError(11, "'bar' is not defined.");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(4, 7, "'bar' is defined but never used.");
+		th.addError(8, 9, "'z' is not defined.");
+		th.addError(10, 7, "'y' is not defined.");
+		th.addError(11, 1, "'bar' is not defined.");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2469,16 +2529,16 @@ public class TestParser extends Assert
 		    "foo();"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'z' is defined but never used.");
-	    th.addError(3, "'y' is defined but never used.");
-	    th.addError(4, "'bar' is defined but never used.");
-	    th.addError(8, "'z' is not defined.");
-	    th.addError(10, "'y' is not defined.");
-	    th.addError(11, "'bar' is not defined.");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 9, "'z' is defined but never used.");
+		th.addError(3, 7, "'y' is defined but never used.");
+		th.addError(4, 7, "'bar' is defined but never used.");
+		th.addError(8, 9, "'z' is not defined.");
+		th.addError(10, 7, "'y' is not defined.");
+		th.addError(11, 1, "'bar' is not defined.");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2554,12 +2614,12 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print", "Iterator")); // es5
 	}
 	
@@ -2585,12 +2645,12 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print", "Iterator"));
 	}
 	
@@ -2690,8 +2750,8 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(21, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(21, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(21, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2725,8 +2785,8 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(21, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(21, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(21, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2773,7 +2833,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("require", "xferable", "options"));
 	}
 	
@@ -2797,10 +2857,10 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("require", "xferable", "options")); // es5
 	}
 	
@@ -2824,10 +2884,10 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("require", "xferable", "options"));
 	}
 	
@@ -2858,9 +2918,9 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(4, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(3, 6, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(4, 9, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2876,12 +2936,12 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(4, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 6, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(4, 9, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(4, 12, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -2897,12 +2957,12 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(4, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 5, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(3, 3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 6, "'let block' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(4, 9, "'let expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(4, 12, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -2951,10 +3011,10 @@ public class TestParser extends Assert
 		    "sup();"
 		};
 		
-		th.addError(1, "'a' is defined but never used.");
-	    th.addError(2, "'b' is defined but never used.");
-	    th.addError(3, "'c' is defined but never used.");
-	    th.addError(9, "'d' has already been declared.");
+		th.addError(1, 5, "'a' is defined but never used.");
+	    th.addError(2, 5, "'b' is defined but never used.");
+	    th.addError(3, 5, "'c' is defined but never used.");
+	    th.addError(9, 5, "'d' has already been declared.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).set("funcscope", true));
 	}
 	
@@ -3012,7 +3072,7 @@ public class TestParser extends Assert
 		    "let Map = false;"
 		};
 		
-		th.addError(4, "Redefinition of 'Map'.");
+		th.addError(4, 5, "Redefinition of 'Map'.");
 	    th.test(code, new LinterOptions().set("esnext", true).set("browser", true));
 	}
 	
@@ -3070,9 +3130,8 @@ public class TestParser extends Assert
 		    "whois(user);"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(4, 15, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3092,9 +3151,8 @@ public class TestParser extends Assert
 		    "whois(user);"
 		};
 		
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(4, 15, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3141,24 +3199,24 @@ public class TestParser extends Assert
 		
 		th.test(codeValid, new LinterOptions().set("esnext", true));
 		
-		th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(2, "Missing semicolon.");
-	    th.addError(2, "Expected an identifier and instead saw '='.");
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(2, "Missing semicolon.");
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(3, "Bad assignment.");
-	    th.addError(4, "Bad assignment.");
-	    th.addError(5, "Expected ',' and instead saw '('.");
-	    th.addError(5, "Expected an identifier and instead saw ')'.");
-	    th.addError(5, "Expected ',' and instead saw '{'.");
-	    th.addError(5, "Expected ',' and instead saw '}'.");
-	    th.addError(6, "Expected ',' and instead saw '('.");
-	    th.addError(6, "Expected an identifier and instead saw ')'.");
-	    th.addError(6, "Expected ',' and instead saw '{'.");
-	    th.addError(6, "Expected ',' and instead saw '}'.");
-	    th.addError(7, "Bad assignment.");
-	    th.addError(8, "Bad assignment.");
+		th.addError(2, 2, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 3, "Missing semicolon.");
+		th.addError(2, 5, "Expected an identifier and instead saw '='.");
+		th.addError(2, 5, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 6, "Missing semicolon.");
+		th.addError(2, 7, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(3, 7, "Bad assignment.");
+		th.addError(4, 7, "Bad assignment.");
+		th.addError(5, 14, "Expected ',' and instead saw '('.");
+		th.addError(5, 15, "Expected an identifier and instead saw ')'.");
+		th.addError(5, 16, "Expected ',' and instead saw '{'.");
+		th.addError(5, 18, "Expected ',' and instead saw '}'.");
+		th.addError(6, 15, "Expected ',' and instead saw '('.");
+		th.addError(6, 16, "Expected an identifier and instead saw ')'.");
+		th.addError(6, 17, "Expected ',' and instead saw '{'.");
+		th.addError(6, 19, "Expected ',' and instead saw '}'.");
+		th.addError(7, 15, "Bad assignment.");
+		th.addError(8, 11, "Bad assignment.");
 	    th.test(codeInvalid, new LinterOptions().set("esnext", true));
 	}
 	
@@ -3172,7 +3230,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "Invalid for each loop.");
+		th.addError(1, 5, "Invalid for each loop.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3186,8 +3244,8 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "Invalid for each loop.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 5, "Invalid for each loop.");
+	    th.addError(1, 5, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3201,9 +3259,9 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "Invalid for each loop.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "Invalid for each loop.");
+	    th.addError(1, 5, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(1, 11, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3217,9 +3275,9 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "Invalid for each loop.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "Invalid for each loop.");
+	    th.addError(1, 5, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(1, 11, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3262,7 +3320,7 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3284,9 +3342,9 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3308,9 +3366,9 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3332,7 +3390,7 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(7, "A generator function should contain at least one yield expression.");
+		th.addError(7, 1, "A generator function should contain at least one yield expression.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3357,13 +3415,13 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "A generator function should contain at least one yield expression.");
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(2, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(2, 11, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(2, 23, "A generator function should contain at least one yield expression.");
 		th.test(code);
 		
-		th.reset();
+		th.newTest();
 		th.test(code, new LinterOptions().set("esnext", true).set("noyield", true));
 		
 	}
@@ -3405,7 +3463,7 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(4, "Yield expressions may only occur within generator functions.");
+		th.addError(4, 5, "Yield expressions may only occur within generator functions.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print", "Iterator"));
 		
 		th.test(code, new LinterOptions().set("esnext", true).set("moz", true));
@@ -3432,6 +3490,124 @@ public class TestParser extends Assert
 	}
 	
 	@Test
+	public void testCatchBlockNoCurlies()
+	{
+		String[] code = {
+			"try {} catch(e) e.toString();"
+		};
+		th.addError(1, 17, "Expected '{' and instead saw 'e'.");
+		th.test(code, new LinterOptions());
+	}
+	
+	@Test
+	public void testStrictViolationUseOfArgumentsAndEval()
+	{
+		String[] code = {
+			"'use strict';",
+			"var arguments;",
+			"(function() {",
+			"  var eval;",
+			"}());"
+		};
+		th.addError(2, 5, "Strict violation.");
+		th.addError(4, 7, "Strict violation.");
+		th.test(code, new LinterOptions().set("strict", "global"));
+		
+		th.newTest("via `catch` clause binding (valid)");
+		th.test(new String[] {
+			"try {} catch (arguments) {}",
+			"try {} catch (eval) {}"
+		});
+		
+		th.newTest("via `catch` clause binding (invalid)");
+		th.addError(2, 15, "Strict violation.");
+		th.addError(3, 15, "Strict violation.");
+		th.test(new String[] {
+			"'use strict';",
+			"try {} catch (arguments) {}",
+			"try {} catch (eval) {}"
+		}, new LinterOptions().set("strict", "global"));
+		
+		th.newTest("via parameter (valid)");
+		th.test(new String[] {
+			"function f1(arguments) {}",
+			"function f2(eval) {}"
+		});
+		
+		th.newTest("via parameter - (invalid)");
+		th.addError(1, 13, "Strict violation.");
+		th.addError(2, 13, "Strict violation.");
+		th.test(new String[] {
+			"function f1(arguments) { 'use strict'; }",
+			"function f2(eval) { 'use strict'; }"
+		});
+		
+		th.newTest("as function binding (valid)");
+		th.test(new String[] {
+			"function arguments() {}",
+			"function eval() {}",
+			"void function arguments() {};",
+			"void function eval() {};"
+		});
+		
+		th.newTest("as function bindings for expressions with inferred names (valid)");
+		th.test(new String[] {
+			"var arguments = function() {};",
+			"(function() {",
+			"  var eval = function() {};",
+			"}());"
+		});
+		
+		th.newTest("as function declaration binding (invalid)");
+		th.addError(1, 10, "Strict violation.");
+		th.addError(2, 10, "Strict violation.");
+		th.addError(5, 12, "Strict violation.");
+		th.addError(6, 12, "Strict violation.");
+		th.addError(10, 12, "Strict violation.");
+		th.addError(10, 26, "Unnecessary directive \"use strict\".");
+		th.addError(11, 12, "Strict violation.");
+		th.addError(11, 21, "Unnecessary directive \"use strict\".");
+		th.test(new String[] {
+			"function arguments() { 'use strict'; }",
+			"function eval() { 'use strict'; }",
+			"(function() {",
+			"  'use strict';",
+			"  function arguments() {}",
+			"  function eval() {}",
+			"}());",
+			"(function() {",
+			"  'use strict';",
+			"  function arguments() { 'use strict'; }",
+			"  function eval() { 'use strict'; }",
+			"}());"
+		});
+		
+		th.newTest("as function expression binding (invalid)");
+		th.addError(1, 15, "Strict violation.");
+		th.addError(2, 15, "Strict violation.");
+		th.addError(5, 17, "Strict violation.");
+		th.addError(6, 17, "Strict violation.");
+		th.addError(10, 17, "Strict violation.");
+		th.addError(10, 31, "Unnecessary directive \"use strict\".");
+		th.addError(11, 17, "Strict violation.");
+		th.addError(11, 26, "Unnecessary directive \"use strict\".");
+		th.test(new String[] {
+			"void function arguments() { 'use strict'; };",
+			"void function eval() { 'use strict'; };",
+			"(function() {",
+			"  'use strict';",
+			"  void function arguments() {};",
+			"  void function eval() {};",
+			"}());",
+			"(function() {",
+			"  'use strict';",
+			"  void function arguments() { 'use strict'; };",
+			"  void function eval() { 'use strict'; };",
+			"}());"
+		});
+	}
+	
+	@Test
 	public void testMozillaGeneratorAsEs5()
 	{
 		// example taken from https://developer.mozilla.org/en-US/docs/JavaScript/New_in_JavaScript/1.7
@@ -3448,9 +3624,9 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(9, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print", "Iterator")); // es5
 	}
 	
@@ -3471,9 +3647,9 @@ public class TestParser extends Assert
 		    "  print(g.next());"
 		};
 		
-		th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(9, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print", "Iterator"));
 	}
 	
@@ -3506,19 +3682,23 @@ public class TestParser extends Assert
 		String[] code = {
 			"var range = [1, 2];",
 		    "var a = [for (i of range) if (i % 2 === 0) i];",
-		    "var b = [for (j of range) doesnotexist];"
+		    "var b = [for (j of range) doesnotexist];",
+		    "var c = [for (\\u0024 of range) 1];"
 		};
 		
-		th.addError(2, "'a' is defined but never used.");
-	    th.addError(3, "'j' is defined but never used.");
-	    th.addError(3, "'doesnotexist' is not defined.");
-	    th.addError(3, "'b' is defined but never used.");
+		th.addError(2, 5, "'a' is defined but never used.");
+		th.addError(3, 15, "'j' is defined but never used.");
+		th.addError(3, 27, "'doesnotexist' is not defined.");
+		th.addError(3, 5, "'b' is defined but never used.");
+		th.addError(4, 15, "'\\u0024' is defined but never used.");
+		th.addError(4, 5, "'c' is defined but never used.");
 	    th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true));
 	    
 	    List<Token> unused = th.getJSHint().generateSummary().getUnused();
 	    assertEquals(Arrays.asList(
 	    	new Token("a", 2, 5),
-	    	new Token("b", 3, 5)
+	    	new Token("b", 3, 5),
+	    	new Token("c", 4, 5)
 	    	//new Token("j", 3, 15) // see gh-2440
 	    ), unused);
 	    
@@ -3620,7 +3800,7 @@ public class TestParser extends Assert
 		    "print('ret:', ret);"
 		};
 		
-		th.addError(1, "'unknown' is not defined.");
+		th.addError(1, 22, "'unknown' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3632,7 +3812,7 @@ public class TestParser extends Assert
 		    "print('ret:', ret);"
 		};
 		
-		th.addError(1, "'unknown' is not defined.");
+		th.addError(1, 24, "'unknown' is not defined.");
 		th.test(code, new LinterOptions().set("moz", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3652,15 +3832,15 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(3, "Yield expressions may only occur within generator functions.");
-	    th.addError(6, "Expected 'for' and instead saw 'i'.");
-	    th.addError(6, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "Expected 'for' and instead saw 'i'.");
-	    th.addError(7, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 5, "Yield expressions may only occur within generator functions.");
+		th.addError(6, 20, "Expected 'for' and instead saw 'i'.");
+		th.addError(6, 30, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 14, "Expected 'for' and instead saw 'i'.");
+		th.addError(7, 20, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true).set("undef", true).addPredefineds("print"));
 		
-		th.reset();
-		th.addError(3, "Yield expressions may only occur within generator functions.");
+		th.newTest();
+		th.addError(3, 5, "Yield expressions may only occur within generator functions.");
 		th.test(code, new LinterOptions().set("esnext", true).set("moz", true));
 	}
 	
@@ -3680,11 +3860,11 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 10, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 19, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 13, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3704,14 +3884,14 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(6, "Expected 'for' and instead saw 'i'.");
-	    th.addError(6, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "Expected 'for' and instead saw 'i'.");
-	    th.addError(7, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 19, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(6, 20, "Expected 'for' and instead saw 'i'.");
+		th.addError(6, 30, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 13, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 14, "Expected 'for' and instead saw 'i'.");
+		th.addError(7, 20, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("unused", true).set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3731,10 +3911,10 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 19, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 13, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3754,14 +3934,14 @@ public class TestParser extends Assert
 		    "print('evens:', evens);"
 		};
 		
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(6, "Expected 'for' and instead saw 'i'.");
-	    th.addError(6, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(7, "Expected 'for' and instead saw 'i'.");
-	    th.addError(7, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 19, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(6, 20, "Expected 'for' and instead saw 'i'.");
+		th.addError(6, 30, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 13, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(7, 14, "Expected 'for' and instead saw 'i'.");
+		th.addError(7, 20, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3798,12 +3978,12 @@ public class TestParser extends Assert
 		    "var destarray_comparray_2 = [ [i, {i: [i, j]} ] for each ([i, j] in [[0,0], [1,1], [2,2]])];"
 		};
 		
-		th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "Expected 'for' and instead saw '['.");
-	    th.addError(2, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "Expected 'for' and instead saw '['.");
-	    th.addError(3, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 31, "Expected 'for' and instead saw '['.");
+		th.addError(2, 48, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 31, "Expected 'for' and instead saw '['.");
+		th.addError(3, 53, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3816,9 +3996,9 @@ public class TestParser extends Assert
 		    "var destarray_comparray_2 = [for ([i, j] of [[0,0], [1,1], [2,2]]) [i, {i: [i, j]} ] ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(2, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(3, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3831,15 +4011,15 @@ public class TestParser extends Assert
 		    "var destarray_comparray_2 = [ [i, {i: [i, j]} ] for each ([i, j] in [[0,0], [1,1], [2,2]])];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "Expected 'for' and instead saw '['.");
-	    th.addError(2, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "Expected 'for' and instead saw '['.");
-	    th.addError(3, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 31, "Expected 'for' and instead saw '['.");
+		th.addError(2, 48, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 31, "Expected 'for' and instead saw '['.");
+		th.addError(3, 53, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3852,9 +4032,9 @@ public class TestParser extends Assert
 		    "var destarray_comparray_2 = [for ([i, j] of [[0,0], [1,1], [2,2]]) [i, {i: [i, j]} ] ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(2, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+	    th.addError(3, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3867,15 +4047,15 @@ public class TestParser extends Assert
 		    "var destarray_comparray_2 = [ [i, {i: [i, j]} ] for each ([i, j] in [[0,0], [1,1], [2,2]])];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(2, "Expected 'for' and instead saw '['.");
-	    th.addError(2, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(3, "Expected 'for' and instead saw '['.");
-	    th.addError(3, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 31, "Expected 'for' and instead saw '['.");
+		th.addError(2, 48, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 29, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(3, 31, "Expected 'for' and instead saw '['.");
+		th.addError(3, 53, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3916,8 +4096,10 @@ public class TestParser extends Assert
 			"[ [i, j] for each ([i, j] in [[a, b] for each ([a, b] in [[2,2], [3,4]])]) ];"
 		};
 		
-		th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 31, "Expected 'for' and instead saw '['.");
+		th.addError(1, 42, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3928,8 +4110,8 @@ public class TestParser extends Assert
 			"[for ([i, j] of [for ([a, b] of [[2,2], [3,4]]) [a, b] ]) [i, j] ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 17, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3940,8 +4122,8 @@ public class TestParser extends Assert
 			"[for ([i, j] of [for ([a, b] of [[2,2], [3,4]]) [a, b] ]) [i, j] ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 17, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -3952,11 +4134,12 @@ public class TestParser extends Assert
 			"[ [i, j] for each ([i, j] in [[a, b] for each ([a, b] in [[2,2], [3,4]])]) ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 30, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 31, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 42, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -3967,11 +4150,12 @@ public class TestParser extends Assert
 			"[ [i, j] for each ([i, j] in [[a, b] for each ([a, b] in [[2,2], [3,4]])]) ];"
 		};
 		
-		th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "Expected 'for' and instead saw '['.");
-	    th.addError(1, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 1, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 30, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 3, "Expected 'for' and instead saw '['.");
+		th.addError(1, 31, "Expected 'for' and instead saw '['.");
+		th.addError(1, 14, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(1, 42, "'for each' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4012,7 +4196,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(4, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(4, 8, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4028,7 +4212,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(4, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(4, 8, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -4044,7 +4228,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(4, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(4, 8, "'catch filter' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4068,7 +4252,7 @@ public class TestParser extends Assert
 		    "arr.every(function (o) o instanceof Object);"
 		};
 		
-		th.addError(2, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 22, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
@@ -4080,7 +4264,7 @@ public class TestParser extends Assert
 		    "arr.every(function (o) o instanceof Object);"
 		};
 		
-		th.addError(2, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 22, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true)); // es5
 	}
 	
@@ -4092,7 +4276,7 @@ public class TestParser extends Assert
 		    "arr.every(function (o) o instanceof Object);"
 		};
 		
-		th.addError(2, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(2, 22, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true));
 	}
 	
@@ -4120,31 +4304,31 @@ public class TestParser extends Assert
 		    "for (const x = 1, y = 2 of [1,2,3,4]) print(x + y);"
 		};
 		
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(10, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(13, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(14, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(18, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(8, 8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(10, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(11, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(12, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(12, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(13, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(14, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(15, 15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(15, 15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(16, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(17, 13, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(18, 17, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(18, 17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 		
-		th.reset();
+		th.newTest("Left-hand side as MemberExpression");
 		th.test(new String[]{
 			"for (x.y of []) {}",
 			"for (x[z] of []) {}"
 		}, new LinterOptions().set("esversion", 2015));
 		
-		th.reset();
+		th.newTest("Left-hand side as MemberExpression (invalid)");
 		th.addError(1, 10, "Bad assignment.");
 		th.addError(2, 13, "Bad assignment.");
 		th.test(new String[]{
@@ -4176,47 +4360,46 @@ public class TestParser extends Assert
 		    "for (const x = 1, y = 2 of [1,2,3,4]) print(x + y);"
 		};
 		
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(10, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(11, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(12, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(13, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(14, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(15, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(16, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(17, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-
+		th.addError(1, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 14, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 11, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 7, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 19, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 11, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(8, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(10, 15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(11, 23, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(11, 15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(12, 16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(12, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(12, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(13, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 23, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(14, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(15, 18, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(15, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(15, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 13, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(16, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 17, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(17, 17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(17, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -4243,49 +4426,47 @@ public class TestParser extends Assert
 		    "for (const x = 1, y = 2 of [1,2,3,4]) print(x + y);"
 		};
 		
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(10, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(11, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(12, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(13, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(14, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(15, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(16, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-	    th.addError(17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-	    th.addError(17, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-
-	    //JSHINT_BUG: copy paste bug, to check legacy code es3 parameter must be passed
-	    th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
+		th.addError(1, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 14, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 12, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 11, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 7, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 19, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 11, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(8, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(10, 15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(11, 23, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(11, 15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(12, 16, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(12, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(12, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 15, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 11, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(13, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 23, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 15, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(14, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 15, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(15, 18, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(15, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(15, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 13, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(16, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 17, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(17, 17, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(17, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
 	@Test
@@ -4298,8 +4479,9 @@ public class TestParser extends Assert
 			"for (const [i, v] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);"
 		};
 		
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var i ...'.");
-	    th.addError(1, "Creating global 'for' variable. Should be 'for (var v ...'.");
+		th.newTest("basic");
+		th.addError(1, 7, "Creating global 'for' variable. Should be 'for (var i ...'.");
+	    th.addError(1, 10, "Creating global 'for' variable. Should be 'for (var v ...'.");
 		th.test(basic, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 		
 		String[] bad = {
@@ -4311,15 +4493,15 @@ public class TestParser extends Assert
 			"for (var [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.newTest("errors #1");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(2, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(bad, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 		
 		String[] bad2 = {
@@ -4331,15 +4513,15 @@ public class TestParser extends Assert
 			"for (const [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.newTest("errors #2");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(2, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(bad2, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4353,18 +4535,19 @@ public class TestParser extends Assert
 			"for (const [i, v] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);"
 		};
 		
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var i ...'.");
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var v ...'.");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("basic");
+		th.addError(1, 13, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 7, "Creating global 'for' variable. Should be 'for (var i ...'.");
+		th.addError(1, 10, "Creating global 'for' variable. Should be 'for (var v ...'.");
+		th.addError(2, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 19, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(basic, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 		
 		String[] bad = {
@@ -4376,31 +4559,31 @@ public class TestParser extends Assert
 			"for (var [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #1");
+		th.addError(1, 22, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(1, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 21, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(2, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 30, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 26, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 		
 		String[] bad2 = {
@@ -4412,38 +4595,37 @@ public class TestParser extends Assert
 			"for (const [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-
+		th.newTest("errors #2");
+		th.addError(1, 26, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(1, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(2, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 28, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 27, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad2, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -4457,18 +4639,19 @@ public class TestParser extends Assert
 			"for (const [i, v] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);"
 		};
 		
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var i ...'.");
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var v ...'.");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("basic");
+		th.addError(1, 13, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 7, "Creating global 'for' variable. Should be 'for (var i ...'.");
+		th.addError(1, 10, "Creating global 'for' variable. Should be 'for (var v ...'.");
+		th.addError(2, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 17, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 19, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(basic, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); //es3
 		
 		String[] bad = {
@@ -4480,31 +4663,31 @@ public class TestParser extends Assert
 			"for (var [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #1");
+		th.addError(1, 22, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(1, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 21, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(2, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 30, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 12, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 12, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 26, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); //es3
 		
 		String[] bad2 = {
@@ -4516,37 +4699,37 @@ public class TestParser extends Assert
 			"for (const [i, v], [a, b] = [1, 2] of [[0, 1],[1, 2],[2, 3],[3, 4]]) print(i + '=' + v);",
 		};
 		
-		th.reset();
-		th.addError(1, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(3, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #2");
+		th.addError(1, 26, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(1, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 25, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(2, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 16, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 28, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 27, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 18, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad2, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); //es3
 	}
 	
@@ -4563,8 +4746,9 @@ public class TestParser extends Assert
 			"for (const {key, data: { value } } of arr) print(key + '=' + value);"
 		};
 		
-		th.addError(4, "Creating global 'for' variable. Should be 'for (var key ...'.");
-	    th.addError(4, "Creating global 'for' variable. Should be 'for (var value ...'.");
+		th.newTest("basic");
+		th.addError(4, 7, "Creating global 'for' variable. Should be 'for (var key ...'.");
+	    th.addError(4, 20, "Creating global 'for' variable. Should be 'for (var value ...'.");
 		th.test(basic, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 		
 		String[] bad = {
@@ -4579,15 +4763,15 @@ public class TestParser extends Assert
 			"for (var {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.newTest("errors #1");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(8, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(bad, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 		
 		String[] bad2 = {
@@ -4602,15 +4786,15 @@ public class TestParser extends Assert
 			"for (const {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.newTest("errors #2");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(8, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
 		th.test(bad2, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4627,22 +4811,19 @@ public class TestParser extends Assert
 			"for (const {key, data: { value } } of arr) print(key + '=' + value);"
 		};
 		
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Creating global 'for' variable. Should be 'for (var key ...'.");
-		th.addError(4, "Creating global 'for' variable. Should be 'for (var value ...'.");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("basic");
+		th.addError(4, 30, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 7, "Creating global 'for' variable. Should be 'for (var key ...'.");
+		th.addError(4, 20, "Creating global 'for' variable. Should be 'for (var value ...'.");
+		th.addError(5, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(basic, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 		
 		String[] bad = {
@@ -4657,37 +4838,31 @@ public class TestParser extends Assert
 			"for (var {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #1");
+		th.addError(4, 32, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 33, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 24, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 40, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 24, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 37, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 44, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 		
 		String[] bad2 = {
@@ -4702,43 +4877,37 @@ public class TestParser extends Assert
 			"for (const {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(8, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #2");
+		th.addError(4, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 37, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 44, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 38, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 39, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 46, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad2, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -4755,22 +4924,19 @@ public class TestParser extends Assert
 			"for (const {key, data: { value } } of arr) print(key + '=' + value);"
 		};
 		
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Creating global 'for' variable. Should be 'for (var key ...'.");
-		th.addError(4, "Creating global 'for' variable. Should be 'for (var value ...'.");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("basic");
+		th.addError(4, 30, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 7, "Creating global 'for' variable. Should be 'for (var key ...'.");
+		th.addError(4, 20, "Creating global 'for' variable. Should be 'for (var value ...'.");
+		th.addError(5, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 34, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(basic, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); // es3
 		
 		String[] bad = {
@@ -4785,38 +4951,31 @@ public class TestParser extends Assert
 			"for (var {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #1");
+		th.addError(4, 32, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 33, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 24, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 40, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 24, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 5, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 24, "'destructuring assignment' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 37, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 44, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); // es3
 		
 		String[] bad2 = {
@@ -4831,43 +4990,37 @@ public class TestParser extends Assert
 			"for (const {key, data: {val}}, {a, b} = obj1 of arr) print(key + '=' + val);"
 		};
 		
-		th.reset();
-		th.addError(4, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(6, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(7, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(8, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "Invalid for-of loop left-hand-side: initializer is forbidden.");
-		th.addError(9, "Invalid for-of loop left-hand-side: more than one ForBinding.");
-		th.addError(9, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("errors #2");
+		th.addError(4, 36, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(4, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 37, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(5, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 44, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(6, 28, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(6, 6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 38, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(7, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 39, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(8, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 46, "'for of' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: initializer is forbidden.");
+		th.addError(9, 30, "Invalid for-of loop left-hand-side: more than one ForBinding.");
+		th.addError(9, 6, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(9, 30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(bad2, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print")); // es3
 	}
 	
@@ -4904,7 +5057,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(5, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(5, 3, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4923,7 +5076,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(5, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(5, 3, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("undef", true).addPredefineds("print")); // es5
 	}
 	
@@ -4942,7 +5095,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(5, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(5, 3, "'multiple catch blocks' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true).addPredefineds("print"));
 	}
 	
@@ -4965,21 +5118,21 @@ public class TestParser extends Assert
 		    "if (true) try { let x = 1; } catch (e) { let x = 1; }"
 		};
 		
-		th.addError(1, "Let declaration not directly within block.");
-	    th.addError(4, "Let declaration not directly within block.");
-	    th.addError(6, "Let declaration not directly within block.");
-	    th.addError(7, "Let declaration not directly within block.");
-	    th.addError(8, "Let declaration not directly within block.");
-	    th.addError(9, "Let declaration not directly within block.");
-	    th.addError(10, "Let declaration not directly within block.");
-	    th.addError(10, "Let declaration not directly within block.");
-	    th.addError(10, "Let declaration not directly within block.");
-	    th.addError(11, "Let declaration not directly within block.");
+		th.addError(1, 11, "Let declaration not directly within block.");
+		th.addError(4, 8, "Let declaration not directly within block.");
+		th.addError(6, 30, "Let declaration not directly within block.");
+		th.addError(7, 30, "Let declaration not directly within block.");
+		th.addError(8, 30, "Let declaration not directly within block.");
+		th.addError(9, 14, "Let declaration not directly within block.");
+		th.addError(10, 12, "Let declaration not directly within block.");
+		th.addError(10, 38, "Let declaration not directly within block.");
+		th.addError(10, 54, "Let declaration not directly within block.");
+		th.addError(11, 22, "Let declaration not directly within block.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 		th.test(code, new LinterOptions().set("moz", true));
 		
 		// Don't warn about let expressions
-		th.reset();
+		th.newTest();
 		th.test("if (true) let (x = 1) print(x);", new LinterOptions().set("moz", true).setPredefineds("print"));
 	}
 	
@@ -4998,13 +5151,13 @@ public class TestParser extends Assert
 			"if (true) if (false) { const a = 1; }"
 		};
 		
-		th.addError(1, "Const declaration not directly within block.");
-		th.addError(4, "Const declaration not directly within block.");
-		th.addError(6, "Const declaration not directly within block.");
-		th.addError(7, "Const declaration not directly within block.");
-		th.addError(8, "Const declaration not directly within block.");
-		th.addError(8, "Const declaration not directly within block.");
-		th.addError(8, "Const declaration not directly within block.");
+		th.addError(1, 11, "Const declaration not directly within block.");
+		th.addError(4, 8, "Const declaration not directly within block.");
+		th.addError(6, 30, "Const declaration not directly within block.");
+		th.addError(7, 14, "Const declaration not directly within block.");
+		th.addError(8, 12, "Const declaration not directly within block.");
+		th.addError(8, 40, "Const declaration not directly within block.");
+		th.addError(8, 58, "Const declaration not directly within block.");
 		th.test(code, new LinterOptions().addPredefineds("print").set("esnext", true));
 	}
 	
@@ -5067,8 +5220,8 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(2, "Bad assignment.");
-	    th.addError(2, "Did you mean to return a conditional instead of an assignment?");
+		th.addError(2, 23, "Bad assignment.");
+	    th.addError(2, 24, "Did you mean to return a conditional instead of an assignment?");
 		th.test(code);
 	}
 	
@@ -5098,35 +5251,35 @@ public class TestParser extends Assert
 		    "a"
 		};
 		
-		th.addError(2, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
-	    th.addError(6, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
-	    th.addError(8, "Line breaking error 'return'.");
-	    th.addError(9, "Label 'a' on 1 statement.");
-	    th.addError(9, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(11, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(14, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 1, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
+		th.addError(6, 12, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
+		th.addError(8, 3, "Line breaking error 'return'.");
+		th.addError(9, 12, "Label 'a' on 1 statement.");
+		th.addError(9, 12, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(11, 1, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(14, 1, "Expected an assignment or function call and instead saw an expression.");
 	    
 	    th.test(code, new LinterOptions().set("es3", true).set("asi", true));
 		th.test(code, new LinterOptions().set("asi", true)); // es5
 		th.test(code, new LinterOptions().set("esnext", true).set("asi", true));
 		th.test(code, new LinterOptions().set("moz", true).set("asi", true));
 		
-		th.reset();
-		th.addError(2, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
-	    th.addError(3, "Missing semicolon.");
-	    th.addError(4, "Missing semicolon.");
-	    th.addError(6, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
-	    th.addError(8, "Line breaking error 'return'.");
-	    th.addError(8, "Missing semicolon.");
-	    th.addError(9, "Label 'a' on 1 statement.");
-	    th.addError(9, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(9, "Missing semicolon.");
-	    th.addError(11, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(11, "Missing semicolon.");
-	    th.addError(13, "Missing semicolon.");
-	    th.addError(14, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(14, "Missing semicolon.");
-	    th.addError(16, "Missing semicolon.");
+		th.newTest();
+		th.addError(2, 1, "Misleading line break before 'instanceof'; readers may interpret this as an expression boundary.");
+		th.addError(3, 19, "Missing semicolon.");
+		th.addError(4, 11, "Missing semicolon.");
+		th.addError(6, 12, "Misleading line break before '&&'; readers may interpret this as an expression boundary.");
+		th.addError(8, 3, "Line breaking error 'return'.");
+		th.addError(8, 9, "Missing semicolon.");
+		th.addError(9, 12, "Label 'a' on 1 statement.");
+		th.addError(9, 12, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(9, 13, "Missing semicolon.");
+		th.addError(11, 1, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(11, 2, "Missing semicolon.");
+		th.addError(13, 2, "Missing semicolon.");
+		th.addError(14, 1, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(14, 2, "Missing semicolon.");
+		th.addError(16, 2, "Missing semicolon.");
 	    
 	    th.test(code, new LinterOptions().set("es3", true).set("asi", false));
 		th.test(code, new LinterOptions().set("asi", false)); // es5
@@ -5146,10 +5299,10 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.addError(2, "Missing semicolon.");
+		th.addError(2, 9, "Missing semicolon.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 		
-		th.reset();
+		th.newTest();
 		th.test(code, new LinterOptions().set("esversion", 6).set("asi", true));
 	}
 	
@@ -5163,11 +5316,11 @@ public class TestParser extends Assert
 			"void 0;"
 		};
 		
-		th.addError(1, "Missing semicolon.");
-		th.addError(3, "Missing semicolon.");
+		th.addError(1, 4, "Missing semicolon.");
+		th.addError(3, 4, "Missing semicolon.");
 		th.test(code);
 		
-		th.reset();
+		th.newTest();
 		th.test(code, new LinterOptions().set("asi", true));
 	}
 	
@@ -5210,79 +5363,79 @@ public class TestParser extends Assert
 		    "let immediatelyInvoked = (x => {})(0);"
 		};
 		
-		th.addError(5, "'evens' is not defined.");
-	    th.addError(6, "'nats' is not defined.");
-	    th.addError(8, "'print' is not defined.");
-	    th.addError(9, "'print' is not defined.");
-	    th.addError(9, "'j' is not defined.");
-	    th.addError(8, "'z' is not defined.");
+		th.addError(5, 12, "'evens' is not defined.");
+		th.addError(6, 17, "'nats' is not defined.");
+		th.addError(8, 3, "'print' is not defined.");
+		th.addError(9, 3, "'print' is not defined.");
+		th.addError(9, 9, "'j' is not defined.");
+		th.addError(8, 13, "'z' is not defined.");
 	    
 	    th.test(code, new LinterOptions().set("undef", true).set("esnext", true));
 	    
-	    th.reset();
-	    th.addError(1, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'evens' is not defined.");
-	    th.addError(6, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'nats' is not defined.");
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(8, "'print' is not defined.");
-	    th.addError(8, "'z' is not defined.");
-	    th.addError(9, "'print' is not defined.");
-	    th.addError(9, "'j' is not defined.");
-	    th.addError(13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.newTest();
+	    th.addError(1, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(2, 18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(3, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(5, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(5, 12, "'evens' is not defined.");
+	    th.addError(6, 32, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(6, 17, "'nats' is not defined.");
+	    th.addError(7, 27, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(8, 3, "'print' is not defined.");
+	    th.addError(8, 13, "'z' is not defined.");
+	    th.addError(9, 3, "'print' is not defined.");
+	    th.addError(9, 9, "'j' is not defined.");
+	    th.addError(13, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(16, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(17, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(18, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(19, 26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(21, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(22, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(23, 17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(24, 23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(26, 29, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
 	    
 	    th.test(code, new LinterOptions().set("undef", true).set("moz", true));
 		
-		th.reset();
-		th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(16, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "Bad invocation.");
-	    th.addError(18, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(19, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(19, "Bad invocation.");
-	    th.addError(20, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(22, "Bad invocation.");
-	    th.addError(23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(24, "Bad invocation.");
-	    th.addError(26, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.newTest();
+		th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(3, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(6, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 32, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 27, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 1, "'const' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(13, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(16, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(17, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(17, 32, "Bad invocation.");
+		th.addError(18, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(18, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(19, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(19, 26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(19, 46, "Bad invocation.");
+		th.addError(20, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(21, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(22, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(22, 29, "Bad invocation.");
+		th.addError(23, 17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(24, 23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(24, 43, "Bad invocation.");
+		th.addError(26, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(26, 29, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
 	    
 	    th.test(code); // es5
 	    th.test(code, new LinterOptions().set("es3", true));
@@ -5328,7 +5481,7 @@ public class TestParser extends Assert
 	@Test
 	public void testExressionsInPlaceOfArrowFunctionParameters()
 	{
-		th.addError(1, "Expected an identifier and instead saw '1'.");
+		th.addError(1, 2, "Expected an identifier and instead saw '1'.");
 		th.test("(1) => {};", new LinterOptions().set("expr", true).set("esnext", true));
 	}
 	
@@ -5357,10 +5510,10 @@ public class TestParser extends Assert
 		th.test(code, new LinterOptions().set("esnext", true));
 		th.test(code, new LinterOptions().set("moz", true));
 		
-		th.addError(2, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'generator functions' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 3, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 3, "'generator functions' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 4, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 5, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 	    
 	    th.test(code); // es5
 		th.test(code, new LinterOptions().set("es3", true));
@@ -5399,7 +5552,6 @@ public class TestParser extends Assert
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
-	//JSHINT_BUG: copy paste bug, method should be called setWithoutGet
 	@Test(groups = {"conciseMethods"})
 	public void testConciseMethodsSetWithoutGet()
 	{
@@ -5442,12 +5594,15 @@ public class TestParser extends Assert
 		    "};"
 		};
 		
+		th.newTest("1");
 		th.test(code, new LinterOptions().set("esnext", true));
 		
-		th.addError(2, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.newTest("2");
+		th.addError(2, 12, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 12, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 17, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 3, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 3, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 	    th.test(code);
 	}
 	
@@ -5462,10 +5617,10 @@ public class TestParser extends Assert
 		
 		th.test(code, new LinterOptions().set("esnext", true));
 		
-		th.addError(2, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 17, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(2, 20, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 11, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 20, "'object short notation' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 	    th.test(code);
 	}
 	
@@ -5489,21 +5644,28 @@ public class TestParser extends Assert
 		    "var b = { '[': 1 };",
 		    "var c = { [b]: 1 };",
 		    "var d = { 0: 1 };",
-		    "var e = { ['s']: 1 };"
+		    "var e = { ['s']: 1 };",
+		    "var f = { get [0]() {} };",
+		    "var g = { set [0](_) {} };"
 		};
 		
+		th.addError(19, 17, "Setter is defined without getter.");
 		th.test(code, new LinterOptions().set("esnext", true));
 		
-		th.addError(6, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(8, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(9, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(13, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(15, "'computed property names' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.newTest();
+		th.addError(6, 1, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 8, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(8, 7, "'concise methods' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 1, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(9, 1, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 1, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 1, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(13, 6, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(15, 11, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(17, 11, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(18, 15, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(19, 15, "'computed property names' is only available in ES6 (use 'esversion: 6').");
+		th.addError(19, 17, "Setter is defined without getter.");
 	    th.test(code);
 	}
 	
@@ -5551,40 +5713,38 @@ public class TestParser extends Assert
 		
 		th.test(code, new LinterOptions().set("esnext", true));
 		
-	    th.addError(1, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(8, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(9, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    
+		th.addError(1, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(3, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(8, 14, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(9, 14, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(12, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 	    th.test(code, new LinterOptions().set("moz", true));
 	    
-	    th.reset();
-	    th.addError(1, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    
-	    th.addError(7, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(9, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    
+	    th.newTest();
+	    th.addError(1, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(2, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(3, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(5, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(6, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(7, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+
+	    th.addError(7, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(8, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(8, 14, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(9, 14, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(10, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(10, 12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(10, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(11, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(12, 5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 	    th.test(code);   
 	}
 	
@@ -5631,61 +5791,54 @@ public class TestParser extends Assert
 		
 		th.test(code, new LinterOptions().set("esnext", true));
 		
-		th.addError(1, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(1, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(1, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(1, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(2, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(8, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(9, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(1, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 10, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(1, 11, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 19, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(3, 13, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 26, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(6, 20, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(8, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+		th.addError(9, 12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 	    
 	    th.test(code, new LinterOptions().set("moz", true));
 	    
-	    th.reset();
-	    th.addError(1, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(1, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(1, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.newTest();
+	    th.addError(1, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(1, 9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(1, 11, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(2, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(2, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(2, 17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(2, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(2, 19, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(3, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(3, 11, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 13, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 26, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(4, 9, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(4, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(4, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(5, 17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(5, 26, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(6, 11, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(6, 20, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(7, 17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(7, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(7, 10, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(8, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(8, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(8, 1, "'let' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(8, 18, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 
-	    th.addError(9, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(9, 12, "'spread/rest operator' is only available in ES6 (use 'esversion: 6').");
 	    
 	    
 	    th.test(code);   
@@ -5807,34 +5960,28 @@ public class TestParser extends Assert
 		int icdeclAssn = ArrayUtils.indexOf(code, cdeclAssn) + 1;
 		int icexprAssn = ArrayUtils.indexOf(code, cexprAssn) + 1;
 		
-		th.addError(icdecl + 4, "Expected an identifier and instead saw 'package' (a reserved word).");
-	    th.addError(icexpr + 4, "Expected an identifier and instead saw 'package' (a reserved word).");
-	    th.addError(icdeclAssn + 4, "Reassignment of 'Foo15', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icdeclAssn + 7, "Reassignment of 'Foo18', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icdeclAssn + 7, "Reassignment of 'Foo17', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 4, "Reassignment of 'Foo15', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 7, "Reassignment of 'Foo18', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 7, "Reassignment of 'Foo17', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icdecl + 4, 15, "Expected an identifier and instead saw 'package' (a reserved word).");
+		th.addError(icexpr + 4, 15, "Expected an identifier and instead saw 'package' (a reserved word).");
+		th.addError(icdeclAssn + 4, 21, "Reassignment of 'Foo15', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icdeclAssn + 7, 21, "Reassignment of 'Foo18', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icdeclAssn + 7, 43, "Reassignment of 'Foo17', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icexprAssn + 4, 27, "Reassignment of 'Foo15', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icexprAssn + 7, 27, "Reassignment of 'Foo18', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icexprAssn + 7, 49, "Reassignment of 'Foo17', which is a class. Use 'var' or 'let' to declare bindings that may change.");
 	    
 	    th.test(code, new LinterOptions().set("esnext", true));
 		th.test(code, new LinterOptions().set("moz", true));
 		
-		th.addError(icdecl + 1, "'Foo0' is defined but never used.");
-	    th.addError(icdecl + 3, "Expected an identifier and instead saw 'protected' (a reserved word).");
-	    th.addError(icdecl + 3, "'protected' is defined but never used.");
-	    th.addError(icdecl + 4, "'package' is defined but never used.");
-	    th.addError(icexpr + 1, "'Foo7' is defined but never used.");
-	    th.addError(icexpr + 3, "Expected an identifier and instead saw 'static' (a reserved word).");
-	    th.addError(icexpr + 3, "'static' is defined but never used.");
-	    th.addError(icexpr + 3, "Expected an identifier and instead saw 'protected' (a reserved word).");
-	    th.addError(icexpr + 4, "'package' is defined but never used.");
+		th.addError(icdecl + 1, 7, "'Foo0' is defined but never used.");
+		th.addError(icdecl + 3, 7, "Expected an identifier and instead saw 'protected' (a reserved word).");
+		th.addError(icdecl + 3, 7, "'protected' is defined but never used.");
+		th.addError(icdecl + 4, 15, "'package' is defined but never used.");
 	    
-	    th.addError(icdeclAssn + 4, "Reassignment of 'Foo15', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icdeclAssn + 7, "Reassignment of 'Foo18', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icdeclAssn + 7, "Reassignment of 'Foo17', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 4, "Reassignment of 'Foo15', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 7, "Reassignment of 'Foo18', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(icexprAssn + 7, "Reassignment of 'Foo17', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(icexpr + 1, 5, "'Foo7' is defined but never used.");
+		th.addError(icexpr + 3, 5, "Expected an identifier and instead saw 'static' (a reserved word).");
+		th.addError(icexpr + 3, 5, "'static' is defined but never used.");
+		th.addError(icexpr + 3, 20, "Expected an identifier and instead saw 'protected' (a reserved word).");
+		th.addError(icexpr + 4, 15, "'package' is defined but never used.");
 		
 	    code[0] = "'use strict';" + code[0];
 	    th.test(code, new LinterOptions().set("unused", true).set("globalstrict", true).set("esnext", true));
@@ -5888,27 +6035,27 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "Expected an identifier and instead saw 'eval' (a reserved word).");
-	    th.addError(2, "Expected an identifier and instead saw 'arguments' (a reserved word).");
-	    th.addError(4, "A class getter method cannot be named 'constructor'.");
-	    th.addError(5, "A class setter method cannot be named 'constructor'.");
-	    th.addError(6, "A class method cannot be named 'prototype'.");
-	    th.addError(7, "Class properties must be methods. Expected '(' but instead saw 'extra'.");
-	    th.addError(8, "Class properties must be methods. Expected '(' but instead saw 'extraIdent1'.");
-	    th.addError(9, "Class properties must be methods. Expected '(' but instead saw 'extraIdent2'.");
-	    th.addError(10, "Class properties must be methods. Expected '(' but instead saw 'extraIdent3'.");
-	    th.addError(11, "Class properties must be methods. Expected '(' but instead saw 'extraIdent4'.");
-	    th.addError(12, "Class properties must be methods. Expected '(' but instead saw 'extraIdent5'.");
-	    th.addError(14, "Duplicate getter method 'dupgetter'.");
-	    th.addError(16, "Duplicate setter method 'dupsetter'.");
-	    th.addError(16, "Setter is defined without getter.");
-	    th.addError(18, "Duplicate static getter method 'dupgetter'.");
-	    th.addError(20, "Duplicate static setter method 'dupsetter'.");
-	    th.addError(22, "Duplicate class method 'dupmethod'.");
-	    th.addError(24, "Duplicate static class method 'dupmethod'.");
-	    th.addError(29, "Unexpected '('.");
-	    th.addError(30, "Setter is defined without getter.");
-	    th.addError(31, "Setter is defined without getter.");
+		th.addError(1, 7, "Strict violation.");
+		th.addError(2, 7, "Strict violation.");
+		th.addError(4, 7, "A class getter method cannot be named 'constructor'.");
+		th.addError(5, 7, "A class setter method cannot be named 'constructor'.");
+		th.addError(6, 3, "A class method cannot be named 'prototype'.");
+		th.addError(7, 6, "Class properties must be methods. Expected '(' but instead saw 'extra'.");
+		th.addError(8, 11, "Class properties must be methods. Expected '(' but instead saw 'extraIdent1'.");
+		th.addError(9, 11, "Class properties must be methods. Expected '(' but instead saw 'extraIdent2'.");
+		th.addError(10, 15, "Class properties must be methods. Expected '(' but instead saw 'extraIdent3'.");
+		th.addError(11, 17, "Class properties must be methods. Expected '(' but instead saw 'extraIdent4'.");
+		th.addError(12, 17, "Class properties must be methods. Expected '(' but instead saw 'extraIdent5'.");
+		th.addError(14, 16, "Duplicate getter method 'dupgetter'.");
+		th.addError(16, 16, "Duplicate setter method 'dupsetter'.");
+		th.addError(16, 7, "Setter is defined without getter.");
+		th.addError(18, 23, "Duplicate static getter method 'dupgetter'.");
+		th.addError(20, 23, "Duplicate static setter method 'dupsetter'.");
+		th.addError(22, 12, "Duplicate class method 'dupmethod'.");
+		th.addError(24, 19, "Duplicate static class method 'dupmethod'.");
+		th.addError(29, 3, "Unexpected '('.");
+		th.addError(30, 7, "Setter is defined without getter.");
+		th.addError(31, 7, "Setter is defined without getter.");
 	    
 	    th.test(code, new LinterOptions().set("esnext", true));
 	}
@@ -5952,7 +6099,7 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.addError(10, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
+		th.addError(10, 39, "If a strict mode function is executed using function invocation, its 'this' value will be undefined.");
 	    th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -5970,6 +6117,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
+		th.newTest("The `newcap` option is not automatically enabled within class bodies.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 	
@@ -5988,14 +6136,192 @@ public class TestParser extends Assert
 			"void MyClass;"
 		};
 		
-		th.addError(2, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(3, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(4, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(5, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(6, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(7, "Reassignment of 'MyClass', which is is a class. Use 'var' or 'let' to declare bindings that may change.");
-		th.addError(9, "'MyClass' is not defined.");
+		th.addError(2, 19, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(3, 14, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(4, 21, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(5, 20, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(6, 20, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(7, 15, "Reassignment of 'MyClass', which is a class. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(9, 6, "'MyClass' is not defined.");
 		th.test(code, new LinterOptions().set("esnext", true).set("undef", true));
+	}
+	
+	@Test(groups = {"super"})
+	public void testSuperInvalid()
+	{
+		th.newTest("as identifier");
+		th.addError(3, 10, "Unexpected ';'.");
+		th.addError(3, 5, "Expected an assignment or function call and instead saw an expression.");
+		th.test(new String[] {
+			"void {",
+			"  m() {",
+			"    super;",
+			"  }",
+			"};"
+		}, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test(groups = {"super"})
+	public void testSuperSuperProperty()
+	{
+		th.newTest("bracket notation");
+		th.addError(3, 14, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(4, 20, "['ab'] is better written in dot notation.");
+		th.test(new String[] {
+			"void {",
+			"  m() {",
+			"    super['4'];",
+			"    void super['a' + 'b'];",
+			"  }",
+			"};"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("dot operator");
+		th.addError(3, 11, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(4, 26, "'hasOwnProperty' is a really bad name.");
+		th.test(new String[] {
+			"void {",
+			"  m() {",
+			"    super.x;",
+			"    super.hasOwnProperty = 0;",
+			"  }",
+			"};"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("within arrow functions");
+		th.test(new String[] {
+			"void {",
+			"  m() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        void super.x;",
+			"      });",
+			"    });",
+			"  },",
+			"  *g() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        void super.x;",
+			"      });",
+			"    });",
+			"    yield;",
+			"  }",
+			"};",
+			"class C {",
+			"  m() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        void super.x;",
+			"      });",
+			"    });",
+			"  }",
+			"  static m() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        void super.x;",
+			"      });",
+			"    });",
+			"  }",
+			"}"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("outside of method");
+		th.addError(5, 14, "Super property may only be used within method bodies.");
+		th.addError(6, 14, "Super property may only be used within method bodies.");
+		th.addError(12, 8, "Super property may only be used within method bodies.");
+		th.addError(13, 8, "Super property may only be used within method bodies.");
+		th.addError(15, 6, "Super property may only be used within method bodies.");
+		th.addError(16, 6, "Super property may only be used within method bodies.");
+		th.test(new String[] {
+			"void {",
+			"  m() {",
+			"    function f() {",
+			"      void (() => {",
+			"        void super.x;",
+			"        void super[x];",
+			"      });",
+			"    }",
+			"  }",
+			"};",
+			"function f() {",
+			"  void super.x;",
+			"  void super[x];",
+			"}",
+			"void super.x;",
+			"void super[x];"
+		}, new LinterOptions().set("esversion", 6));
+	}
+	
+	@Test(groups = {"super"})
+	public void testSuperSuperCall()
+	{
+		th.test(new String[] {
+			"class C {",
+			"  m() {",
+			"    super();",
+			"    super(1);",
+			"    super(...x);",
+			"  }",
+			"}"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("within arrow functions");
+		th.test(new String[] {
+			"class C {",
+			"  m() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        super();",
+			"      });",
+			"    });",
+			"  }",
+			"  *g() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        super();",
+			"      });",
+			"    });",
+			"    yield;",
+			"  }",
+			"  static m() {",
+			"    void (() => {",
+			"      void (() => {",
+			"        super();",
+			"      });",
+			"    });",
+			"  }",
+			"}"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("outside of class method");
+		th.addError(5, 9, "Super call may only be used within class method bodies.");
+		th.addError(14, 9, "Super call may only be used within class method bodies.");
+		th.addError(20, 3, "Super call may only be used within class method bodies.");
+		th.addError(22, 1, "Super call may only be used within class method bodies.");
+		th.test(new String[] {
+			"class C {",
+			"  m() {",
+			"    function f() {",
+			"      void (() => {",
+			"        super();",
+			"      });",
+			"    }",
+			"  }",
+			"}",
+			"void {",
+			"  m() {",
+			"    function f() {",
+			"      void (() => {",
+			"        super();",
+			"      });",
+			"    }",
+			"  }",
+			"};",
+			"function f() {",
+			"  super();",
+			"}",
+			"super();"
+		}, new LinterOptions().set("esversion", 6));
 	}
 	
 	@Test
@@ -6015,12 +6341,12 @@ public class TestParser extends Assert
 		    "}());"
 		};
 		
-		th.addError(2, "Reassignment of 'f', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(3, "Reassignment of 'f', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(5, "Reassignment of 'g', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(6, "Reassignment of 'g', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(9, "Reassignment of 'h', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(10, "Reassignment of 'h', which is is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(2, 1, "Reassignment of 'f', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(3, 1, "Reassignment of 'f', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(5, 3, "Reassignment of 'g', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(6, 3, "Reassignment of 'g', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(9, 3, "Reassignment of 'h', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(10, 3, "Reassignment of 'h', which is a function. Use 'var' or 'let' to declare bindings that may change.");
 	    th.test(src);
 	}
 	
@@ -6068,11 +6394,11 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.addError(2, "Unnecessary semicolon.");
-		th.addError(4, "Unnecessary semicolon.");
-		th.addError(6, "Unnecessary semicolon.");
-		th.addError(6, "Unnecessary semicolon.");
-		th.addError(8, "Unnecessary semicolon.");
+		th.addError(2, 3, "Unnecessary semicolon.");
+		th.addError(4, 3, "Unnecessary semicolon.");
+		th.addError(6, 3, "Unnecessary semicolon.");
+		th.addError(6, 4, "Unnecessary semicolon.");
+		th.addError(8, 3, "Unnecessary semicolon.");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -6080,16 +6406,16 @@ public class TestParser extends Assert
 	public void testInvalidClasses()
 	{
 		// Regression test for GH-2324
-		th.addError(1, "Class properties must be methods. Expected '(' but instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 11, "Class properties must be methods. Expected '(' but instead saw ''.");
+		th.addError(1, 11, "Unrecoverable syntax error. (100% scanned).");
 		th.test("class a { b", new LinterOptions().set("esnext", true));
 		
 		// Regression test for GH-2339
-		th.reset();
-		th.addError(2, "Class properties must be methods. Expected '(' but instead saw ':'.");
-		th.addError(3, "Expected '(' and instead saw '}'.");
-		th.addError(4, "Expected an identifier and instead saw '}'.");
-		th.addError(4, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(2, 14, "Class properties must be methods. Expected '(' but instead saw ':'.");
+		th.addError(3, 3, "Expected '(' and instead saw '}'.");
+		th.addError(4, 1, "Expected an identifier and instead saw '}'.");
+		th.addError(4, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test(new String[]{
 				"class Test {",
 				"  constructor: {",
@@ -6112,11 +6438,12 @@ public class TestParser extends Assert
 		
 	    th.test(code, new LinterOptions().set("boss", true));
 	    
-	    for (int i = 0; i < code.length; i++)
-	    {
-	    	th.addError(i + 1, "Expected a conditional expression and instead saw an assignment.");
-	    }
-	    
+	    th.addError(1, 11, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(2, 16, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(3, 14, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(4, 20, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(5, 20, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(6, 15, "Expected a conditional expression and instead saw an assignment.");	    
 	    th.test(code);
 	}
 	
@@ -6132,8 +6459,8 @@ public class TestParser extends Assert
 		    "if (a = b, (b = c)) { }"
 		};
 		
-		th.addError(1, "Expected a conditional expression and instead saw an assignment.");
-	    th.addError(4, "Expected a conditional expression and instead saw an assignment.");
+		th.addError(1, 10, "Expected a conditional expression and instead saw an assignment.");
+	    th.addError(4, 17, "Expected a conditional expression and instead saw an assignment.");
 	    
 	    th.test(code); // es5
 	}
@@ -6153,11 +6480,11 @@ public class TestParser extends Assert
 		    "foo;"
 		};
 		
-		th.addError(9, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(9, 1, "Expected an assignment or function call and instead saw an expression.");
 		
 		th.test(code, new LinterOptions().set("moz", true));
 	    
-		th.addError(4, "'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.addError(4, 23 ,"'function closure expressions' is only available in Mozilla JavaScript extensions (use moz option).");
 	    th.test(code);
 	}
 	
@@ -6170,7 +6497,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(2, "Missing semicolon.");
+		th.addError(2, 22, "Missing semicolon.");
 		
 	    th.test(code);
 	}
@@ -6191,22 +6518,22 @@ public class TestParser extends Assert
 		
 		// As long as jshint doesn't crash, it doesn't matter what these errors
 		// are. Feel free to adjust these if they don't match the output.
-		th.addError(1, "Expected an identifier and instead saw ')'.");
-	    th.addError(1, "Expected ')' to match '(' from line 1 and instead saw ';'.");
-	    th.addError(2, "Expected an identifier and instead saw ','.");
-	    th.addError(3, "Unexpected ')'.");
-	    th.addError(4, "Expected an identifier and instead saw ','.");
-	    th.addError(4, "Expected ')' to match '(' from line 4 and instead saw 'b'.");
-	    th.addError(4, "Expected an identifier and instead saw ')'.");
-	    th.addError(4, "Missing semicolon.");
-	    th.addError(6, "Expected an identifier and instead saw ','.");
-	    th.addError(7, "Unexpected ')'.");
-	    th.addError(7, "Expected an identifier and instead saw ')'.");
-	    th.addError(7, "Expected ')' to match '(' from line 7 and instead saw ';'.");
-	    th.addError(8, "Expected an identifier and instead saw ','.");
-	    th.addError(8, "Expected ')' to match '(' from line 8 and instead saw 'b'.");
-	    th.addError(8, "Expected an identifier and instead saw ')'.");
-	    th.addError(8, "Missing semicolon.");
+		th.addError(1, 14, "Expected an identifier and instead saw ')'.");
+		th.addError(1, 15, "Expected ')' to match '(' from line 1 and instead saw ';'.");
+		th.addError(2, 14, "Expected an identifier and instead saw ','.");
+		th.addError(3, 16, "Unexpected ')'.");
+		th.addError(4, 14, "Expected an identifier and instead saw ','.");
+		th.addError(4, 15, "Expected ')' to match '(' from line 4 and instead saw 'b'.");
+		th.addError(4, 16, "Expected an identifier and instead saw ')'.");
+		th.addError(4, 16, "Missing semicolon.");
+		th.addError(6, 15, "Expected an identifier and instead saw ','.");
+		th.addError(7, 17, "Unexpected ')'.");
+		th.addError(7, 17, "Expected an identifier and instead saw ')'.");
+		th.addError(7, 19, "Expected ')' to match '(' from line 7 and instead saw ';'.");
+		th.addError(8, 15, "Expected an identifier and instead saw ','.");
+		th.addError(8, 16, "Expected ')' to match '(' from line 8 and instead saw 'b'.");
+		th.addError(8, 18, "Expected an identifier and instead saw ')'.");
+		th.addError(8, 18, "Missing semicolon.");
 		
 		th.test(code, new LinterOptions().set("asi", true).set("expr", true));
 	}
@@ -6216,9 +6543,9 @@ public class TestParser extends Assert
 	{
 		String code = th.readFile("src/test/resources/fixtures/yield-expressions.js");
 		
-		th.addError(22, "Did you mean to return a conditional instead of an assignment?");
+		th.addError(22, 15, "Did you mean to return a conditional instead of an assignment?");
 		th.addError(23, 22, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
-		th.addError(31, "Did you mean to return a conditional instead of an assignment?");
+		th.addError(31, 15, "Did you mean to return a conditional instead of an assignment?");
 		th.addError(32, 20, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
 		th.addError(32, 17, "Bad operand.");
 		th.addError(51, 10, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
@@ -6250,9 +6577,9 @@ public class TestParser extends Assert
 		th.addError(84, 43, "Bad operand.");
 	    th.test(code, new LinterOptions().set("maxerr", 1000).set("expr", true).set("esnext", true));
 	    
-	    th.reset();
-	    th.addError(22, "Did you mean to return a conditional instead of an assignment?");
-	    th.addError(31, "Did you mean to return a conditional instead of an assignment?");
+	    th.newTest();
+	    th.addError(22, 15, "Did you mean to return a conditional instead of an assignment?");
+	    th.addError(31, 15, "Did you mean to return a conditional instead of an assignment?");
 	    
 	    // These are line-column pairs for the Mozilla paren errors.
 	    int[][] needparen = {
@@ -6276,8 +6603,8 @@ public class TestParser extends Assert
 	    	th.addError(lc[0], lc[1], "Mozilla requires the yield expression to be parenthesized here.");
 	    }
 	    
-	    th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(74, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(74, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
 	    
 	    th.test(code, new LinterOptions().set("maxerr", 1000).set("expr", true).set("moz", true));
 	}
@@ -6285,7 +6612,8 @@ public class TestParser extends Assert
 	@Test
 	public void testYieldInInvalidPositions()
 	{
-		th.addError(1, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
+		th.newTest("as an invalid operand");
+		th.addError(1, 25, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
 		
 		th.test("function* g() { null || yield; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { null || yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
@@ -6293,12 +6621,24 @@ public class TestParser extends Assert
 		th.test("function* g() { null && yield; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { null && yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { null && yield* g(); }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest("as an invalid operand");
+		th.addError(1, 18, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
+		
 		th.test("function* g() { !yield; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { !yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { !yield* g(); }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest("as an invalid operand");
+		th.addError(1, 19, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
+		
 		th.test("function* g() { !!yield; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { !!yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { !!yield* g(); }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest("as an invalid operand");
+		th.addError(1, 21, "Invalid position for 'yield' expression (consider wrapping in parenthesis).");
+		
 		th.test("function* g() { 1 + yield; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { 1 + yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { 1 + yield* g(); }", new LinterOptions().set("esversion", 6).set("expr", true));
@@ -6306,22 +6646,32 @@ public class TestParser extends Assert
 		th.test("function* g() { 1 - yield null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { 1 - yield* g(); }", new LinterOptions().set("esversion", 6).set("expr", true));
 		
-		th.reset();
-		th.addError(1, "Bad operand.");
-		
+		th.newTest("with an invalid operand");
+		th.addError(1, 22, "Bad operand.");
 		th.test("function* g() { yield.x; }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest("with an invalid operand");
+		th.addError(1, 23, "Bad operand.");
+		
 		th.test("function* g() { yield*.x; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { yield ? null : null; }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest("with an invalid operand");
+		th.addError(1, 24, "Bad operand.");
+		
 		th.test("function* g() { yield* ? null : null; }", new LinterOptions().set("esversion", 6).set("expr", true));
 		th.test("function* g() { (yield ? 1 : 1); }", new LinterOptions().set("esversion", 6).set("expr", true));
+		
+		th.newTest();
+		th.addError(1, 25, "Bad operand.");
 		th.test("function* g() { (yield* ? 1 : 1); }", new LinterOptions().set("esversion", 6).set("expr", true));
 		
-		th.reset();
-		th.addError(1, "Unclosed regular expression.");
-	    th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.newTest();
+		th.addError(1, 24, "Unclosed regular expression.");
+	    th.addError(1, 24, "Unrecoverable syntax error. (100% scanned).");
 	    th.test("function* g() { yield* / 1; }", new LinterOptions().set("esversion", 6).set("expr", true));
 	    
-	    th.reset();
+	    th.newTest("as a valid operand");
 	    th.test(new String[] {
 	    	"function* g() {",
 	        "  (yield);",
@@ -6350,6 +6700,7 @@ public class TestParser extends Assert
 	        "}"
 	    }, new LinterOptions().set("esversion", 6));
 	    
+	    th.newTest("with a valid operand");
 	    th.test(new String[] {
 	    	"function *g() {",
 	        "  yield g;",
@@ -6371,12 +6722,12 @@ public class TestParser extends Assert
 	        "}"
 	    };
 	    
-	    th.reset();
-	    th.addError(3, "Missing semicolon.");
-	    th.addError(5, "Missing semicolon.");
+	    th.newTest("asi");
+	    th.addError(3, 6, "Missing semicolon.");
+	    th.addError(5, 6, "Missing semicolon.");
 	    th.test(code, new LinterOptions().set("esversion", 6).set("expr", true));
 	    
-	    th.reset();
+	    th.newTest("asi (ignoring warnings)");
 	    th.test(code, new LinterOptions().set("esversion", 6).set("expr", true).set("asi", true));
 	}
 	
@@ -6388,7 +6739,7 @@ public class TestParser extends Assert
 		    "delete foo.a;"
 		};
 		
-		th.addError(1, "Missing semicolon.");
+		th.addError(1, 12, "Missing semicolon.");
 		
 	    th.test(code); // es5
 	}
@@ -6414,22 +6765,22 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(3, "Expected ')' to match '(' from line 2 and instead saw 'c'.");
-		th.addError(3, "Missing semicolon.");
-	    th.addError(4, "Expected an identifier and instead saw ')'.");
-	    th.addError(4, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(7, "Misleading line break before ','; readers may interpret this as an expression boundary.");
-	    th.addError(8, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(9, "Missing semicolon.");
-	    th.addError(10, "Expected an identifier and instead saw '?'.");
-	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(10, "Missing semicolon.");
-	    th.addError(10, "Label 'i' on j statement.");
-	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(13, "Missing semicolon.");
-	    th.addError(14, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(3, 5, "Expected ')' to match '(' from line 2 and instead saw 'c'.");
+		th.addError(3, 6, "Missing semicolon.");
+		th.addError(4, 5, "Expected an identifier and instead saw ')'.");
+		th.addError(4, 5, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(5, 14, "Missing semicolon.");
+		th.addError(6, 7, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(7, 10, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+		th.addError(8, 5, "Comma warnings can be turned off with 'laxcomma'.");
+		th.addError(9, 14, "Missing semicolon.");
+		th.addError(10, 5, "Expected an identifier and instead saw '?'.");
+		th.addError(10, 5, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(10, 6, "Missing semicolon.");
+		th.addError(10, 11, "Label 'i' on j statement.");
+		th.addError(10, 11, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(13, 22, "Missing semicolon.");
+		th.addError(14, 7, "Expected an assignment or function call and instead saw an expression.");
 		
 	    th.test(code, new LinterOptions().set("esnext", true));
 	    
@@ -6442,33 +6793,33 @@ public class TestParser extends Assert
 	    // a ? yield
 	    // : b;
 	    // ```
-	    th.reset();
-	    th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(3, "Expected ')' to match '(' from line 2 and instead saw 'c'.");
-	    th.addError(4, "Expected an identifier and instead saw ')'.");
-	    th.addError(4, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(8, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(7, "Misleading line break before ','; readers may interpret this as an expression boundary.");
-	    th.addError(10, "Expected an identifier and instead saw '?'.");
-	    th.addError(10, "Missing semicolon.");
-	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(10, "Label 'i' on j statement.");
-	    th.addError(10, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(14, "Expected an assignment or function call and instead saw an expression.");
+	    th.newTest();
+	    th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+	    th.addError(3, 5, "Expected ')' to match '(' from line 2 and instead saw 'c'.");
+	    th.addError(4, 5, "Expected an identifier and instead saw ')'.");
+	    th.addError(4, 5, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(6, 7, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(8, 5, "Comma warnings can be turned off with 'laxcomma'.");
+	    th.addError(7, 10, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+	    th.addError(10, 5, "Expected an identifier and instead saw '?'.");
+	    th.addError(10, 6, "Missing semicolon.");
+	    th.addError(10, 5, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(10, 11, "Label 'i' on j statement.");
+	    th.addError(10, 11, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(14, 7, "Expected an assignment or function call and instead saw an expression.");
 	    
 	    th.test(code, new LinterOptions().set("moz", true).set("asi", true));
 	    
-	    th.addError(2, "Line breaking error 'yield'.");
-	    th.addError(3, "Missing semicolon.");
-	    th.addError(5, "Line breaking error 'yield'.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(7, "Line breaking error 'yield'.");
-	    th.addError(9, "Line breaking error 'yield'.");
-	    th.addError(9, "Missing semicolon.");
-	    th.addError(11, "Line breaking error 'yield'.");
-	    th.addError(13, "Line breaking error 'yield'.");
-	    th.addError(13, "Missing semicolon.");
+	    th.addError(2, 14, "Line breaking error 'yield'.");
+	    th.addError(3, 6, "Missing semicolon.");
+	    th.addError(5, 9, "Line breaking error 'yield'.");
+	    th.addError(5, 14, "Missing semicolon.");
+	    th.addError(7, 10, "Line breaking error 'yield'.");
+	    th.addError(9, 9, "Line breaking error 'yield'.");
+	    th.addError(9, 14, "Missing semicolon.");
+	    th.addError(11, 13, "Line breaking error 'yield'.");
+	    th.addError(13, 17, "Line breaking error 'yield'.");
+	    th.addError(13, 22, "Missing semicolon.");
 	    
 	    th.test(code, new LinterOptions().set("moz", true));
 	    
@@ -6481,13 +6832,13 @@ public class TestParser extends Assert
 	        "}"
 	    };
 	    
-	    th.reset();
-	    th.addError(5, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
+	    th.newTest("gh-2530 (asi: true)");
+	    th.addError(5, 3, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
 	    th.test(code2, new LinterOptions().set("esnext", true).set("undef", false).set("asi", true));
 	    
-	    th.reset();
-	    th.addError(2, "Missing semicolon.");
-	    th.addError(5, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
+	    th.newTest("gh-2530 (asi: false)");
+	    th.addError(2, 8, "Missing semicolon.");
+	    th.addError(5, 3, "Misleading line break before 'fn'; readers may interpret this as an expression boundary.");
 	    th.test(code2, new LinterOptions().set("esnext", true).set("undef", false));
 	}
 	
@@ -6507,20 +6858,20 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-		th.addError(2, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(4, "Missing semicolon.");
-		th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-		th.addError(6, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(7, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(8, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(3, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 8, "Missing semicolon.");
+		th.addError(5, 3, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(6, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(8, 3, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
 		th.test(code);
 		
-		th.reset();
-		th.addError(4, "Missing semicolon.");
-		th.addError(5, "Expected an assignment or function call and instead saw an expression.");
+		th.newTest();
+		th.addError(4, 8, "Missing semicolon.");
+		th.addError(5, 3, "Expected an assignment or function call and instead saw an expression.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 		
 		code = new String[] {
@@ -6529,15 +6880,15 @@ public class TestParser extends Assert
 			"}"
 		};
 		
-		th.reset();
-		th.addError(1, "'function*' is only available in ES6 (use 'esversion: 6').");
-		th.addError(2, "Unclosed regular expression.");
-		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
+		th.newTest();
+		th.addError(1, 9, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(2, 9, "Unclosed regular expression.");
+		th.addError(2, 9, "Unrecoverable syntax error. (66% scanned).");
 		th.test(code);
 		
-		th.reset();
-		th.addError(2, "Unclosed regular expression.");
-		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
+		th.newTest();
+		th.addError(2, 9, "Unclosed regular expression.");
+		th.addError(2, 9, "Unrecoverable syntax error. (66% scanned).");
 		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 	
@@ -6546,7 +6897,7 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh1227.js");
 		
-		th.addError(14, "Unreachable 'return' after 'return'.");
+		th.addError(14, 3, "Unreachable 'return' after 'return'.");
 	    th.test(src);
 	}
 	
@@ -6561,7 +6912,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(4, "Unreachable 'i' after 'break'.");
+		th.addError(4, 3, "Unreachable 'i' after 'break'.");
 	    th.test(src);
 	}
 	
@@ -6576,7 +6927,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(4, "Unreachable 'i' after 'continue'.");
+		th.addError(4, 3, "Unreachable 'i' after 'continue'.");
 	    th.test(src);
 	}
 	
@@ -6591,7 +6942,7 @@ public class TestParser extends Assert
 		    "}());"
 		};
 		
-		th.addError(4, "Unreachable 'x' after 'return'.");
+		th.addError(4, 3, "Unreachable 'x' after 'return'.");
 	    th.test(src);
 	}
 	
@@ -6603,7 +6954,7 @@ public class TestParser extends Assert
 		    "var x;"
 		};
 		
-		th.addError(2, "Unreachable 'var' after 'throw'.");
+		th.addError(2, 1, "Unreachable 'var' after 'throw'.");
 	    th.test(src);
 	}
 	
@@ -6659,7 +7010,7 @@ public class TestParser extends Assert
 		};
 		
 		// No error for case 1, 2, 3.
-		th.addError(9, "Expected a 'break' statement before 'default'.");
+		th.addError(9, 3, "Expected a 'break' statement before 'default'.");
 		th.test(code);
 	}
 	
@@ -6684,7 +7035,7 @@ public class TestParser extends Assert
 		};
 		
 		// No error for case 1, 2, 3, 4.
-		th.addError(11, "Expected a 'break' statement before 'default'.");
+		th.addError(11, 5, "Expected a 'break' statement before 'default'.");
 		th.test(code);
 	}
 	
@@ -6710,7 +7061,7 @@ public class TestParser extends Assert
 		    "/*jshint ignore:badvalue*/"
 		};
 		
-		th.addError(4, "Bad option value.");
+		th.addError(4, 1, "Bad option value.");
 		th.test(code);
 	}
 	
@@ -6783,7 +7134,7 @@ public class TestParser extends Assert
 		    "  /*jshint ignore:end */   "     // leading and trailing whitespace
 		};
 		
-		th.addError(4, "Missing semicolon.");
+		th.addError(4, 28, "Missing semicolon.");
 		th.test(code);
 	}
 	
@@ -6824,11 +7175,11 @@ public class TestParser extends Assert
 	public void testRegressionForGH1431()
 	{
 		// The code is invalid but it should not crash JSHint.
-	    th.addError(1, "Expected ';' and instead saw ')'.");
-	    th.addError(1, "Expected ')' and instead saw ';'.");
-	    th.addError(1, "Expected an identifier and instead saw ';'.");
-	    th.addError(1, "Expected ')' to match '(' from line 1 and instead saw 'i'.");
-	    th.addError(1, "Expected an identifier and instead saw ')'.");
+		th.addError(1, 25, "Expected ';' and instead saw ')'.");
+		th.addError(1, 26, "Expected ')' and instead saw ';'.");
+		th.addError(1, 26, "Expected an identifier and instead saw ';'.");
+		th.addError(1, 28, "Expected ')' to match '(' from line 1 and instead saw 'i'.");
+		th.addError(1, 31, "Expected an identifier and instead saw ')'.");
 		th.test("for (i=0; (arr[i])!=null); i++);");
 	}
 	
@@ -6842,7 +7193,7 @@ public class TestParser extends Assert
 		    "var b;"
 		};
 		
-		th.addError(4, "'b' is defined but never used.");
+		th.addError(4, 5, "'b' is defined but never used.");
 		th.test(code, new LinterOptions().set("unused", true));
 	}
 	
@@ -6851,59 +7202,48 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/destparam.js");
 		
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(14, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(15, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(15, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(22, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(22, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(23, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(23, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(24, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(24, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(27, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(27, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(27, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(28, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(29, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(29, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(29, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(30, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(31, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(31, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(31, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(6, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 14, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(14, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 11, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(15, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(15, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(16, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(17, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(18, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(18, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(21, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(21, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(22, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(22, 25, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(23, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(23, 28, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(24, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(24, 30, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(27, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(27, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(28, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(28, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(29, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(29, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(30, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(30, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(31, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(31, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
 		th.test(src, new LinterOptions().set("unused", true).set("undef", true).set("maxerr", 100));
 	}
 	
@@ -6912,59 +7252,48 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/destparam.js");
 		
-		th.addError(4, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(4, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(5, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(5, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(6, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(7, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(10, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(10, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(11, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(14, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(15, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(15, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(17, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(18, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(21, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(22, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(22, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(23, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(23, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(23, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(24, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(24, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(27, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(27, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(27, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(28, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(28, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(29, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(29, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(29, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(30, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(30, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(31, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(31, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(31, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(4, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(5, 18, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(6, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 14, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(6, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(7, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(10, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(11, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(14, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(14, 11, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(15, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(15, 14, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(16, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 17, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(16, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(17, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(17, 20, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(18, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(18, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(21, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(21, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(22, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(22, 25, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(23, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(23, 28, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(24, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(24, 30, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(27, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(27, 13, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(28, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(28, 16, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(29, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(29, 19, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(30, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(30, 22, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
+		th.addError(31, 7, "'destructuring binding' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(31, 24, "'arrow function syntax (=>)' is only available in ES6 (use 'esversion: 6').");
 		th.test(src, new LinterOptions().set("es3", true).set("unused", true).set("undef", true).set("maxerr", 100));
 	}
 	
@@ -6983,12 +7312,12 @@ public class TestParser extends Assert
 	@Test
 	public void testRegressionCrashFromGH1573()
 	{
-		th.addError(1, "Expected an identifier and instead saw 'var'.");
-	    th.addError(1, "Expected ']' to match '[' from line 1 and instead saw 'foo'.");
-	    th.addError(1, "Expected an identifier and instead saw ']'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Missing semicolon.");
-	    th.addError(1, "Bad assignment.");
+		th.addError(1, 2, "Expected an identifier and instead saw 'var'.");
+		th.addError(1, 6, "Expected ']' to match '[' from line 1 and instead saw 'foo'.");
+		th.addError(1, 14, "Expected an identifier and instead saw ']'.");
+		th.addError(1, 14, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(1, 15, "Missing semicolon.");
+		th.addError(1, 10, "Bad assignment.");
 		th.test("[var foo = 1;]");
 	}
 	
@@ -7008,9 +7337,9 @@ public class TestParser extends Assert
 	@Test
 	public void testEnforcementOfForinOptionShouldBeTolerantOfInvalidSyntax()
 	{
-		th.addError(1, "Creating global 'for' variable. Should be 'for (var x ...'.");
-		th.addError(2, "Unrecoverable syntax error. (66% scanned).");
-		th.addError(3, "Expected an identifier and instead saw '}'.");
+		th.addError(1, 6, "Creating global 'for' variable. Should be 'for (var x ...'.");
+		th.addError(2, 3, "Unrecoverable syntax error. (66% scanned).");
+		th.addError(3, 1, "Expected an identifier and instead saw '}'.");
 		th.test(new String[] {
 			"for (x in x) {",
 			"  if (",
@@ -7051,7 +7380,7 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(17, "Creating global 'for' variable. Should be 'for (var nonKey ...'.");
+		th.addError(17, 10, "Creating global 'for' variable. Should be 'for (var nonKey ...'.");
 		th.test(code);
 	}
 	
@@ -7086,8 +7415,8 @@ public class TestParser extends Assert
 		    "const constDefinedLater = 62;"
 		};
 		
-		th.addError(24, "'letDefinedLater' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(25, "'constDefinedLater' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(24, 5, "'letDefinedLater' was used before it was declared, which is illegal for 'let' variables.");
+	    th.addError(25, 7, "'constDefinedLater' was used before it was declared, which is illegal for 'const' variables.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -7120,19 +7449,19 @@ public class TestParser extends Assert
 		    "funcScope();"
 		};
 		
-		th.addError(1, "'broken' is defined but never used.");
-	    th.addError(2, "'broken2' is defined but never used.");
-	    th.addError(4, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(5, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(6, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(7, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(8, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(14, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(15, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(16, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(17, "Export declarations are only allowed at the top level of module scope.");
-	    th.addError(17, "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.");
-	    th.addError(18, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(1, 5, "'broken' is defined but never used.");
+		th.addError(2, 5, "'broken2' is defined but never used.");
+		th.addError(4, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(5, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(6, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(7, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(8, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(14, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(15, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(16, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(17, 3, "Export declarations are only allowed at the top level of module scope.");
+		th.addError(17, 10, "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.");
+		th.addError(18, 3, "Export declarations are only allowed at the top level of module scope.");
 		th.test(code, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -7155,86 +7484,112 @@ public class TestParser extends Assert
 		    "limitScope();"
 		};
 		
-		th.addError(2, "Import declarations are only allowed at the top level of module scope.");
-	    th.addError(5, "Import declarations are only allowed at the top level of module scope.");
-	    th.addError(8, "Import declarations are only allowed at the top level of module scope.");
-	    th.addError(11, "Import declarations are only allowed at the top level of module scope.");
+		th.addError(2, 2, "Import declarations are only allowed at the top level of module scope.");
+	    th.addError(5, 2, "Import declarations are only allowed at the top level of module scope.");
+	    th.addError(8, 2, "Import declarations are only allowed at the top level of module scope.");
+	    th.addError(11, 2, "Import declarations are only allowed at the top level of module scope.");
 	    th.test(code, new LinterOptions().set("esversion", 6).set("module", true));
 	}
 	
 	@Test
 	public void testStrictDirectiveASI()
 	{
-		LinterOptions options = new LinterOptions().set("strict", true).set("asi", true).set("globalstrict", true).setPredefineds("x");
+		LinterOptions options = new LinterOptions().set("strict", true).set("asi", true).set("globalstrict", true);
 		
+		th.newTest("1");
 		th.test("'use strict'\nfunction fn() {}\nfn();", options);
 		
+		th.newTest("2");
 		th.test("'use strict'\n;function fn() {}\nfn();", options);
 		
+		th.newTest("3");
 		th.test("'use strict';function fn() {} fn();", options);
 		
-		th.addError(2, "Bad invocation.");
-	    th.addError(2, "Missing \"use strict\" statement.");
+		th.newTest("4");
+		th.addError(2, 1, "Bad invocation.");
+	    th.addError(2, 21, "Missing \"use strict\" statement.");
 		th.test("'use strict'\n(function fn() {})();", options);
 		
-		th.reset();
-		th.addError(2, "Missing \"use strict\" statement.");
+		th.newTest("5");
+		th.addError(2, 10, "Missing \"use strict\" statement.");
 		th.test("'use strict'\n[0] = '6';", options);
 		
-		th.reset();
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(2, "Missing \"use strict\" statement.");
+		th.newTest("6");
+		th.addError(1, 29, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 1, "Missing \"use strict\" statement.");
+		th.addError(2, 5, "Missing \"use strict\" statement.");
 	    th.test("'use strict',function fn() {}\nfn();", options);
 	    
-	    th.reset();
-	    th.addError(1, "Missing \"use strict\" statement.");
+	    th.newTest("7");
+	    th.addError(1, 24, "Missing \"use strict\" statement.");
 		th.test("'use strict'.split(' ');", options);
 		
-		th.reset();
-		th.addError(1, "Missing \"use strict\" statement.");
+		th.newTest("8");
+		th.addError(1, 15, "Missing \"use strict\" statement.");
 		th.test("(function() { var x; \"use strict\"; return x; }());", new LinterOptions().set("strict", true).set("expr", true));
 		
-		th.reset();
-		th.addError(1, "Missing \"use strict\" statement.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
+		th.newTest("9");
+		th.addError(1, 27, "Missing \"use strict\" statement.");
+	    th.addError(1, 15, "Expected an assignment or function call and instead saw an expression.");
 	    th.test("'use strict', 'use strict';", options);
 	    
-	    th.reset();
-	    th.addError(1, "Missing \"use strict\" statement.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
+	    th.newTest("10");
+	    th.addError(1, 28, "Missing \"use strict\" statement.");
+	    th.addError(1, 16, "Expected an assignment or function call and instead saw an expression.");
 	    th.test("'use strict' * 'use strict';", options);
 	    
-	    th.reset();
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.test("'use strict'\n!x;", options);
+	    th.newTest("11");
+	    th.addError(2, 2, "Expected an assignment or function call and instead saw an expression.");
+	    th.test("'use strict'\n!x;", options, new LinterGlobals(true, "x"));
 	    
-	    th.reset();
-	    th.addError(2, "Misleading line break before '+'; readers may interpret this as an expression boundary.");
-	    th.addError(2, "Missing \"use strict\" statement.");
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.test("'use strict'\n+x;", options);
+	    th.newTest("12");
+	    th.addError(2, 1, "Misleading line break before '+'; readers may interpret this as an expression boundary.");
+	    th.addError(2, 3, "Missing \"use strict\" statement.");
+	    th.addError(2, 2, "Expected an assignment or function call and instead saw an expression.");
+	    th.test("'use strict'\n+x;", options, new LinterGlobals(true, "x"));
 	    
-	    th.reset();
-	    th.test("'use strict'\n++x;", options);
+	    th.newTest("13");
+	    th.test("'use strict'\n++x;", options, new LinterGlobals(true, "x"));
 	    
-	    th.reset();
-	    th.addError(1, "Bad operand.");
-	    th.addError(2, "Missing \"use strict\" statement.");
-	    th.addError(2, "Missing \"use strict\" statement.");
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.test("'use strict'++\nx;", options);
+	    th.newTest("14");
+	    th.addError(1, 13, "Bad assignment.");
+	    th.addError(2, 1, "Missing \"use strict\" statement.");
+	    th.addError(2, 2, "Missing \"use strict\" statement.");
+	    th.addError(2, 1, "Expected an assignment or function call and instead saw an expression.");
+	    th.test("'use strict'++\nx;", options, new LinterGlobals(true, "x"));
 	    
-	    th.reset();
-	    th.addError(1, "Bad operand.");
-	    th.addError(1, "Missing \"use strict\" statement.");
-	    th.test("'use strict'++;", options);
+	    th.newTest("15");
+	    th.addError(1, 13, "Bad assignment.");
+	    th.addError(1, 15, "Missing \"use strict\" statement.");
+	    th.test("'use strict'++;", options, new LinterGlobals(true, "x"));
+	    
+	    th.newTest("16");
+	    th.addError(1, 9, "Missing \"use strict\" statement.");
+	    th.test("(() => 1)();", new LinterOptions().set("strict", true).set("esnext", true));
+	    
+	    th.newTest("17");
+	    th.test("(() => { \"use strict\"; })();", new LinterOptions().set("strict", true).set("esnext", true));
+	    
+	    th.newTest("18");
+	    th.test("(() => {})();", new LinterOptions().set("strict", true).set("esnext", true));
+	    
+	    th.newTest("19");
+	    th.addError(1, 10, "Missing \"use strict\" statement.");
+	    th.test("(() => { return 1; })();", new LinterOptions().set("strict", true).set("esnext", true));
+	    
+	    th.newTest("20");
+	    th.addError(1, 1, "Use the function form of \"use strict\".");
+	    th.test(new String[] {
+    		"'use strict';",
+    		"(() => { return 1; })();"
+	    }, new LinterOptions().set("strict", true).set("esnext", true));
 	}
 	
 	@Test
 	public void testDereferenceDelete()
 	{
-		th.addError(1, "Expected an identifier and instead saw '.'.");
-		th.addError(1, "Missing semicolon.");
+		th.addError(1, 7, "Expected an identifier and instead saw '.'.");
+		th.addError(1, 8, "Missing semicolon.");
 		th.test("delete.foo();");
 	}
 	
@@ -7312,8 +7667,8 @@ public class TestParser extends Assert
 		    "fn([1, 2, 3]);"
 		};
 		
-		th.addError(2, "Invalid element after rest element.");
-		th.addError(3, "Invalid element after rest element.");
+		th.addError(2, 18, "Invalid element after rest element.");
+		th.addError(3, 12, "Invalid element after rest element.");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -7327,8 +7682,8 @@ public class TestParser extends Assert
 		    "fn2([1,2,3]);"
 		};
 		
-		th.addError(1, "Invalid element after rest element.");
-		th.addError(2, "Invalid element after rest element.");
+		th.addError(1, 24, "Invalid element after rest element.");
+		th.addError(2, 19, "Invalid element after rest element.");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -7342,48 +7697,64 @@ public class TestParser extends Assert
 		    "fn2(1, 2, 3);"
 		};
 		
-		th.addError(1, "Invalid parameter after rest parameter.");
-		th.addError(2, "Invalid parameter after rest parameter.");
+		th.addError(1, 23, "Invalid parameter after rest parameter.");
+		th.addError(2, 18, "Invalid parameter after rest parameter.");
 		th.test(code, new LinterOptions().set("esnext", true));
+	}
+	
+	@Test
+	public void testRestParameterWithDefault()
+	{
+		th.addError(1, 17, "Rest parameter does not a support default value.");
+		th.test("function f(...x = 0) {}", new LinterOptions().set("esversion", 6));
 	}
 	
 	@Test
 	public void testExtraRestOperator()
 	{
-		String[] code = {
-			"function fn([a, b, ......c]) { }",
-		    "function fn2([......c]) { }",
-		    "function fn3(a, b, ......) { }",
-		    "function fn4(......) { }",
-		    "var [......a] = [1, 2, 3];",
-		    "var [a, b, ... ...c] = [1, 2, 3];",
-		    "var arrow = (......a) => a;",
-		    "var arrow2 = (a, b, ......c) => c;",
-		    "var arrow3 = ([......a]) => a;",
-		    "var arrow4 = ([a, b, ......c]) => c;",
-		    "fn([1, 2, 3]);",
-		    "fn2([1, 2, 3]);",
-		    "fn3(1, 2, 3);",
-		    "fn4(1, 2, 3);",
-		    "arrow(1, 2, 3);",
-		    "arrow2(1, 2, 3);",
-		    "arrow3([1, 2, 3]);",
-		    "arrow4([1, 2, 3]);"
-		};
+		th.newTest();
+		th.addError(1, 23, "Unexpected '...'.");
+		th.test("function fn([a, b, ......c]) { }", new LinterOptions().set("esnext", true));
 		
-		th.addError(1, "Unexpected '...'.");
-		th.addError(2, "Unexpected '...'.");
-		th.addError(3, "Unexpected '...'.");
-		th.addError(3, "Unexpected ')'.");
-		th.addError(4, "Unexpected '...'.");
-		th.addError(4, "Unexpected ')'.");
-		th.addError(5, "Unexpected '...'.");
-		th.addError(6, "Unexpected '...'.");
-		th.addError(7, "Unexpected '...'.");
-		th.addError(8, "Unexpected '...'.");
-		th.addError(9, "Unexpected '...'.");
-		th.addError(10, "Unexpected '...'.");
-		th.test(code, new LinterOptions().set("esnext", true));
+		th.newTest();
+		th.addError(1, 18, "Unexpected '...'.");
+		th.test("function fn2([......c]) { }", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 23, "Unexpected '...'.");
+		// The reported column number for this parsing error is incorrect.
+		th.addError(1, 23, "Unexpected ')'.");
+		th.test("function fn3(a, b, ......) { }", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 17, "Unexpected '...'.");
+		// The reported column number for this parsing error is incorrect.
+		th.addError(1, 17, "Unexpected ')'.");
+		th.test("function fn4(......) { }", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 9, "Unexpected '...'.");
+		th.test("var [......a] = [1, 2, 3];", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 16, "Unexpected '...'.");
+		th.test("var [a, b, ... ...c] = [1, 2, 3];", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 17, "Unexpected '...'.");
+		th.test("var arrow = (......a) => a;", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 24, "Unexpected '...'.");
+		th.test("var arrow2 = (a, b, ......c) => c;", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 19, "Unexpected '...'.");
+		th.test("var arrow3 = ([......a]) => a;", new LinterOptions().set("esnext", true));
+		
+		th.newTest();
+		th.addError(1, 25, "Unexpected '...'.");
+		th.test("var arrow4 = ([a, b, ......c]) => c;", new LinterOptions().set("esnext", true));
 	}
 	
 	@Test
@@ -7410,16 +7781,16 @@ public class TestParser extends Assert
 		    "arrow4([1, 2, 3]);"
 		};
 		
-		th.addError(1, "Unexpected ']'.");
-		th.addError(2, "Unexpected ']'.");
-		th.addError(3, "Unexpected ')'.");
-		th.addError(4, "Unexpected ')'.");
-		th.addError(5, "Unexpected ']'.");
-		th.addError(6, "Unexpected ']'.");
-		th.addError(7, "Unexpected ')'.");
-		th.addError(8, "Unexpected ')'.");
-		th.addError(9, "Unexpected ']'.");
-		th.addError(10, "Unexpected ']'.");
+		th.addError(1, 20, "Unexpected ']'.");
+		th.addError(2, 15, "Unexpected ']'.");
+		th.addError(3, 20, "Unexpected ')'.");
+		th.addError(4, 14, "Unexpected ')'.");
+		th.addError(5, 6, "Unexpected ']'.");
+		th.addError(6, 12, "Unexpected ']'.");
+		th.addError(7, 14, "Unexpected ')'.");
+		th.addError(8, 21, "Unexpected ')'.");
+		th.addError(9, 16, "Unexpected ']'.");
+		th.addError(10, 22, "Unexpected ']'.");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -7452,8 +7823,8 @@ public class TestParser extends Assert
 	@Test
 	public void testInvalidParams()
 	{
-		th.addError(1, "Expected an identifier and instead saw '!'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 11, "Expected an identifier and instead saw '!'.");
+		th.addError(1, 11, "Unrecoverable syntax error. (100% scanned).");
 		th.test("(function(!", new LinterOptions().set("esnext", true));
 	}
 	
@@ -7461,9 +7832,9 @@ public class TestParser extends Assert
 	@Test
 	public void testFunctionKeyword()
 	{
-		th.addError(1, "Missing name in function declaration.");
-		th.addError(1, "Expected '(' and instead saw ''.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 1, "Missing name in function declaration.");
+		th.addError(1, 1, "Expected '(' and instead saw ''.");
+		th.addError(1, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test("function");
 	}
 	
@@ -7496,11 +7867,12 @@ public class TestParser extends Assert
 		    "}"
 		};
 		
-		th.addError(1, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-	    th.addError(3, "'new.target' is only available in ES6 (use 'esversion: 6').");
+		th.newTest("only in ES6");
+		th.addError(1, 1, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+	    th.addError(3, 15, "'new.target' is only available in ES6 (use 'esversion: 6').");
 	    th.test(code);
 	    
-	    th.reset();
+	    th.newTest("only in ES6");
 	    th.test(code, new LinterOptions().set("esnext", true));
 	    
 	    String[] code2 = {
@@ -7527,18 +7899,18 @@ public class TestParser extends Assert
 	        "}"
 	    };
 	    
-	    th.reset();
-	    th.addError(1, "'new.target' must be in function scope.");
-	    th.addError(4, "'new.target' must be in function scope.");
-	    th.addError(6, "'new.target' must be in function scope.");
+	    th.newTest("must be in function scope");
+	    th.addError(1, 12, "'new.target' must be in function scope.");
+	    th.addError(4, 15, "'new.target' must be in function scope.");
+	    th.addError(6, 13, "'new.target' must be in function scope.");
 	    th.test(code2, new LinterOptions().set("esnext", true));
 	    
 	    String[] code3 = {
 	    	"var x = new.meta;"
 	    };
 	    
-	    th.reset();
-	    th.addError(1, "Invalid meta property: 'new.meta'.");
+	    th.newTest("invalid meta property");
+	    th.addError(1, 12, "Invalid meta property: 'new.meta'.");
 	    th.test(code3);
 	    
 	    String[] code4 = {
@@ -7553,12 +7925,12 @@ public class TestParser extends Assert
 	        "}"
 	    };
 	    
-	    th.reset();
-	    th.addError(3, "Bad assignment.");
-	    th.addError(4, "Bad assignment.");
-	    th.addError(5, "Bad assignment.");
-	    th.addError(6, "Bad assignment.");
-	    th.addError(7, "Bad assignment.");
+	    th.newTest("can't assign to new.target");
+	    th.addError(3, 16, "Bad assignment.");
+	    th.addError(4, 16, "Bad assignment.");
+	    th.addError(5, 16, "Bad assignment.");
+	    th.addError(6, 15, "Bad assignment.");
+	    th.addError(7, 5, "Bad assignment.");
 	    th.test(code4, new LinterOptions().set("esnext", true));
 	}
 	
@@ -7576,7 +7948,7 @@ public class TestParser extends Assert
 		    "o.__proto__ = null;"
 		};
 		
-		th.addError(7, "The '__proto__' property is deprecated.");
+		th.addError(7, 12, "The '__proto__' property is deprecated.");
 	    th.test(src);
 	    
 	    src = new String[] {
@@ -7591,9 +7963,9 @@ public class TestParser extends Assert
 	        "o.__iterator__ = null;"
 	    };
 	    
-	    th.reset();
-	    th.addError(8, "The '__proto__' property is deprecated.");
-	    th.addError(9, "The '__iterator__' property is deprecated.");
+	    th.newTest();
+	    th.addError(8, 12, "The '__proto__' property is deprecated.");
+	    th.addError(9, 15, "The '__iterator__' property is deprecated.");
 	    th.test(src);
 	}
 	
@@ -7602,27 +7974,27 @@ public class TestParser extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/parsingCommas.js");
 		
-		th.addError(2, "Unexpected ','.");
-	    th.addError(2, "Comma warnings can be turned off with 'laxcomma'.");
-	    th.addError(1, "Misleading line break before ','; readers may interpret this as an expression boundary.");
-	    th.addError(2, "Expected an identifier and instead saw ';'.");
-	    th.addError(2, "Expected an identifier and instead saw ')'.");
-	    th.addError(2, "Expected ';' and instead saw '{'.");
-	    th.addError(2, "Expected an identifier and instead saw '}'.");
-	    th.addError(5, "Expected ')' to match '(' from line 1 and instead saw 'for'.");
-	    th.addError(5, "Expected an identifier and instead saw ';'.");
-	    th.addError(5, "Expected ')' to match '(' from line 5 and instead saw ';'.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(6, "Unexpected ','.");
-	    th.addError(5, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(5, "Missing semicolon.");
-	    th.addError(6, "Expected an identifier and instead saw ','.");
-	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(6, "Missing semicolon.");
-	    th.addError(6, "Expected an identifier and instead saw ')'.");
-	    th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(6, "Missing semicolon.");
+		th.addError(2, 12, "Unexpected ','.");
+		th.addError(2, 12, "Comma warnings can be turned off with 'laxcomma'.");
+		th.addError(1, 8, "Misleading line break before ','; readers may interpret this as an expression boundary.");
+		th.addError(2, 13, "Expected an identifier and instead saw ';'.");
+		th.addError(2, 17, "Expected an identifier and instead saw ')'.");
+		th.addError(2, 19, "Expected ';' and instead saw '{'.");
+		th.addError(2, 20, "Expected an identifier and instead saw '}'.");
+		th.addError(5, 1, "Expected ')' to match '(' from line 1 and instead saw 'for'.");
+		th.addError(5, 7, "Expected an identifier and instead saw ';'.");
+		th.addError(5, 9, "Expected ')' to match '(' from line 5 and instead saw ';'.");
+		th.addError(5, 9, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(5, 10, "Missing semicolon.");
+		th.addError(6, 9, "Unexpected ','.");
+		th.addError(5, 12, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(5, 13, "Missing semicolon.");
+		th.addError(6, 9, "Expected an identifier and instead saw ','.");
+		th.addError(6, 9, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(6, 10, "Missing semicolon.");
+		th.addError(6, 10, "Expected an identifier and instead saw ')'.");
+		th.addError(6, 10, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(6, 11, "Missing semicolon.");
 	    th.test(src);
 	}
 	
@@ -7669,27 +8041,26 @@ public class TestParser extends Assert
 		String errorMessage = "Non-callable values cannot be used as the second operand to instanceof.";
 		String warningMessage = "Function expressions should not be used as the second operand to instanceof.";
 		
-		th.addError(13, "Expected an identifier and instead saw 'undefined' (a reserved word).");
-	    th.addError(16, errorMessage);
-	    th.addError(17, errorMessage);
-	    th.addError(18, errorMessage);
-	    th.addError(19, errorMessage);
-	    th.addError(20, errorMessage);
-	    th.addError(21, errorMessage);
-	    th.addError(22, errorMessage);
-	    th.addError(23, errorMessage);
-	    th.addError(24, errorMessage);
-	    th.addError(25, errorMessage);
-	    th.addError(26, errorMessage);
-	    th.addError(27, warningMessage);
-	    th.addError(28, warningMessage);
+		th.addError(16, 20, errorMessage);
+		th.addError(17, 20, errorMessage);
+		th.addError(18, 19, errorMessage);
+		th.addError(19, 20, errorMessage);
+		th.addError(20, 22, errorMessage);
+		th.addError(21, 27, errorMessage);
+		th.addError(22, 20, errorMessage);
+		th.addError(23, 20, errorMessage);
+		th.addError(24, 21, errorMessage);
+		th.addError(25, 20, errorMessage);
+		th.addError(26, 24, errorMessage);
+		th.addError(27, 31, warningMessage);
+		th.addError(28, 50, warningMessage);
 	    
 	    th.test(code, new LinterOptions().set("esversion", 6));
 	    
-	    th.reset();
-	    th.addError(1, "Expected an identifier and instead saw ';'.");
-	    th.addError(1, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(1, "Missing semicolon.");
+	    th.newTest();
+	    th.addError(1, 13, "Expected an identifier and instead saw ';'.");
+	    th.addError(1, 13, "Expected an assignment or function call and instead saw an expression.");
+	    th.addError(1, 14, "Missing semicolon.");
 	    th.test("0 instanceof;");
 	}
 	
@@ -7700,10 +8071,10 @@ public class TestParser extends Assert
 			"for (var x in [], []) {}"
 		});
 		
-		th.addError(2, "Expected ')' to match '(' from line 2 and instead saw ','.");
-	    th.addError(2, "Expected an identifier and instead saw ')'.");
-	    th.addError(2, "Expected an assignment or function call and instead saw an expression.");
-	    th.addError(2, "Missing semicolon.");
+		th.addError(2, 17, "Expected ')' to match '(' from line 2 and instead saw ','.");
+		th.addError(2, 21, "Expected an identifier and instead saw ')'.");
+		th.addError(2, 21, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 22, "Missing semicolon.");
 	    th.test(new String[]{
 	    	"for (var x in [], []) {}",
 	        "for (var x of {}, {}) {}"
@@ -7713,13 +8084,13 @@ public class TestParser extends Assert
 	@Test
 	public void testOctalEscape()
 	{
-		th.addError(3, "Octal literals are not allowed in strict mode.");
-		th.addError(4, "Octal literals are not allowed in strict mode.");
-		th.addError(5, "Octal literals are not allowed in strict mode.");
-		th.addError(6, "Octal literals are not allowed in strict mode.");
-		th.addError(7, "Octal literals are not allowed in strict mode.");
-		th.addError(8, "Octal literals are not allowed in strict mode.");
-		th.addError(9, "Octal literals are not allowed in strict mode.");
+		th.addError(3, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(4, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(5, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(6, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(7, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(8, 8, "Octal literals are not allowed in strict mode.");
+		th.addError(9, 8, "Octal literals are not allowed in strict mode.");
 		th.test(new String[] {
 			"'use strict';",
 			"void '\\0';",
@@ -7734,7 +8105,7 @@ public class TestParser extends Assert
 			"void '\\9';",
 		}, new LinterOptions().set("strict", "global"));
 		
-		th.reset();
+		th.newTest();
 		th.test(new String[] {
 			"void '\\0';",
 			"void '\\1';",
@@ -7754,8 +8125,40 @@ public class TestParser extends Assert
 	@Test
 	public void testLookaheadBeyondEnd()
 	{
-		th.addError(1, "Unmatched '{'.");
-		th.addError(1, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(1, 7, "Unmatched '{'.");
+		th.addError(1, 7, "Unrecoverable syntax error. (100% scanned).");
 		th.test("({ a: {");
+	}
+	
+	// In releases prior to 2.9.6, JSHint would not terminate when given the source
+	// code in the following tests.
+	@Test
+	public void testRegressionTestForGH3230()
+	{
+		th.newTest("as originally reported");
+		th.addError(1, 12, "Expected ';' and instead saw ')'.");
+		th.addError(1, 13, "Unmatched '{'.");
+		th.addError(1, 13, "Unrecoverable syntax error. (100% scanned).");
+		th.test("for(var i=1){");
+		
+		th.newTest("further simplified (unclosed brace)");
+		th.addError(1, 5, "Unmatched '{'.");
+		th.addError(1, 5, "Unrecoverable syntax error. (100% scanned).");
+		th.test("for({");
+		
+		th.newTest("further simplified (unclosed bracket)");
+		th.addError(1, 5, "Unmatched '['.");
+		th.addError(1, 5, "Unrecoverable syntax error. (100% scanned).");
+		th.test("for([");
+	}
+	
+	@Test
+	public void testUnicode8()
+	{
+		th.addError(1, 5, "'unicode 8' is only available in ES6 (use 'esversion: 6').");
+		th.test("var Ϳ;", new LinterOptions().set("esversion", 5));
+		
+		th.newTest();
+		th.test("var Ϳ;", new LinterOptions().set("esversion", 6));
 	}
 }

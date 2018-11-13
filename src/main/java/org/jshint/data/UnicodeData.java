@@ -2,6 +2,8 @@ package org.jshint.data;
 
 public class UnicodeData
 {
+	private UnicodeData() {}
+	
 	public static boolean[] identifierStartTable = new boolean[128];
 	static
 	{

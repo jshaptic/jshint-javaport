@@ -1,7 +1,7 @@
 // Use TestNG framework instead of default JUnit
 test {
 	useTestNG() {
-		suites "src/test/resources/testng.xml"
+		suites "src/test/resources/unit-test.xml"
 	}
 	
 	testLogging {
@@ -10,11 +10,12 @@ test {
 	}
 }
 
-// Separate task for 262 test
+// Dedicated task to run test262
 task test262(type: Test, dependsOn: testClasses, group: "verification") {
+	description "Runs official ECMAScript conformance test."
 	mustRunAfter test
 	useTestNG() {
-		include "**/*Test262*"
+		suites "src/test/resources/test262.xml"
 	}
 	
 	testLogging {

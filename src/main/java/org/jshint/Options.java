@@ -8,6 +8,8 @@ import com.google.common.collect.ImmutableSet;
 
 public class Options
 {
+	private Options() {}
+	
 	// These are the JSHint boolean options.
 	public static final Map<String, Map<String, Boolean>> bool = ImmutableMap.<String, Map<String, Boolean>>builder()
 		.put("enforcing", ImmutableMap.<String, Boolean>builder()
@@ -366,13 +368,12 @@ public class Options
 			.put("evil", true)
 			
 			/**
-			 * This option suppresses warnings about declaring variables inside of
-			 * control
-			 * structures while accessing them later from the outside. Even though
-			 * JavaScript has only two real scopes-global and function-such practice
-			 * leads to confusion among people new to the language and hard-to-debug
-			 * bugs. This is why, by default, JSHint warns about variables that are
-			 * used outside of their intended scope.
+			 * This option suppresses warnings about declaring variables inside
+			 * of control structures while accessing them later from the outside.
+			 * Even though identifiers declared with `var` have two real scopes—global
+			 * and function—such practice leads to confusion among people new to
+			 * the language and hard-to-debug bugs. This is why, by default, JSHint
+			 * warns about variables that are used outside of their intended scope.
 			 *
 			 *     function test() {
 			 *       if (true) {

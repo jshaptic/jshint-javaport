@@ -4,14 +4,13 @@ repositories {
 
 dependencies {
 	compile "com.github.jshaptic:js4j:0.1.1"
-	compile "org.apache.commons:commons-lang3:3.7"
+	compile "org.apache.commons:commons-lang3:3.8.1"
 	compile "commons-cli:commons-cli:1.4"
-	compile "com.google.guava:guava:26.0-jre"
+	compile "com.google.guava:guava:27.0-jre"
 	compile "net.htmlparser.jericho:jericho-html:3.4"
-    
-    // TODO: try to replace it with nashhorn or v8
-    compile "org.mozilla:rhino:1.7.10"
     
     // Dependecies during testing stage
     testCompile "org.testng:testng:6.14.3"
+    testCompile "org.yaml:snakeyaml:1.23"
+    testCompile "com.eclipsesource.minimal-json:minimal-json:0.9.5"
 }

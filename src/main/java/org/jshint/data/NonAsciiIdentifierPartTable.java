@@ -1,33 +1,29 @@
 package org.jshint.data;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class NonAsciiIdentifierPartTable
 {
-	private static String str = null;
+	private NonAsciiIdentifierPartTable() {}
+	
+	private static final List<Integer> arr;
+	
 	static
 	{
 		try
 		{
-			str = new String(Files.readAllBytes(Paths.get("src/main/resources/non-ascii-identifier-part-only.txt")));
+			String str = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemClassLoader().getResource("non-ascii-identifier-part-only.txt").toURI())));
+			arr = Arrays.stream(str.split(",")).map(code -> Integer.parseInt(code, 10)).collect(Collectors.toList());
 		}
-		catch (IOException e)
+		catch (IOException | URISyntaxException e)
 		{
-			str = "";
-		}
-	}
-	
-	private static List<Integer> arr = new ArrayList<Integer>();
-	static
-	{
-		String[] strarr = str.split(",");
-		for (int i = 0; i < strarr.length; i++)
-		{
-			arr.add(Integer.parseInt(strarr[i], 10));
+			throw new RuntimeException("Cannot load resource file!");
 		}
 	}
 	

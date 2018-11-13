@@ -10,76 +10,52 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.Reg;
 
-public final class JSHintUtils
+public class IOUtils
 {
-	public static ShellUtils shell = new ShellUtils();
-	public static PathUtils path = new PathUtils();
-	public static CliUtils cli = new CliUtils();
+	private static PathUtils path = new PathUtils();
+	private static ShellUtils shell = new ShellUtils(path);
+	private static CliUtils cli = new CliUtils();
 	
-	public static void reset()
+	private static boolean isWindows = (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
+	// Regex to split a windows path into three parts: [*, device, slash, tail] windows-only
+	private static Pattern splitDeviceRe = Pattern.compile("^([a-zA-Z]:|[\\\\\\/]{2}[^\\\\\\/]+[\\\\\\/]+[^\\\\\\/]+)?([\\\\\\/])?([\\s\\S]*?)$");
+	// Split a filename into [root, dir, basename, ext], unix version 'root' is just a slash, or nothing.
+	private static Pattern splitPathRe = Pattern.compile("^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$");
+	// Regex to split the tail part of the above into [*, dir, basename, ext]
+	private static Pattern splitTailRe = Pattern.compile("^([\\s\\S]*?)((?:\\.{1,2}|[^\\\\\\/]+?|)(\\.[^.\\/\\\\]*|))(?:[\\\\\\/]*)$");
+	
+	private static final CommandLineParser parser = new DefaultParser();
+	
+	private IOUtils() {}
+	
+	public static PathUtils getPathUtils()
 	{
-		shell = new ShellUtils();
-		path = new PathUtils();
-		cli = new CliUtils();
+		return path;
 	}
 	
-	public static class ShellUtils
-	{	
-		//shjs.cat(path)
-		public String cat(String path) throws IOException
-		{
-			return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
-		}
-				
-		//process.cwd()
-		public String cwd()
-		{
-			return System.getProperty("user.dir");
-		}
-		
-		//shjs.ls(path)
-		public List<String> ls(String path)
-		{
-			List<String> result = new ArrayList<String>();
-			DirectoryStream<Path> stream;
-			try
-			{
-				stream = Files.newDirectoryStream(Paths.get(JSHintUtils.path.resolve(path)));
-				for (Path p : stream)
-				{
-					result.add(p.getFileName().toString());
-				}
-			}
-			catch (IOException e)
-			{
-				return result;
-			}
-			
-			return result;
-		}
-		
-		//shjs.test("-e", path)
-		public boolean exists(String path)
-		{
-			return Files.exists(Paths.get(JSHintUtils.path.resolve(path)));
-		}
-		
-		//shjs.test("-d")
-		public boolean isDirectory(String path)
-		{
-			return Files.isDirectory(Paths.get(JSHintUtils.path.resolve(path)));
-		}
+	public static ShellUtils getShellUtils()
+	{
+		return shell;
+	}
+
+	public static CliUtils getCliUtils()
+	{
+		return cli;
 	}
 	
 	public static class PathUtils
 	{
-		private boolean isWindows = (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
-		
 		// resolves . and .. elements in a path array with directory names there
 		// must be no slashes or device names (c:\) in the array
 		// (so also no leading and trailing slashes - it does not distinguish
@@ -112,12 +88,7 @@ public final class JSHintUtils
 			return res;
 		}
 		
-		// Regex to split a windows path into three parts: [*, device, slash,
-		// tail] windows-only
-		private String splitDeviceRe = "^([a-zA-Z]:|[\\\\\\/]{2}[^\\\\\\/]+[\\\\\\/]+[^\\\\\\/]+)?([\\\\\\/])?([\\s\\S]*?)$";
 		
-		// Regex to split the tail part of the above into [*, dir, basename, ext]
-		private String splitTailRe = "^([\\s\\S]*?)((?:\\.{1,2}|[^\\\\\\/]+?|)(\\.[^.\\/\\\\]*|))(?:[\\\\\\/]*)$";
 		
 		// Function to split a filename into [root, dir, basename, ext]
 		private String[] win32SplitPath(String filename)
@@ -134,14 +105,6 @@ public final class JSHintUtils
 			String ext = result2.length > 3 ? StringUtils.defaultString(result2[3]) : "";
 			
 			return new String[]{device, dir, basename, ext};
-		}
-		
-		private class StatPath
-		{
-			String device = "";
-			boolean isUnc = false;
-			boolean isAbsolute = false;
-			String tail = "";
 		}
 		
 		private StatPath win32StatPath(String path)
@@ -180,7 +143,7 @@ public final class JSHintUtils
 					}
 					else if (StringUtils.isEmpty(resolvedDevice))
 					{
-						path = shell.cwd();
+						path = cwd();
 					}
 					else if (StringUtils.isEmpty(path) || !path.substring(0, 3).toLowerCase().equals(resolvedDevice.toLowerCase() + "\\"))
 					{
@@ -326,10 +289,6 @@ public final class JSHintUtils
 			return root + dir;
 		}
 		
-		// Split a filename into [root, dir, basename, ext], unix version
-		// 'root' is just a slash, or nothing.
-		private String splitPathRe = "^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$";
-		
 		private String[] posixSplitPath(String filename)
 		{
 			String[] result = Reg.exec(splitPathRe, filename);
@@ -346,7 +305,7 @@ public final class JSHintUtils
 				
 				for (int i = paths.length-1; i >= -1 && !resolvedAbsolute; i--)
 				{
-					String path = (i >= 0) ? paths[i] : shell.cwd();
+					String path = (i >= 0) ? paths[i] : cwd();
 					
 					// Skip empty and invalid entries
 					if (StringUtils.isEmpty(path)) continue;
@@ -464,11 +423,6 @@ public final class JSHintUtils
 				return posixNormalize(path);
 		}
 		
-		public String convertSepToPosix(String value)
-		{
-			return value.replace("\\\\", "/").replace("\\", "/");
-		}
-		
 		//path.resolve(...)
 		public String resolve(String... paths)
 		{
@@ -477,10 +431,70 @@ public final class JSHintUtils
 			else
 				return posixResolve(paths);
 		}
+		
+		//process.cwd()
+		public String cwd()
+		{
+			return System.getProperty("user.dir");
+		}
+	}
+	
+	public static class ShellUtils
+	{	
+		private PathUtils pathUtils;
+		
+		public ShellUtils(PathUtils pathUtils)
+		{
+			this.pathUtils = pathUtils;
+		}
+		
+		//shjs.cat(path)
+		public String cat(String path) throws IOException
+		{
+			return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+		}
+		
+		//shjs.ls(path)
+		public List<String> ls(String path)
+		{
+			List<String> result = new ArrayList<String>();
+			DirectoryStream<Path> stream;
+			try
+			{
+				stream = Files.newDirectoryStream(Paths.get(pathUtils.resolve(path)));
+				for (Path p : stream)
+				{
+					result.add(p.getFileName().toString());
+				}
+			}
+			catch (IOException e)
+			{
+				return result;
+			}
+			
+			return result;
+		}
+		
+		//shjs.test("-e", path)
+		public boolean exists(String path)
+		{
+			return Files.exists(Paths.get(pathUtils.resolve(path)));
+		}
+		
+		//shjs.test("-d")
+		public boolean isDirectory(String path)
+		{
+			return Files.isDirectory(Paths.get(pathUtils.resolve(path)));
+		}
 	}
 	
 	public static class CliUtils
-	{
+	{	
+		public CommandLine parse(Options options, String... args) throws ParseException
+		{
+			return parser.parse(options, args);
+		}
+		
 		public String readFromStdin()
 		{
 			String result = "";
@@ -500,5 +514,18 @@ public final class JSHintUtils
 				return null;
 			}
 		}
+		
+		public void error(String message)
+		{
+			System.err.println(message);
+		}
+	}
+	
+	private static class StatPath
+	{
+		String device = "";
+		boolean isUnc = false;
+		boolean isAbsolute = false;
+		String tail = "";
 	}
 }

@@ -325,14 +325,7 @@ public class LinterOptions implements Iterable<String>
 				
 				Pattern reIgnore = Pattern.compile(reIgnoreStr, Pattern.CASE_INSENSITIVE);
 				
-				result = Reg.replaceAll(reIgnore, result, new Reg.Replacer()
-				{
-					@Override
-					public String apply(String str, List<String> groups)
-					{
-						return str.replaceAll(".", " ");
-					}
-				});
+				result = Reg.replaceAll(reIgnore, result, (str, groups) -> str.replaceAll(".", " "));
 			}
 		}
 		
@@ -501,15 +494,42 @@ public class LinterOptions implements Iterable<String>
 	{
 		initOptions();
 		
-		if (Reg.test("^-W\\d{3}$", name))
+		boolean isIgnored = false;
+		if (name.startsWith("-W"))
+		{
+			String code = name.substring(2);
+			if (code.length() == 3)
+			{
+				isIgnored = true;
+				for (char c : code.toCharArray())
+				{
+					switch (c)
+					{
+			        case '0':
+			        case '1':
+			        case '2':
+			        case '3':
+			        case '4':
+			        case '5':
+			        case '6':
+			        case '7':
+			        case '8':
+			        case '9':
+			            continue;
+					}
+					isIgnored = false;
+					break;
+				}
+			}
+		}
+		
+		if (isIgnored)
 		{
 			options.put(name, new InnerOption(name.substring(1), new UniversalContainer(true), true, false));
 		}
 		else
 		{
-			UniversalContainer v = new UniversalContainer(value);
-			
-			options.put(name, new InnerOption(name, v, false, false));
+			options.put(name, new InnerOption(name, new UniversalContainer(value), false, false));
 		}
 		
 		return this;

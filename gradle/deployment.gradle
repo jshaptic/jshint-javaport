@@ -1,5 +1,5 @@
 task travisDeploy(group: "release") {
-	description "Publishes assembled archives to public repositories"
+	description "Publishes assembled archives to public repositories."
 	dependsOn artifactoryPublish
 	dependsOn bintrayUpload
 }

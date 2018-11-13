@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
-//TODO: make State object nonstatic so it was possible to execute linting in parallel
 public final class State
 {
 	private static Map<String, Token> syntax = new HashMap<String, Token>();
@@ -381,7 +380,6 @@ public final class State
 		ignored = ContainerFactory.createObject();
 		directive = new HashMap<String, Boolean>();
 		jsonMode = false;
-		//jsonWarnings = ContainerFactory.createArray(); //JSHINT_BUG: not used anywhere, can be removed
 		lines = new String[]{};
 		tab = "";
 		cache = new HashMap<String, String>();

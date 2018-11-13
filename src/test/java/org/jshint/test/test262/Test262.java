@@ -1,91 +1,33 @@
 package org.jshint.test.test262;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.JSHint;
 import org.jshint.LinterOptions;
 import org.jshint.LinterWarning;
-import org.jshint.Reg;
-import org.jshint.test.helpers.TestHelper;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableMap;
-
+/**
+ * Includes port of Node.JS library [results-interpreter v1.0.0]
+ */
 public class Test262 extends Assert
 {	
-	private TestHelper th = new TestHelper();
-	
-	private static final String pathTest262 = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/test262/test";
-	private static final String pathExpectations = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/expectations.txt";
-	private static final String pathPortExpectations = normalize(System.getProperty("user.dir")) + "/src/test/resources/test262/portExpectations.txt";
-	
-	private static final Pattern testName = Pattern.compile("^(?!.*_FIXTURE).*\\.[jJ][sS]");
-	
-	private static final Pattern modulePattern = Pattern.compile("^\\s*-\\s*module\\s*$|^\\s*flags\\s*:.*\\bmodule\\b", Pattern.MULTILINE);
-	private static final Pattern noStrictPattern = Pattern.compile("^\\s*-\\s*noStrict\\s*$|^\\s*flags\\s*:.*\\bnoStrict\\b", Pattern.MULTILINE);
-	private static final Pattern onlyStrictPattern = Pattern.compile("^\\s*-\\s*onlyStrict\\s*$|^\\s*flags\\s*:.*\\bonlyStrict\\b", Pattern.MULTILINE);
-	
-	private boolean hasEarlyError(String src)
-	{
-		return Reg.test("^\\s*negative:\\s*$", Pattern.MULTILINE, src) && Reg.test("^\\s+phase: early\\s*$", Pattern.MULTILINE, src); 
-	}
-	
-	private RunResult runJshint(String src)
-	{
-		boolean isModule = Reg.test(modulePattern, src);
-		RunResult result = null;
-		Exception exception = null;
-		
-		JSHint jshint = new JSHint();
-		try
-		{
-			jshint.lint(src, new LinterOptions().set("esversion", 6).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
-		}
-		catch(Exception e)
-		{
-			exception = e;
-		}
-		
-		result = new RunResult(exception, jshint.generateSummary().getErrors());
-		
-		result.parseFailure = isFailure(result);
-		
-		return result;
-	}
-	
-	/**
-	 * Given the source of a Test262 test, invoke the provided callback once for
-	 * each valid "version" of that program as defined by its meta data.
-	 */
-	private List<RunResult> forEachVersion(String src)
-	{
-		boolean onlyStrict = Reg.test(onlyStrictPattern, src);
-		boolean noStrict = Reg.test(noStrictPattern, src);
-		List<RunResult> results = new ArrayList<RunResult>();
-		
-		if (!onlyStrict)
-		{
-			results.add(runJshint(src));
-		}
-		
-		if (!noStrict)
-		{
-			results.add(runJshint("'use strict';\n" + src));
-		}
-		
-		return results;
-	}
+	private static final Pattern commentPattern = Pattern.compile("#.*$");
 	
 	/**
 	 * JSHint "error" messages generally indicate a parsing failure and "warning"
@@ -94,326 +36,221 @@ public class Test262 extends Assert
 	 * interpreting parsing success/failure from message code requires the
 	 * following list of "contradictory" codes.
 	 */
-	private static final Map<String, Boolean> incorrectSeverity = ImmutableMap.<String, Boolean>builder()
-		.put("E007", true)
+	private static final String[] incorrectSeverity = {
+		"E007",
 		// E013 describes a runtime error: the modification of a constant binding.
 		// Although (unlike the other errors referenced in this object) this
 		// condition is guaranteed to produce errors, it is not technically an early
 		// error and should therefore be ignored when interpreting Test262 tests.
-		.put("E013", true)
-		.put("E034", true)
+		"E013",
+		"E034",
 		
-		.put("W024", true)
-		.put("W025", true)
-		.put("W052", true)
-		.put("W067", true)
-		.put("W076", true)
-		.put("W077", true)
-		.put("W090", true)
-		.put("W094", true)
-		.put("W095", true)
-		.put("W112", true)
-		.put("W115", true)
-		.put("W130", true)
-		.put("W131", true)
-		.put("W133", true)
-		.put("W136", true)
-		.build();
+		"W024",
+		"W025",
+		"W052",
+		"W067",
+		"W076",
+		"W077",
+		"W090",
+		"W094",
+		"W095",
+		"W112",
+		"W115",
+		"W130",
+		"W131",
+		"W133",
+		"W136"
+	};
 	
-	private boolean isFailure(RunResult result)
+	private static final Path expectationsFile = Paths.get(System.getProperty("user.dir"), "/src/test/resources/test262/expectations.txt");
+	private static final Path javaExpectationsFile = Paths.get(System.getProperty("user.dir"), "/src/test/resources/test262/java-expectations.txt");
+	private static final Stream262 stream = new Stream262.Builder(Paths.get(System.getProperty("user.dir"), "/src/test/resources/test262/test262"))
+		.omitRuntime()
+		.build();
+	private static final AtomicInteger count = new AtomicInteger(0);
+	
+	private Set<String> whitelist;
+	private boolean passed = true;
+	private List<String> allowedSuccess = new ArrayList<String>();
+	private List<String> allowedFailure = new ArrayList<String>();
+	private List<String> allowedFalsePositive = new ArrayList<String>();
+	private List<String> allowedFalseNegative = new ArrayList<String>();
+	private List<String> disallowedSuccess = new ArrayList<String>();
+	private List<String> disallowedFailure = new ArrayList<String>();
+	private List<String> disallowedFalsePositive = new ArrayList<String>();
+	private List<String> disallowedFalseNegative = new ArrayList<String>();
+	private List<String> unrecognized = Collections.emptyList();
+	
+	@Test
+	public void test262() throws IOException
 	{
-		if (result.exception != null)
-		{
-			return true;
-		}
+		System.out.println("Now running tests...");
 		
-		if (result.errors != null)
-		{
-			for (LinterWarning msg : result.errors)
-			{
-				if (msg.getCode().startsWith("W"))
+		String contents = new String(Files.readAllBytes(expectationsFile), StandardCharsets.UTF_8);
+		whitelist = parseWhitelist(contents);
+		
+		contents = new String(Files.readAllBytes(javaExpectationsFile), StandardCharsets.UTF_8);
+		whitelist.addAll(parseWhitelist(contents));
+		
+		stream
+			.onTest(test -> {
+				int c = count.incrementAndGet();
+				if (c % 2000 == 0)
 				{
-					if (incorrectSeverity.containsKey(msg.getCode())) return true;
-					continue;
+					System.out.println("Completed " + c + " tests.");
 				}
 				
-				if (!incorrectSeverity.containsKey(msg.getCode())) return true;
-			}
-		}
-		
-		return false;
-	}
-	
-	private TestResult test(String src)
-	{
-		boolean expected = hasEarlyError(src);
-		boolean parseFailure = false;
-		
-		List<RunResult> results = forEachVersion(src);
-		
-		for (RunResult result : results)
-		{
-			parseFailure = parseFailure || result.parseFailure;
-		}
-		
-		return new TestResult(expected, parseFailure);
-	}
-	
-	/**
-	 * A "test expectations" file contains a newline-separated list of file names
-	 * with support for pound-sign (`#`) delimited comments. Translate the contents
-	 * of such a file into a lookup table--an object whose keys are file names and
-	 * whose key-values are the `true` value.
-	 */
-	private Map<String, Boolean> parseExpectations(String src)
-	{
-		Map<String, Boolean> memo = new HashMap<String, Boolean>();
-		
-		for (String line : src.split("\n"))
-		{
-			line = line.replaceFirst("\\s*#.*$", "").trim();
-			if (line.isEmpty())
-			{
-				continue;
-			}
-			memo.put(line, true);
-		}
-		
-		return memo;
-	}
-	
-	private List<String> expectedSuccess = new ArrayList<String>();
-	private List<String> expectedFailure = new ArrayList<String>();
-	private List<String> expectedFalsePositive = new ArrayList<String>();
-	private List<String> expectedFalseNegative = new ArrayList<String>();
-	private List<String> unexpectedSuccess = new ArrayList<String>();
-	private List<String> unexpectedFailure = new ArrayList<String>();
-	private List<String> unexpectedFalsePositive = new ArrayList<String>();
-	private List<String> unexpectedFalseNegative = new ArrayList<String>();
-	private List<String> unexpectedUnrecognized = null;
-	private int totalUnexpected = 0;
-	private int totalTests = 0;
-	
-	/**
-	 * Normalize directory name separators to be Unix-like forward slashes. Also
-	 * condenses repeated slashes to a single slash.
-	 *
-	 * Source: https://github.com/jonschlinkert/normalize-path
-	 */
-	private static String normalize(String filePath)
-	{
-		return filePath.replaceAll("[\\\\\\/]+", "/");
-	}
-	
-	private void interpretResults(List<TestResult> results, Map<String, Boolean> allowed)
-	{
-		for (TestResult result : results)
-		{
-			String normalizedName = normalize(result.name);
-			boolean isAllowed = allowed.containsKey(normalizedName) && allowed.get(normalizedName);
-			allowed.remove(normalizedName);
-			
-			if (result.parseFailure == result.expected)
-			{
-				if (isAllowed)
+				String id = normalizePath(test.getFile()) + "(" + test.getScenario() + ")";
+				TestStatus expected = "early".equals(test.getAttrs().getNegativePhase()) ? TestStatus.FAIL : TestStatus.PASS;
+				TestStatus actual = runTest(test) ? TestStatus.PASS : TestStatus.FAIL;
+				
+				interpret(id, expected, actual);
+			})
+			.onError(error -> {
+				System.out.println(error);
+				System.exit(1);
+			})
+			.onFinish(() -> {
+				unrecognized = new ArrayList<String>(whitelist);
+				if (unrecognized.size() > 0)
 				{
-					if (result.parseFailure)
-					{
-						unexpectedFailure.add(result.name);
-					}
-					else
-					{
-						unexpectedSuccess.add(result.name);
-					}
+					passed = false;
 				}
-				else
+				
+				report();
+				
+				if (!passed)
 				{
-					if (result.parseFailure)
-					{
-						expectedFailure.add(result.name);
-					}
-					else
-					{
-						expectedSuccess.add(result.name);
-					}
+					fail("Test262 failed!");
 				}
+			})
+			.run();
+	}
+	
+	// JSHINT_BUG: in original results-interpreter/src/whitelist.js file this is parsed incorrectly - comment lines are not filtered out
+	private Set<String> parseWhitelist(String contents)
+	{
+		return Arrays.stream(contents.split("\n"))
+			.map(line -> commentPattern.matcher(line).replaceFirst("").trim())
+			.filter(line -> line.length() > 0)
+			.collect(Collectors.toSet());
+	}
+	
+	private String normalizePath(Path path)
+	{
+		return path.toString().replaceAll("\\\\", "/");
+	}
+	
+	private boolean runTest(File262 test)
+	{
+		JSHint jshint = new JSHint();
+		boolean isModule = test.getAttrs().isModule();
+		
+		try
+		{
+			jshint.lint(test.getContents(), new LinterOptions().set("esversion", 6).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
+		}
+		catch(Exception e)
+		{
+			return false;
+		}
+		
+		return !isFailure(jshint.generateSummary().getErrors());
+	}
+	
+	private boolean isFailure(List<LinterWarning> errors)
+	{
+		return errors != null && errors.stream().filter(msg -> {
+			if (msg.getCode().startsWith("W"))
+				return ArrayUtils.indexOf(incorrectSeverity, msg.getCode()) >= 0;
+			return ArrayUtils.indexOf(incorrectSeverity, msg.getCode()) < 0;
+		}).findAny().isPresent();
+	}
+	
+	private synchronized void interpret(String id, TestStatus expected, TestStatus actual)
+	{
+		boolean inWhitelist = whitelist.contains(id);
+		boolean isAllowed = false;
+		List<String> classification;
+		
+		whitelist.remove(id);
+		
+		if (expected == TestStatus.PASS)
+		{
+			if (actual == TestStatus.PASS)
+			{
+				isAllowed = !inWhitelist;
+				classification = isAllowed ? allowedSuccess : disallowedSuccess;
 			}
 			else
 			{
-				if (isAllowed)
-				{
-					if (result.parseFailure)
-					{
-						expectedFalsePositive.add(result.name);
-					}
-					else
-					{
-						expectedFalseNegative.add(result.name);
-					}
-				}
-				else
-				{
-					if (result.parseFailure)
-					{
-						unexpectedFalseNegative.add(result.name);
-					}
-					else
-					{
-						unexpectedFalsePositive.add(result.name);
-					}
-				}
+				isAllowed = inWhitelist;
+				classification = isAllowed ? allowedFalseNegative : disallowedFalseNegative;
 			}
-		}
-		unexpectedUnrecognized = new ArrayList<String>(allowed.keySet());
-		totalUnexpected = unexpectedSuccess.size() + unexpectedFailure.size() +
-			unexpectedFalsePositive.size() + unexpectedFalseNegative.size() +
-			unexpectedUnrecognized.size();
-		
-		totalTests = results.size();
-	}
-	
-	private String list(List<String> items, String title)
-	{
-		if (items.size() == 0)
-		{
-			return null;
-		}
-		
-		List<String> result = new ArrayList<String>(); 
-		result.add(title.replace("#", ""+items.size()));
-		for (String item : items)
-		{
-			result.add("- " + item);
-		}
-		
-		return StringUtils.join(result.iterator(), "\n");
-	}
-	
-	private String report(long duration)
-	{
-		double seconds = duration / 1000.0;
-		
-		String[] lines = ArrayUtils.removeAllOccurences(new String[]{
-			"Results:",
-			"",
-			totalTests + " total programs parsed in " + new DecimalFormat("#0.00").format(seconds) + " seconds.",
-			"",
-			expectedSuccess.size() + " valid programs parsed successfully",
-			expectedFailure.size() + " invalid programs produced parsing errors",
-			expectedFalsePositive.size() + " invalid programs parsed successfully (in accordance with expectations file)",
-			expectedFalseNegative.size() + " valid programs produced parsing errors (in accordance with expectations file)",
-			"",
-			list(unexpectedSuccess, "# valid programs parsed successfully (in violation of expectations file):"),
-			list(unexpectedFailure, "# invalid programs produced parsing errors (in violation of expectations file):"),
-			list(unexpectedFalsePositive, "# invalid programs parsed successfully (without a corresponding entry in expectations file):"),
-			list(unexpectedFalseNegative, "# valid programs produced parsing errors (without a corresponding entry in expectations file):"),
-			list(unexpectedUnrecognized, "# programs were referenced by the expectations file but not parsed in this test run:"),
-		}, null);
-		
-		return StringUtils.join(lines, "\n");
-	}
-	
-	private List<String> findTests(String directoryName)
-	{
-		List<String> tests = new ArrayList<String>();
-		findTests(new File(directoryName), tests);
-		return tests;
-	}
-	
-	private void findTests(File directory, List<String> tests)
-	{
-		File[] fileNames = directory.listFiles();
-		
-		if (fileNames == null || fileNames.length == 0)
-		{
-			return;
-		}
-		
-		for (File fileName : fileNames)
-		{
-			String fullName = normalize(fileName.getAbsolutePath());
-			if (fileName.isDirectory())
-			{
-				findTests(fileName, tests);
-				continue;
-			}
-			
-			if (Reg.test(testName, fullName))
-			{
-				tests.add(fullName);
-			}
-		}
-	}
-	
-	@Test
-	public void test262()
-	{
-		System.out.println("Indexing test files (searching in " + pathTest262 + ").");
-		List<String> testNames = findTests(pathTest262);
-		System.out.println("Indexing complete (" + testNames.size() + " files found).");
-		System.out.println("Testing...");
-		
-		long start = new Date().getTime();
-		List<TestResult> results = new ArrayList<TestResult>();
-		
-		int count = 0;
-		for (String testName : testNames) //TODO: implement parallel test execution
-		{ 
-			String src = th.readFile(testName);
-			
-			count++;
-			if (count % 1000 == 0)
-			{
-				System.out.format("%d/%d (%.2f%%)%n", count, testNames.size(), (100.0*count/testNames.size()));
-			}
-			
-			TestResult result = test(src);
-			result.name = normalize(Paths.get(pathTest262).relativize(Paths.get(testName)).toString());
-			results.add(result);
-		}
-		
-		String src = th.readFile(pathExpectations);
-		Map<String, Boolean> expections = parseExpectations(src);
-		
-		// add additional expections for current java port
-		expections.putAll(parseExpectations(th.readFile(pathPortExpectations)));
-		
-		interpretResults(results, expections);
-		String output = report(new Date().getTime() - start);
-		
-		if (totalUnexpected == 0)
-		{
-			System.out.println(output);
 		}
 		else
 		{
-			fail(output);
+			if (actual == TestStatus.PASS)
+			{
+				isAllowed = inWhitelist;
+				classification = isAllowed ? allowedFalsePositive : disallowedFalsePositive;
+			}
+			else
+			{
+				isAllowed = !inWhitelist;
+				classification = isAllowed ? allowedFailure : disallowedFailure;
+			}
+		}
+		
+		passed = passed && isAllowed;
+		classification.add(id);
+	}
+	
+	private void report()
+	{	
+		String[] goodnews = {
+			allowedSuccess.size() + " valid programs parsed without error",
+			allowedFailure.size() + " invalid programs produced a parsing error",
+			allowedFalsePositive.size() + " invalid programs did not produce a parsing error (and allowed by the expectations file)",
+			allowedFalseNegative.size() + " valid programs produced a parsing error (and allowed by the expectations file)"
+		};
+		List<String> badnews = new ArrayList<String>();
+		List<String> badnewsDetails = new ArrayList<String>();
+		
+		badnews(disallowedSuccess, "valid programs parsed without error (in violation of the expectations file)", badnews, badnewsDetails);
+		badnews(disallowedFailure, "invalid programs produced a parsing error (in violation of the expectations file)", badnews, badnewsDetails);
+		badnews(disallowedFalsePositive, "invalid programs did not produce a parsing error (without a corresponding entry in the expectations file)", badnews, badnewsDetails);
+		badnews(disallowedFalseNegative, "valid programs produced a parsing error (without a corresponding entry in the expectations file)", badnews, badnewsDetails);
+		badnews(unrecognized, "non-existent programs specified in the expectations file", badnews, badnewsDetails);
+		
+		System.out.println("Testing complete.");
+		System.out.println("Summary:");
+		System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(goodnews, "\n")).replaceAll(" v "));
+		
+		if (!passed)
+		{
+			System.out.println("");
+			System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(badnews, "\n")).replaceAll(" X "));
+			System.out.println("");
+			System.out.println("Details:");
+			System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(badnewsDetails, "\n")).replaceAll("   "));
 		}
 	}
 	
-	private static class RunResult
+	private void badnews(List<String> tests, String label, List<String> badnews, List<String> badnewsDetails)
 	{
-		private Exception exception;
-		private List<LinterWarning> errors;
-		private boolean parseFailure = false;
+		if (tests.size() == 0) return;
 		
-		private RunResult(Exception exception, List<LinterWarning> errors)
-		{
-			this.exception = exception;
-			this.errors = errors;
-		}
+		String desc = tests.size() + " " + label;
+		
+		badnews.add(desc);
+		badnewsDetails.add(desc + ":");
+		badnewsDetails.addAll(tests);
 	}
 	
-	private static class TestResult
+	private static enum TestStatus
 	{
-		private String name = "";
-		private boolean expected = false;
-		private boolean parseFailure = false;
-		
-		private TestResult(boolean expected, boolean parseFailure)
-		{
-			this.expected = expected;
-			this.parseFailure = parseFailure;
-		}
+		PASS,
+		FAIL
 	}
 }

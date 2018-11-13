@@ -126,6 +126,19 @@ public class DataSummary
 		this.file = StringUtils.defaultString(file);
 	}
 	
+	@Override
+	public String toString()
+	{
+		StringBuilder summary = new StringBuilder();
+		if (errors != null) {
+			errors.forEach(error -> {
+				summary.append("line " + error.getLine() + ", col " + error.getCharacter()+ ", " + error.getReason() + " (" + error.getCode() + ")");
+				summary.append("\n");
+			});
+		}
+		return summary.toString();
+	}
+	
 	public static class Function
 	{
 		private String name;

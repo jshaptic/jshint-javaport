@@ -16,7 +16,7 @@ public class UnixReporter implements JSHintReporter
 	public void generate(List<ReporterResult> results, List<DataSummary> data, String verbose)
 	{
 		int len = results.size();
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		String prevfile = null;
 		
 		for (ReporterResult result : results)
@@ -26,21 +26,21 @@ public class UnixReporter implements JSHintReporter
 			
 			if (StringUtils.isNotEmpty(prevfile) && !prevfile.equals(file))
 			{
-				str += "\n";
+				str.append("\n");
 			}
 			prevfile = file;
 			
-			str += file + ":" + error.getLine() + ":" + error.getCharacter() + ": " + error.getReason();
+			str.append(file + ":" + error.getLine() + ":" + error.getCharacter() + ": " + error.getReason());
 			
 			if (StringUtils.isNotEmpty(verbose))
 			{
-				str += " (" + error.getCode() + ")";
+				str.append(" (" + error.getCode() + ")");
 			}
 			
-			str += "\n";
+			str.append("\n");
 		}
 		
-		if (StringUtils.isNotEmpty(str))
+		if (str.length() > 0)
 		{
 			System.out.println(str + "\n" + len + " error" + (len == 1 ? "" : "s"));
 		}

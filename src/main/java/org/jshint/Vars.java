@@ -6,11 +6,13 @@ import com.google.common.collect.ImmutableMap;
 
 public class Vars
 {
+	private Vars() {}
+	
 	// Identifiers provided by the ECMAScript standard.
 	
 	public static final Map<String, Boolean> reservedVars = ImmutableMap.<String, Boolean>builder()
-		.put("arguments", false)
 		.put("NaN", false)
+		.put("undefined", false)
 		.build();
 	
 	public static final Map<Integer, Map<String, Boolean>> ecmaIdentifiers = ImmutableMap.<Integer, Map<String, Boolean>>builder()
@@ -27,6 +29,7 @@ public class Vars
 			.put("EvalError", false)
 			.put("Function", false)
 			.put("hasOwnProperty", false)
+			.put("Infinity", false)
 			.put("isFinite", false)
 			.put("isNaN", false)
 			.put("Math", false)
@@ -62,7 +65,7 @@ public class Vars
 			.put("Uint8Array", false)
 			.put("Uint16Array", false)
 			.put("Uint32Array", false)
-			.put("Uint8ClampledArray", false)
+			.put("Uint8ClampedArray", false)
 			.put("WeakMap", false)
 			.put("WeakSet", false)
 			.build()).build();
@@ -82,6 +85,17 @@ public class Vars
 		.put("CanvasPattern", false)
 		.put("CanvasRenderingContext2D", false)
 		.put("CSS", false)
+		.put("CSSImportRule", false)
+		.put("CSSGroupingRule", false)
+		.put("CSSMarginRule", false)
+		.put("CSSMediaRule", false)
+		.put("CSSNamespaceRule", false)
+		.put("CSSPageRule", false)
+		.put("CSSRule", false)
+		.put("CSSRuleList", false)
+		.put("CSSStyleDeclaration", false)
+		.put("CSSStyleRule", false)
+		.put("CSSStyleSheet", false)
 		.put("clearInterval", false)
 		.put("clearTimeout", false)
 		.put("close", false)
@@ -106,8 +120,10 @@ public class Vars
 		.put("focus", false)
 		.put("frames", false)
 		.put("getComputedStyle", false)
-		.put("HTMLElement", false)
+		.put("Headers", false)
 		.put("HTMLAnchorElement", false)
+		.put("HTMLAreaElement", false)
+		.put("HTMLAudioElement", false)
 		.put("HTMLBaseElement", false)
 		.put("HTMLBlockquoteElement", false)
 		.put("HTMLBodyElement", false)
@@ -115,9 +131,15 @@ public class Vars
 		.put("HTMLButtonElement", false)
 		.put("HTMLCanvasElement", false)
 		.put("HTMLCollection", false)
+		.put("HTMLDataElement", false)
+		.put("HTMLDataListElement", false)
+		.put("HTMLDetailsElement", false)
+		.put("HTMLDialogElement", false)
 		.put("HTMLDirectoryElement", false)
 		.put("HTMLDivElement", false)
 		.put("HTMLDListElement", false)
+		.put("HTMLElement", false)
+		.put("HTMLEmbedElement", false)
 		.put("HTMLFieldSetElement", false)
 		.put("HTMLFontElement", false)
 		.put("HTMLFormElement", false)
@@ -130,6 +152,13 @@ public class Vars
 		.put("HTMLIFrameElement", false)
 		.put("HTMLImageElement", false)
 		.put("HTMLInputElement", false)
+		/* HTMLIsIndexElement was removed from the WHATWG HTML spec;
+		 * see https://github.com/whatwg/html/pull/1095.
+		 * HTMLIsIndexElement has been removed from browsers; see:
+		 * • Chromium Removal: https://codereview.chromium.org/96653004/
+		 * • Gecko Removal: https://bugzilla.mozilla.org/show_bug.cgi?id=1266495
+		 * • WebKit Removal: https://bugs.webkit.org/show_bug.cgi?id=7139.
+		 * See also the discussion at https://github.com/jshint/jshint/pull/3222. */
 		.put("HTMLIsIndexElement", false)
 		.put("HTMLLabelElement", false)
 		.put("HTMLLayerElement", false)
@@ -137,8 +166,11 @@ public class Vars
 		.put("HTMLLIElement", false)
 		.put("HTMLLinkElement", false)
 		.put("HTMLMapElement", false)
+		.put("HTMLMarqueeElement", false)
+		.put("HTMLMediaElement", false)
 		.put("HTMLMenuElement", false)
 		.put("HTMLMetaElement", false)
+		.put("HTMLMeterElement", false)
 		.put("HTMLModElement", false)
 		.put("HTMLObjectElement", false)
 		.put("HTMLOListElement", false)
@@ -146,10 +178,14 @@ public class Vars
 		.put("HTMLOptionElement", false)
 		.put("HTMLParagraphElement", false)
 		.put("HTMLParamElement", false)
+		.put("HTMLPictureElement", false)
 		.put("HTMLPreElement", false)
+		.put("HTMLProgressElement", false)
 		.put("HTMLQuoteElement", false)
 		.put("HTMLScriptElement", false)
 		.put("HTMLSelectElement", false)
+		.put("HTMLSlotElement", false)
+		.put("HTMLSourceElement", false)
 		.put("HTMLStyleElement", false)
 		.put("HTMLTableCaptionElement", false)
 		.put("HTMLTableCellElement", false)
@@ -159,15 +195,19 @@ public class Vars
 		.put("HTMLTableSectionElement", false)
 		.put("HTMLTemplateElement", false)
 		.put("HTMLTextAreaElement", false)
+		.put("HTMLTimeElement", false)
 		.put("HTMLTitleElement", false)
+		.put("HTMLTrackElement", false)
 		.put("HTMLUListElement", false)
 		.put("HTMLVideoElement", false)
 		.put("history", false)
 		.put("Image", false)
+		.put("IntersectionObserver", false)
 		.put("length", false)
 		.put("localStorage", false)
 		.put("location", false)
 		.put("matchMedia", false)
+		.put("MediaList", false)
 		.put("MediaRecorder", false)
 		.put("MessageChannel", false)
 		.put("MessageEvent", false)
@@ -199,8 +239,10 @@ public class Vars
 		.put("Range", false)
 		.put("requestAnimationFrame", false)
 		.put("removeEventListener", false)
+		.put("Request", false)
 		.put("resizeBy", false)
 		.put("resizeTo", false)
+		.put("Response", false)
 		.put("screen", false)
 		.put("scroll", false)
 		.put("scrollBy", false)
@@ -211,6 +253,7 @@ public class Vars
 		.put("SharedWorker", false)
 		.put("status", false)
 		.put("Storage", false)
+		.put("StyleSheet", false)
 		.put("SVGAElement", false)
 		.put("SVGAltGlyphDefElement", false)
 		.put("SVGAltGlyphElement", false)
@@ -388,6 +431,7 @@ public class Vars
 		.put("Window", false)
 		.put("Worker", false)
 		.put("XDomainRequest", false)
+		.put("XMLDocument", false)
 		.put("XMLHttpRequest", false)
 		.put("XMLSerializer", false)
 		.put("XPathEvaluator", false)
@@ -441,6 +485,7 @@ public class Vars
 	public static final Map<String, Boolean> node = ImmutableMap.<String, Boolean>builder()
 		.put("__filename", false)
 		.put("__dirname", false)
+		.put("arguments", false)
 		.put("GLOBAL", false)
 		.put("global", false)
 		.put("module", false)
@@ -503,6 +548,7 @@ public class Vars
 		.build();
 	
 	public static final Map<String, Boolean> rhino = ImmutableMap.<String, Boolean>builder()
+		.put("arguments", false)
 		.put("defineClass", false)
 		.put("deserialize", false)
 		.put("gc", false)
@@ -737,5 +783,7 @@ public class Vars
 		.put("fdescribe", false)
 		.put("fit", false)
 		.put("pending", false)
+		// Jasmine 2.6
+		.put("spyOnProperty", false)
 		.build();
 }

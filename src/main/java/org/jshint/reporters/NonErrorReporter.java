@@ -14,24 +14,24 @@ public class NonErrorReporter implements JSHintReporter
 	public void generate(List<ReporterResult> results, List<DataSummary> data, String verbose)
 	{
 		int len = results.size();
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		
 		for (ReporterResult result : results)
 		{
 			String file = result.getFile();
 			LinterWarning error = result.getError();
-			str += file + ": line " + error.getLine() + ", col " + error.getCharacter() + ", " + error.getReason();
+			str.append(file + ": line " + error.getLine() + ", col " + error.getCharacter() + ", " + error.getReason());
 			
 			// Add the error code if the --verbose option is set
 			if (StringUtils.isNotEmpty(verbose))
 			{
-				str += " (" + error.getCode() + ")";
+				str.append(" (" + error.getCode() + ")");
 			}
 			
-			str += "\n";
+			str.append("\n");
 		}
 		
-		str += len > 0 ? ("\n" + len + " error" + (len == 1 ? "" : "s")) : "";
+		str.append(len > 0 ? ("\n" + len + " error" + (len == 1 ? "" : "s")) : "");
 		
 		for (DataSummary d : data)
 		{
@@ -41,29 +41,29 @@ public class NonErrorReporter implements JSHintReporter
 			
 			if (globals.size() > 0 || unuseds.size() > 0)
 			{
-				str += "\n\n" + file  + " :\n";
+				str.append("\n\n" + file  + " :\n");
 			}
 			
 			if (globals.size() > 0)
 			{
-				str += "\tImplied globals:\n";
+				str.append("\tImplied globals:\n");
 				for (ImpliedGlobal global : globals)
 				{
-					str += "\t\t" + global.getName()  + ": " + global.getLines() + "\n";
+					str.append("\t\t" + global.getName()  + ": " + global.getLines() + "\n");
 				}
 			}
 			
 			if (unuseds.size() > 0)
 			{
-				str += "\tUnused Variables:\n\t\t";
+				str.append("\tUnused Variables:\n\t\t");
 				for (Token unused : unuseds)
 				{
-					str += unused.getName() + "(" + unused.getLine() + "), ";
+					str.append(unused.getName() + "(" + unused.getLine() + "), ");
 				}
 			}
 		}
 		
-		if (StringUtils.isNotEmpty(str))
+		if (str.length() > 0)
 		{
 			System.out.println(str + "\n");
 		}

@@ -1,87 +1,48 @@
 package org.jshint.test.helpers;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jshint.JSHint;
 import org.jshint.LinterGlobals;
 import org.jshint.LinterOptions;
 import org.jshint.LinterWarning;
-import org.jshint.utils.JSHintUtils;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 import org.testng.Assert;
 
 public class TestHelper extends Assert
-{
-	private static class ErrorMessage
-	{
-		private int line = 0;
-		private String message = "";
-		
-		private boolean extras = false;
-		private int character = 0;
-		private String code = "";
-		
-		private List<Integer> definedIn = null;
-		
-		private ErrorMessage(int line, String message)
-		{
-			this.line = line;
-			this.message = message;
-		}
-		
-		private ErrorMessage(int line, int character, String message)
-		{
-			this.line = line;
-			this.message = message;
-			this.character = character;
-			this.extras = true;
-		}
-		
-		private ErrorMessage(int line, String code, String message)
-		{
-			this.line = line;
-			this.message = message;
-			this.code = code;
-			this.extras = true;
-		}
-		
-		private ErrorMessage(int line, int character, String code, String message)
-		{
-			this.line = line;
-			this.message = message;
-			this.character = character;
-			this.code = code;
-			this.extras = true;
-		}
-		
-		private ErrorMessage(String code, int line, int character, String message, List<Integer> definedIn)
-		{
-			this.code = code;
-			this.line = line;
-			this.character = character;
-			this.message = message;
-			this.definedIn = definedIn;
-		}
-	}
-	
+{	
 	private JSHint jshint = null;
 	
+	private String name = "";
+	private List<LinterWarning> errors = new ArrayList<LinterWarning>();
 	private List<ErrorMessage> definedErrors = new ArrayList<ErrorMessage>();
 	private List<ErrorMessage> undefinedErrors = new ArrayList<ErrorMessage>();
 	private List<ErrorMessage> unthrownErrors = new ArrayList<ErrorMessage>();
-	private List<ErrorMessage> wrongLineNumbers = new ArrayList<ErrorMessage>();
+	private List<ErrorMessage> wrongLocations = new ArrayList<ErrorMessage>();
 	private List<ErrorMessage> duplicateErrors = new ArrayList<ErrorMessage>();
 	
-	public void reset()
+	public TestHelper newTest()
 	{
+		newTest("");
+		return this;
+	}
+	
+	public TestHelper newTest(String name)
+	{
+		this.name = name;
 		definedErrors.clear();
 		undefinedErrors.clear();
 		unthrownErrors.clear();
-		wrongLineNumbers.clear();
+		wrongLocations.clear();
 		duplicateErrors.clear();
+		return this;
 	}
 	
 	public void test(String source)
@@ -96,6 +57,8 @@ public class TestHelper extends Assert
 	
 	public void test(String source, LinterOptions options, LinterGlobals globals)
 	{	
+		// no needed to check for pollutions
+		
 		jshint = new JSHint();
 		jshint.lint(source, options, globals);
 		reportErrors();
@@ -113,29 +76,49 @@ public class TestHelper extends Assert
 	
 	public void test(String[] source, LinterOptions options, LinterGlobals globals)
 	{	
+		// no needed to check for pollutions
+		
 		jshint = new JSHint();
 		jshint.lint(source, options, globals);
 		reportErrors();
 	}
-	
-	public void addError(int line, String message)
+		
+	public TestHelper addError(int line, int character, String message)
 	{
-		definedErrors.add(new ErrorMessage(line, message));
+		addError(line, character, "", message);
+		return this;
 	}
 	
-	public void addError(int line, int character, String message)
+	public TestHelper addError(int line, int character, String code, String message)
 	{
-		definedErrors.add(new ErrorMessage(line, character, message));
-	}
-	
-	public void addError(int line, String code, String message)
-	{
-		definedErrors.add(new ErrorMessage(line, code, message));
-	}
-	
-	public void addError(int line, int character, String code, String message)
-	{
+		boolean alreadyDefined = false;
+		for (ErrorMessage err : definedErrors)
+		{
+			if (!err.message.equals(message))
+			{
+				continue;
+			}
+			
+			if (err.line != line)
+			{
+				continue;
+			}
+			
+			if (err.character != character)
+			{
+				continue;
+			}
+			
+			alreadyDefined = true;
+			break;
+		}
+		
+		if (alreadyDefined)
+			fail("\n  An expected error with the message '" + message + "' and line number " + line + " has already been defined for this test.");
+		
 		definedErrors.add(new ErrorMessage(line, character, code, message));
+		
+		return this;
 	}
 	
 	public JSHint getJSHint()
@@ -360,11 +343,11 @@ public class TestHelper extends Assert
 	{
 		try
 		{
-			return JSHintUtils.shell.cat(filename);
+			return new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
 		}
 		catch (IOException e)
 		{
-			fail("Cannot read file " + filename);
+			fail("\n  Cannot read file: " + filename + "\n  Error: " + e.getMessage());
 		}
 		
 		return "";
@@ -372,192 +355,112 @@ public class TestHelper extends Assert
 	
 	private void reportErrors()
 	{
+		errors = jshint.getErrors();
 		undefinedErrors.clear();
 		unthrownErrors.clear();
-		wrongLineNumbers.clear();
+		wrongLocations.clear();
 		duplicateErrors.clear();
 		
-		List<LinterWarning> errors = jshint.getErrors();
+		if (errors.size() == 0 && definedErrors.size() == 0) return;
 		
-		if (errors.size() == 0 && definedErrors.size() == 0)
-		{
-			return;
-		}
-		
-		// filter all thrown errors
-		for (LinterWarning er : errors)
-		{
-			boolean result = false;
-			
-			for (ErrorMessage def : definedErrors)
-			{
-				if (def.line != er.getLine() || !def.message.equals(er.getReason()))
-					continue;
-				
-				if (def.extras)
-				{
-					if (def.character != 0 && er.getCharacter() != 0)
-					{
-						if (def.character != er.getCharacter())
-							continue;
-					}
-					if (!def.code.equals("") && !er.getCode().equals(""))
-					{
-						if (!def.code.equals(er.getCode()))
-							continue;
-					}
-				}
-				
-				result = true;
-				break;
-			}
-			
-			if (!result)
-			{
-				undefinedErrors.add(new ErrorMessage(er.getCode(), er.getLine(), er.getCharacter(), er.getReason(), null));
-			}
-		}
+		// filter all thrown errors		
+		undefinedErrors = errors.stream()
+			.filter(er -> !definedErrors.stream().anyMatch(def -> def.line == er.getLine() && def.character == er.getCharacter()
+				&& def.message.equals(er.getReason())))
+			.map(ErrorMessage::new)
+			.collect(Collectors.toList());
 		
 		// filter all defined errors
-		for (ErrorMessage def : definedErrors)
-		{
-			boolean result = false;
+		unthrownErrors = definedErrors.stream()
+			.filter(def -> !errors.stream().anyMatch(er -> def.line == er.getLine() && def.character == er.getCharacter()
+				&& def.message.equals(er.getReason())))
+			.collect(Collectors.toList());
+		
+		// elements that only differ in location
+		for (ErrorMessage er : undefinedErrors)
+		{	
+			List<String> locations = unthrownErrors.stream().filter(def -> def.message.equals(er.message) && (def.line != er.line || def.character != er.character))
+				.map(def -> "{Line " + def.line + ", Char " + def.character + "}")
+				.collect(Collectors.toList());
 			
-			for (LinterWarning er : errors)
+			if (locations.size() > 0)
 			{
-				if (def.line != er.getLine() || !def.message.equals(er.getReason()))
-					continue;
-				
-				result = true;
-				break;
-			}
-			
-			if (!result)
-			{
-				unthrownErrors.add(new ErrorMessage(def.code, def.line, def.character, def.message, null));
+				er.definedIn = locations;
+				wrongLocations.add(er);
 			}
 		}
 		
-		// elements that only differs in line number
-		for (ErrorMessage er : undefinedErrors)
-		{
-			List<Integer> lines = new ArrayList<Integer>();
-			
-			for (ErrorMessage def : unthrownErrors)
-			{
-				if (def.line != er.line && def.message.equals(er.message))
-				{
-					lines.add(def.line);
-				}
-			}
-			
-			if (lines.size() > 0)
-			{
-				wrongLineNumbers.add(new ErrorMessage(er.code, er.line, er.character, er.message, lines));
-			}
-		}
-		duplicateErrors = new ArrayList<ErrorMessage>();
-		for (LinterWarning er : errors)
-		{
-			boolean result = false;
-			for (LinterWarning other : errors)
-			{
-				if (er.getLine() == other.getLine() && er.getCharacter() == other.getCharacter() &&
-					er.getReason().equals(other.getReason()))
-				{
-					if (result)
-					{
-						duplicateErrors.add(new ErrorMessage(er.getCode(), er.getLine(), er.getCharacter(), er.getReason(), null));
-						break;
-					}
-					else
-					{
-						result = true;
-					}
-				}
-			}
-		}
+		//JSHINT_BUG: this is not needed since duplication of errors is checked in the addError function
+		duplicateErrors = errors.stream()
+			.filter(er -> errors.stream().filter(other -> er.getLine() == other.getLine() && er.getCharacter() == other.getCharacter()
+				&& er.getReason().equals(other.getReason())).count() > 1)
+			.map(ErrorMessage::new)
+			.collect(Collectors.toList());
 		
 		// remove undefined errors, if there is a definition with wrong line number
-		List<ErrorMessage> filteredUndefinedErrors = new ArrayList<ErrorMessage>();
-		for (ErrorMessage er : undefinedErrors)
-		{
-			boolean result = false;
-			
-			for (ErrorMessage def : wrongLineNumbers)
-			{
-				result = (def.message.equals(er.message));
-				if (result) break;
-			}
-			
-			if (!result)
-			{
-				filteredUndefinedErrors.add(er);
-			}
-		}	
-		undefinedErrors = filteredUndefinedErrors;
+		undefinedErrors = undefinedErrors.stream()
+			.filter(er -> !wrongLocations.stream().anyMatch(def -> def.message.equals(er.message)))
+			.collect(Collectors.toList());
+		unthrownErrors = unthrownErrors.stream()
+			.filter(er -> !wrongLocations.stream().anyMatch(def -> def.message.equals(er.message)))
+			.collect(Collectors.toList());
 		
-		List<ErrorMessage> filteredUnthrownErrors = new ArrayList<ErrorMessage>();
-		for (ErrorMessage er : unthrownErrors)
-		{
-			boolean result = false;
-			
-			for (ErrorMessage def : wrongLineNumbers)
-			{
-				result = (def.message.equals(er.message));
-				if (result) break;
-			}
-			
-			if (!result)
-			{
-				filteredUnthrownErrors.add(er);
-			}
-		}	
-		unthrownErrors = filteredUnthrownErrors;
+		StringBuilder errorDetails = new StringBuilder();
 		
-		if (undefinedErrors.size() == 0 && unthrownErrors.size() == 0 && wrongLineNumbers.size() == 0 && duplicateErrors.size() == 0)
+		if (unthrownErrors.size() > 0)
 		{
-			return;
+			errorDetails.append("\n  Errors defined, but not thrown by JSHint:");
+			for (ErrorMessage el : unthrownErrors)
+				errorDetails.append("\n    {Line " + el.line + ", Char " + el.character + "} " + el.message);
 		}
-		else
+		
+		if (undefinedErrors.size() > 0)
 		{
-			fail(getErrorAssertionMessage());
+			errorDetails.append("\n  Errors thrown by JSHint, but not defined in test run:");
+			for (ErrorMessage el : undefinedErrors)
+				errorDetails.append("\n    {Line " + el.line + ", Char " + el.character + "} " + (el.code.isEmpty() ? "" : (el.code + " ")) + el.message);
 		}
+		
+		if (wrongLocations.size() > 0)
+		{
+			errorDetails.append("\n  Errors with wrong location:");
+			for (ErrorMessage el : wrongLocations)
+				errorDetails.append("\n    {Line " + el.line + ", Char " + el.character + "} " + el.message + " - Not in line(s) " + el.definedIn);
+		}
+		
+		if (duplicateErrors.size() > 0)
+		{
+			errorDetails.append("\n  Duplicated errors:");
+			for (ErrorMessage el : duplicateErrors)
+				errorDetails.append("\n    {Line " + el.line + ", Char " + el.character + "} " + (el.code.isEmpty() ? "" : (el.code + " ")) + el.message);
+		}
+		
+		if (errorDetails.length() > 0)
+			fail(errorDetails.insert(0, name.isEmpty() ? "" : "\n TestRun: '" + name + "'").toString());
 	}
 	
-	private String getErrorAssertionMessage()
+	private static class ErrorMessage
 	{
+		int line = 0;
+		int character = 0;
+		String code = "";
 		String message = "";
+		List<String> definedIn = null;
 		
-		int idx = 0;
-		for (ErrorMessage el : unthrownErrors)
+		ErrorMessage(int line, int character, String code, String message)
 		{
-			if (idx == 0) message += "\nErrors defined, but not thrown by JSHINT:";
-			message += "\n (X) {Line " + el.line + ", Char " + el.character + "} " + el.message;
-			idx++;
-		}
-		idx = 0;
-		for (ErrorMessage el : undefinedErrors)
-		{
-			if (idx == 0) message += "\nErrors thrown by JSHINT, but not defined in test run:";
-			message += "\n (X) {Line " + el.line + ", Char " + el.character + "} " + (el.code.isEmpty() ? "" : (el.code + " ")) + el.message;
-			idx++;
-		}
-		idx = 0;
-		for (ErrorMessage el : wrongLineNumbers)
-		{
-			if (idx == 0) message += "\nErrors with wrong line number:";
-			message += "\n (X) {Line " + el.line + "} " + el.message + " {not in line(s) " + el.definedIn.toString() + "}";
-			idx++;
-		}
-		idx = 0;
-		for (ErrorMessage el : duplicateErrors)
-		{
-			if (idx == 0) message += "\nDuplicated errors:";
-			message += "\n (X) {Line " + el.line + ", Char " + el.character + "} " + (el.code.isEmpty() ? "" : (el.code + " ")) + el.message;
-			idx++;
+			this.line = line;
+			this.message = message;
+			this.character = character;
+			this.code = code;
 		}
 		
-		return message;
+		ErrorMessage(LinterWarning er)
+		{
+			this.line = er.getLine();
+			this.character = er.getCharacter();
+			this.code = er.getCode();
+			this.message = er.getReason();
+		}
 	}
 }

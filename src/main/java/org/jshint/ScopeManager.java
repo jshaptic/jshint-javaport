@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.utils.EventEmitter;
 import org.jshint.utils.EventContext;
@@ -175,13 +176,10 @@ public class ScopeManager
 		Map<String, Label> curentLabels = current.getLabels();
 		for (String labelName : curentLabels.keySet())
 		{
-			if (curentLabels.containsKey(labelName))
+			if (!curentLabels.get(labelName).getType().equals("exception") &&
+				curentLabels.get(labelName).isUnused())
 			{
-				if (!curentLabels.get(labelName).getType().equals("exception") &&
-					curentLabels.get(labelName).isUnused())
-				{
-					warnUnused(labelName, curentLabels.get(labelName).getToken(), "var");
-				}
+				warnUnused(labelName, curentLabels.get(labelName).getToken(), "var");
 			}
 		}
 	}
@@ -297,10 +295,11 @@ public class ScopeManager
 	{
 		if (State.getOption().test("latedef"))
 		{
+			boolean isFunction = type.equals("function") || type.equals("generator function");
+			
 			// if either latedef is strict and this is a function
 		    //    or this is not a function
-			if ((State.getOption().get("latedef").equals(true) && type.equals("function")) ||
-				!type.equals("function"))
+			if ((State.getOption().get("latedef").equals(true) && isFunction) || !isFunction)
 			{
 				warning("W003", token, labelName);
 			}
@@ -338,7 +337,6 @@ public class ScopeManager
 		if (StringUtils.isEmpty(type) && previousScope.getType().equals("functionparams"))
 		{
 			current.setFuncBody(true);
-			//current.setContext(currentFunctBody); //JSHINT_BUG: property "(context)" is not used anywhere, can be removed
 			currentFunctBody = current;
 		}
 	}
@@ -350,6 +348,7 @@ public class ScopeManager
 		boolean isUnstackingFunctionParams = current.getType().equals("functionparams");
 		boolean isUnstackingFunctionOuter = current.getType().equals("functionouter");
 		
+		boolean isImmutable = false;
 		Map<String, Usage> currentUsages = current.getUsages();
 		Map<String, Label> currentLabels = current.getLabels();
 		Set<String> usedLabelNameList = currentUsages.keySet();
@@ -361,20 +360,17 @@ public class ScopeManager
 			if (usedLabel != null)
 			{
 				String usedLabelType = usedLabel.getType();
-				boolean isImmutable = usedLabelType.equals("const") || usedLabelType.equals("import");
+				isImmutable = usedLabelType.equals("const") || usedLabelType.equals("import");
 				
 				if (usedLabel.isUseOutsideOfScope() && !State.getOption().test("funcscope"))
 				{
 					List<Token> usedTokens = usage.getTokens();
-					if (usedTokens != null)
+					for (int j = 0; j < usedTokens.size(); j++)
 					{
-						for (int j = 0; j < usedTokens.size(); j++)
+						// Keep the consistency of https://github.com/jshint/jshint/issues/2409
+						if (usedLabel.getFunction() == usedTokens.get(j).getFunction())
 						{
-							// Keep the consistency of https://github.com/jshint/jshint/issues/2409
-							if (usedLabel.getFunction() == usedTokens.get(j).getFunction())
-							{
-								error("W038", usedTokens.get(j), usedLabelName);
-							}
+							error("W038", usedTokens.get(j), usedLabelName);
 						}
 					}
 				}
@@ -392,8 +388,8 @@ public class ScopeManager
 				}
 				
 				// check for re-assigning a function declaration
-				if ((usedLabelType.equals("function") || usedLabelType.equals("class")) &&
-					usage.getReassigned() != null)
+				if ((usedLabelType.equals("function") || usedLabelType.equals("generator function") ||
+					usedLabelType.equals("class")) && usage.getReassigned() != null)
 				{
 					for (int j = 0; j < usage.getReassigned().size(); j++)
 					{
@@ -406,13 +402,20 @@ public class ScopeManager
 				continue;
 			}
 			
-			if (isUnstackingFunctionOuter)
-			{
-				State.getFunct().setCapturing(true);
-			}
-			
 			if (subScope != null)
 			{
+				String labelType = labeltype(usedLabelName);
+				isImmutable = StringUtils.defaultString(labelType).equals("const") ||
+					(labelType == null && BooleanUtils.isFalse(scopeStack.get(0).getPredefined().get(usedLabelName)));
+				if (isUnstackingFunctionOuter  && !isImmutable)
+				{
+					if (State.getFunct().getOuterMutables() == null)
+					{
+						State.getFunct().setOuterMutables(new ArrayList<String>());
+					}
+					State.getFunct().addOuterMutables(usedLabelName);
+				}
+				
 				// not exiting the global scope, so copy the usage down in case its an out of scope usage
 				if (!subScope.getUsages().containsKey(usedLabelName))
 				{
@@ -457,27 +460,24 @@ public class ScopeManager
 				{
 					// label usage is not predefined and we have not found a declaration
 		            // so report as undeclared
-					if (usage.getTokens() != null)
+					for (int j = 0; j < usage.getTokens().size(); j++)
 					{
-						for (int j = 0; j < usage.getTokens().size(); j++)
+						Token undefinedToken = usage.getTokens().get(j);
+						// if its not a forgiven undefined (e.g. typof x)
+						if (!undefinedToken.isForgiveUndef())
 						{
-							Token undefinedToken = usage.getTokens().get(j);
-							// if its not a forgiven undefined (e.g. typof x)
-							if (!undefinedToken.isForgiveUndef())
+							// if undef is on and undef was on when the token was defined
+							if (State.getOption().test("undef") && !undefinedToken.isIgnoreUndef())
 							{
-								// if undef is on and undef was on when the token was defined
-								if (State.getOption().test("undef") && !undefinedToken.isIgnoreUndef())
-								{
-									warning("W117", undefinedToken, usedLabelName);
-								}
-								if (impliedGlobals.containsKey(usedLabelName))
-								{
-									impliedGlobals.get(usedLabelName).addLine(undefinedToken.getLine());
-								}
-								else
-								{
-									impliedGlobals.put(usedLabelName, new ImpliedGlobal(usedLabelName, undefinedToken.getLine()));
-								}
+								warning("W117", undefinedToken, usedLabelName);
+							}
+							if (impliedGlobals.containsKey(usedLabelName))
+							{
+								impliedGlobals.get(usedLabelName).addLine(undefinedToken.getLine());
+							}
+							else
+							{
+								impliedGlobals.put(usedLabelName, new ImpliedGlobal(usedLabelName, undefinedToken.getLine()));
 							}
 						}
 					}
@@ -594,6 +594,11 @@ public class ScopeManager
 					warning("W002", State.nextToken(), labelName);
 				}
 			}
+			
+			if (State.isStrict() && (labelName.equals("arguments") || labelName.equals("eval")))
+			{
+				warning("E008", token);
+			}
 		}
 		
 		// The variable was declared in the current scope
@@ -605,7 +610,7 @@ public class ScopeManager
 		else
 		{
 			// if this scope has the variable defined, it's a re-definition error
-			checkOuterShadow(labelName, token); //JSHINT_BUG: third parameter is not defined in function checkOuterShadow
+			checkOuterShadow(labelName, token);
 			
 			current.getLabels().put(labelName, new Label(type, token, false, null, true, false));
 			
@@ -628,7 +633,7 @@ public class ScopeManager
 		}
 	}
 	
-	public void validateParams()
+	public void validateParams(boolean isArrow)
 	{
 		// This method only concerns errors for function parameters
 		if (currentFunctBody.getType().equals("global"))
@@ -648,9 +653,9 @@ public class ScopeManager
 		{
 			Label label = currentFunctParamScope.getLabels().get(labelName);
 			
-			if (label != null && label.isDuplicated())
+			if (label.isDuplicated())
 			{
-				if (isStrict)
+				if (isStrict || isArrow)
 				{
 					warning("E011", label.getToken(), labelName);
 				}
@@ -658,6 +663,11 @@ public class ScopeManager
 				{
 					warning("W004", label.getToken(), labelName);
 				}
+			}
+			
+			if (State.isStrict() && (labelName.equals("arguments") || labelName.equals("eval")))
+			{
+				warning("E008", label.getToken());
 			}
 		}
 	}
@@ -767,7 +777,7 @@ public class ScopeManager
      * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
      * 
      * @param labelName name of the label
-     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function".
+     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function", "generator function"
      * @param token the token pointing at the declaration.
      */
 	public void addlabel(String labelName, String type, Token token)
@@ -779,20 +789,26 @@ public class ScopeManager
      * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
      * 
      * @param labelName name of the label
-     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function".
+     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function", "generator function"
      * @param initialized whether the binding should be created in an "initialized" state.
      * @param token the token pointing at the declaration.
      */
 	public void addlabel(String labelName, String type, boolean initialized, Token token)
 	{
 		boolean isblockscoped = type.equals("let") || type.equals("const") ||
-			type.equals("class") || type.equals("import");
-		boolean ishoisted = type.equals("function") || type.equals("import");
+			type.equals("class") || type.equals("import") || type.equals("generator function");
+		boolean ishoisted = type.equals("function") || type.equals("generator function") ||
+				type.equals("import");
 		boolean isexported = (isblockscoped ? current.getType().equals("global") : currentFunctBody.getType().equals("global")) && 
 							 exported.containsKey(labelName);
 		
 		// outer shadow check (inner is only on non-block scoped)
-		checkOuterShadow(labelName, token); //JSHINT_BUG: third parameter is not defined in function checkOuterShadow
+		checkOuterShadow(labelName, token);
+		
+		if (State.isStrict() && (labelName.equals("arguments") || labelName.equals("eval")))
+		{
+			warning("E008", token);
+		}
 		
 		if (isblockscoped)
 		{
@@ -821,8 +837,14 @@ public class ScopeManager
 				}
 			}
 			
-			// if this scope has the variable defined, its a re-definition error
-			if (declaredInCurrentScope != null)
+			// If this scope has already declared a binding with the same name,
+			// then this represents a redeclaration error if:
+			//
+			// 1. it is a "hoisted" block-scoped binding within a block. For
+			//		    instance: generator functions may be redeclared in the global
+			//		    scope but not within block statements
+			// 2. this is not a "hoisted" block-scoped binding
+			if (declaredInCurrentScope != null && (!ishoisted || (!current.getType().equals("global") || type.equals("import"))))
 			{
 				warning("E011", token, labelName);
 			}

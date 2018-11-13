@@ -16,9 +16,7 @@ import org.jshint.DataSummary;
 import org.jshint.ImpliedGlobal;
 import org.jshint.LinterWarning;
 import org.jshint.test.helpers.TestHelper;
-import org.jshint.utils.JSHintUtils;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -28,16 +26,10 @@ public class TestCore extends Assert
 {
 	private TestHelper th = new TestHelper();
 	
-	@BeforeClass
-	private void setupBeforeClass()
-	{
-		JSHintUtils.reset();
-	}
-	
 	@BeforeMethod
 	private void setupBeforeMethod()
 	{
-		th.reset();
+		th.newTest();
 	}
 	
 	/**
@@ -78,8 +70,8 @@ public class TestCore extends Assert
 			"bar = {};"
 		};
 		
-		th.addError(2, "Read only.");
-		th.addError(3, "Read only.");
+		th.addError(2, 1, "Read only.");
+		th.addError(3, 1, "Read only.");
 		th.test(codeArray, new LinterOptions().set("es3", true).set("unused", true).addPredefined("foo", false));
 	}
 	
@@ -88,7 +80,7 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/unusedglobals.js");
 		
-		th.addError(2, "'bar' is defined but never used.");
+		th.addError(2, 1, "'bar' is defined but never used.");
 		th.test(src, new LinterOptions().set("es3", true).set("unused", true));
 	}
 	
@@ -97,10 +89,10 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"f = 0;",
-		    "(function() {",
-		    "  g = 0;",
-		    "}());",
-		    "h = 0;"
+			"(function() {",
+			"  g = 0;",
+			"}());",
+			"h = 0;"
 		};
 		DataSummary report;
 		
@@ -178,7 +170,7 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/multiline-global-declarations.js");
 		
-		th.addError(12, "'pi' is defined but never used.");
+		th.addError(12, 1, "'pi' is defined but never used.");
 		th.test(src, new LinterOptions().set("unused", true));
 	}
 	
@@ -194,7 +186,7 @@ public class TestCore extends Assert
 		th.test(code1);
 		th.test(code2);
 		
-		th.addError(1, "The array literal notation [] is preferable.");
+		th.addError(1, 10, "The array literal notation [] is preferable.");
 		th.test("new Array();");
 	}
 	
@@ -235,8 +227,11 @@ public class TestCore extends Assert
 		th.test(code);
 		th.test(code1);
 		
-		th.addError(1, "The object literal notation {} is preferable.");
+		th.addError(1, 7, "The object literal notation {} is preferable.");
 		th.test("Object();");
+		
+		th.newTest();
+		th.addError(1, 11, "The object literal notation {} is preferable.");
 		th.test("new Object();");
 	}
 	
@@ -271,7 +266,7 @@ public class TestCore extends Assert
 		th.test(code);
 		
 		// But it must never tolerate reassigning of undefined
-		th.addError(1, "Expected an identifier and instead saw 'undefined' (a reserved word).");
+		th.addError(1, 5, "Redefinition of 'undefined'.");
 		th.test(code1);
 	}
 	
@@ -289,7 +284,7 @@ public class TestCore extends Assert
 	@Test
 	public void testNoDelete()
 	{
-		th.addError(1, "Variables should not be deleted.");
+		th.addError(1, 21, "Variables should not be deleted.");
 		
 		th.test("delete NullReference;");
 	}
@@ -303,9 +298,9 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/switchFallThrough.js");
 		
-		th.addError(3, "Expected a 'break' statement before 'case'.");
-		th.addError(18, "Expected a 'break' statement before 'default'.");
-		th.addError(40, "Unexpected ':'.");
+		th.addError(3, 18, "Expected a 'break' statement before 'case'.");
+		th.addError(18, 7, "Expected a 'break' statement before 'default'.");
+		th.addError(40, 12, "Unexpected ':'.");
 		th.test(src);
 	}
 	
@@ -316,7 +311,7 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/switchDefaultFirst.js");
 		
-		th.addError(5, "Expected a 'break' statement before 'default'.");
+		th.addError(5, 16, "Expected a 'break' statement before 'default'.");
 		th.test(src);
 	}
 	
@@ -337,8 +332,8 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/functionScopedOptions.js");
 		
-		th.addError(1, "eval can be harmful.");
-		th.addError(8, "eval can be harmful.");
+		th.addError(1, 1, "eval can be harmful.");
+		th.addError(8, 1, "eval can be harmful.");
 		th.test(src);
 	}
 	
@@ -364,7 +359,7 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/jslintRenamed.js");
 		
-		th.addError(4, "Expected '===' and instead saw '=='.");
+		th.addError(4, 9, "Expected '===' and instead saw '=='.");
 		th.test(src);
 	}
 	
@@ -398,10 +393,10 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/return.js");
 		
-		th.addError(3, "Did you mean to return a conditional instead of an assignment?");
-		th.addError(38, "Line breaking error 'return'.");
-		th.addError(38, "Missing semicolon.");
-		th.addError(39, "Unnecessary semicolon.");
+		th.addError(3, 15, "Did you mean to return a conditional instead of an assignment?");
+		th.addError(38, 5, "Line breaking error 'return'.");
+		th.addError(38, 11, "Missing semicolon.");
+		th.addError(39, 7, "Unnecessary semicolon.");
 		th.test(src, new LinterOptions().set("es3", true));
 	}
 	
@@ -410,10 +405,10 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/trycatch.js");
 		
-		th.addError(6, "'e' is already defined.");
-		th.addError(12, "Do not assign to the exception parameter.");
-		th.addError(13, "Do not assign to the exception parameter.");
-		th.addError(24, "'e' is not defined.");
+		th.addError(6, 13, "'e' is already defined.");
+		th.addError(12, 9, "Do not assign to the exception parameter.");
+		th.addError(13, 9, "Do not assign to the exception parameter.");
+		th.addError(24, 9, "'e' is not defined.");
 		th.test(src, new LinterOptions().set("es3", true).set("undef", true));
 	}
 	
@@ -434,17 +429,17 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/emptystmt.js");
 		
-		th.addError(1, "Expected an identifier and instead saw ';'.");
-		th.addError(6, "Expected an assignment or function call and instead saw an expression.");
-		th.addError(10, "Unnecessary semicolon.");
-		th.addError(17, "Unnecessary semicolon.");
+		th.addError(1, 4, "Expected an identifier and instead saw ';'.");
+		th.addError(6, 1, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(10, 2, "Unnecessary semicolon.");
+		th.addError(17, 11, "Unnecessary semicolon.");
 		th.test(src, new LinterOptions().set("es3", true).set("curly", false));
 		
-		th.reset();
+		th.newTest();
 		
-		th.addError(1, "Expected an identifier and instead saw ';'.");
-		th.addError(10, "Unnecessary semicolon.");
-		th.addError(17, "Unnecessary semicolon.");
+		th.addError(1, 4, "Expected an identifier and instead saw ';'.");
+		th.addError(10, 2, "Unnecessary semicolon.");
+		th.addError(17, 11, "Unnecessary semicolon.");
 		th.test(src, new LinterOptions().set("es3", true).set("curly", false).set("expr", true));
 	}
 	
@@ -453,22 +448,22 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/insideEval.js");
 		
-		th.addError(1, "eval can be harmful.");
-		th.addError(3, "eval can be harmful.");
-		th.addError(5, "eval can be harmful.");
-		th.addError(7, "eval can be harmful.");
-		th.addError(9, "eval can be harmful.");
-		th.addError(11, "Implied eval. Consider passing a function instead of a string.");
-		th.addError(13, "Implied eval. Consider passing a function instead of a string.");
-		th.addError(15, "Implied eval. Consider passing a function instead of a string.");
-		th.addError(17, "Implied eval. Consider passing a function instead of a string.");
+		th.addError(1, 1, "eval can be harmful.");
+		th.addError(3, 1, "eval can be harmful.");
+		th.addError(5, 1, "eval can be harmful.");
+		th.addError(7, 1, "eval can be harmful.");
+		th.addError(9, 1, "eval can be harmful.");
+		th.addError(11, 1, "Implied eval. Consider passing a function instead of a string.");
+		th.addError(13, 1, "Implied eval. Consider passing a function instead of a string.");
+		th.addError(15, 7, "Implied eval. Consider passing a function instead of a string.");
+		th.addError(17, 7, "Implied eval. Consider passing a function instead of a string.");
 		
 		// The "TestRun" class (and these errors) probably needs some
 		// facility for checking the expected scope of the error
-		th.addError(13, "Unexpected early end of program.");
-		th.addError(13, "Unrecoverable syntax error. (100% scanned).");
-		th.addError(17, "Unexpected early end of program.");
-		th.addError(17, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(13, 17, "Unexpected early end of program.");
+		th.addError(13, 17, "Unrecoverable syntax error. (100% scanned).");
+		th.addError(17, 17, "Unexpected early end of program.");
+		th.addError(17, 17, "Unrecoverable syntax error. (100% scanned).");
 		
 		th.test(src, new LinterOptions().set("es3", true).set("evil", false));
 		
@@ -487,7 +482,7 @@ public class TestCore extends Assert
 				"\\u0065val(\"'test'\");"
 		};
 		
-		th.addError(1, "eval can be harmful.");
+		th.addError(1, 1, "eval can be harmful.");
 		th.test(code, new LinterOptions().set("evil", false));
 	}
 	
@@ -507,8 +502,8 @@ public class TestCore extends Assert
 			assertTrue(false, "Exception was thrown");
 		}
 		
-		th.addError(1, "'a' is not defined.");
-		th.addError(1, "'b' is not defined.");
+		th.addError(1, 1, "'a' is not defined.");
+		th.addError(1, 6, "'b' is not defined.");
 		th.test(code, new LinterOptions().set("es3", true).set("undef", true));
 	}
 	
@@ -517,8 +512,8 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh-226.js");
 		
-		th.addError(16, "Unnecessary semicolon.");
-		th.addError(17, "Unnecessary semicolon.");
+		th.addError(16, 1, "Unnecessary semicolon.");
+		th.addError(17, 2, "Unnecessary semicolon.");
 		th.test(src, new LinterOptions().set("es3", true).set("expr", true).set("laxbreak", true));
 	}
 	
@@ -539,7 +534,7 @@ public class TestCore extends Assert
 	@Test
 	public void testInvalidOptions()
 	{
-		th.addError(0, "Bad option: 'invalid'.");
+		th.addError(0, 0, "Bad option: 'invalid'.");
 		th.test("function test() {}", new LinterOptions().set("es3", true).set("devel", true).set("invalid", true));
 	}
 	
@@ -552,11 +547,25 @@ public class TestCore extends Assert
 	}
 	
 	@Test
+	public void testInvalidSource()
+	{
+		// no need to port all tests here
+		
+		th.addError(0, 0, "Input is neither a string nor an array of strings.");
+		th.test((String)null);
+		th.test((String[])null);
+		
+		th.newTest();
+		th.test("", new LinterOptions().set("es3", true));
+		th.test(new String[]{}, new LinterOptions().set("es3", true));
+	}
+	
+	@Test
 	public void testConstructor()
 	{
 		String code = "new Number(5);";
 		
-		th.addError(1, "Do not use Number as a constructor.");
+		th.addError(1, 1, "Do not use Number as a constructor.");
 		th.test(code, new LinterOptions().set("es3", true));
 	}
 	
@@ -565,10 +574,10 @@ public class TestCore extends Assert
 	{
 		String code = "parseInt(20);";
 		
-		th.addError(1, "Missing radix parameter.");
+		th.addError(1, 12, "Missing radix parameter.");
 		th.test(code, new LinterOptions().set("es3", true));
 		
-		th.reset();
+		th.newTest();
 		th.test(code);
 	}
 	
@@ -593,13 +602,13 @@ public class TestCore extends Assert
 	{
 		String src = "var arr = ['a',, null,, '',, undefined,,];";
 		
-		th.addError(1, "Extra comma. (it breaks older versions of IE)");
-		th.addError(1, "Extra comma. (it breaks older versions of IE)");
-		th.addError(1, "Extra comma. (it breaks older versions of IE)");
-		th.addError(1, "Extra comma. (it breaks older versions of IE)");
+		th.addError(1, 16, "Extra comma. (it breaks older versions of IE)");
+		th.addError(1, 23, "Extra comma. (it breaks older versions of IE)");
+		th.addError(1, 28, "Extra comma. (it breaks older versions of IE)");
+		th.addError(1, 40, "Extra comma. (it breaks older versions of IE)");
 		th.test(src, new LinterOptions().set("es3", true));
 		
-		th.reset();
+		th.newTest();
 		th.test(src, new LinterOptions().set("elision", true)); // es5
 	}
 	
@@ -608,17 +617,17 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/reserved.js");
 		
-		th.addError(1, "Expected an identifier and instead saw 'volatile' (a reserved word).");
-		th.addError(5, "Expected an identifier and instead saw 'let' (a reserved word).");
-		th.addError(10, "Expected an identifier and instead saw 'let' (a reserved word).");
-		th.addError(13, "Expected an identifier and instead saw 'class' (a reserved word).");
-		th.addError(14, "Expected an identifier and instead saw 'else' (a reserved word).");
-		th.addError(15, "Expected an identifier and instead saw 'protected' (a reserved word).");
+		th.addError(1, 1, "Expected an identifier and instead saw 'volatile' (a reserved word).");
+		th.addError(5, 5, "Expected an identifier and instead saw 'let' (a reserved word).");
+		th.addError(10, 7, "Expected an identifier and instead saw 'let' (a reserved word).");
+		th.addError(13, 13, "Expected an identifier and instead saw 'class' (a reserved word).");
+		th.addError(14, 5, "Expected an identifier and instead saw 'else' (a reserved word).");
+		th.addError(15, 5, "Expected an identifier and instead saw 'protected' (a reserved word).");
 		th.test(src, new LinterOptions().set("es3", true));
 		
-		th.reset();
-		th.addError(5, "Expected an identifier and instead saw 'let' (a reserved word).");
-		th.addError(10, "Expected an identifier and instead saw 'let' (a reserved word).");
+		th.newTest();
+		th.addError(5, 5, "Expected an identifier and instead saw 'let' (a reserved word).");
+		th.addError(10, 7, "Expected an identifier and instead saw 'let' (a reserved word).");
 		th.test(src); // es5
 	}
 	
@@ -629,23 +638,23 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/es5Reserved.js");
 		
-		th.addError(2, "Expected an identifier and instead saw 'default' (a reserved word).");
-		th.addError(3, "Unexpected 'in'.");
-		th.addError(3, "Expected an identifier and instead saw 'in' (a reserved word).");
-		th.addError(6, "Expected an identifier and instead saw 'default' (a reserved word).");
-		th.addError(7, "Expected an identifier and instead saw 'new' (a reserved word).");
-		th.addError(8, "Expected an identifier and instead saw 'class' (a reserved word).");
-		th.addError(9, "Expected an identifier and instead saw 'default' (a reserved word).");
-		th.addError(10, "Expected an identifier and instead saw 'in' (a reserved word).");
-		th.addError(11, "Expected an identifier and instead saw 'in' (a reserved word).");
+		th.addError(2, 3, "Expected an identifier and instead saw 'default' (a reserved word).");
+		th.addError(3, 3, "Unexpected 'in'.");
+		th.addError(3, 3, "Expected an identifier and instead saw 'in' (a reserved word).");
+		th.addError(6, 5, "Expected an identifier and instead saw 'default' (a reserved word).");
+		th.addError(7, 10, "Expected an identifier and instead saw 'new' (a reserved word).");
+		th.addError(8, 12, "Expected an identifier and instead saw 'class' (a reserved word).");
+		th.addError(9, 3, "Expected an identifier and instead saw 'default' (a reserved word).");
+		th.addError(10, 3, "Expected an identifier and instead saw 'in' (a reserved word).");
+		th.addError(11, 10, "Expected an identifier and instead saw 'in' (a reserved word).");
 		th.test(src, new LinterOptions().set("es3", true));
 		
-		th.reset();
-		th.addError(6, "Expected an identifier and instead saw 'default' (a reserved word).");
-		th.addError(7, "Expected an identifier and instead saw 'new' (a reserved word).");
-		th.addError(8, "Expected an identifier and instead saw 'class' (a reserved word).");
-		th.addError(11, "Expected an identifier and instead saw 'in' (a reserved word).");
-		th.test(src); // es5
+		th.newTest();
+		th.addError(6, 5, "Expected an identifier and instead saw 'default' (a reserved word).");
+		th.addError(7, 10, "Expected an identifier and instead saw 'new' (a reserved word).");
+		th.addError(8, 12, "Expected an identifier and instead saw 'class' (a reserved word).");
+		th.addError(11, 10, "Expected an identifier and instead saw 'in' (a reserved word).");
+		th.test(src, new LinterOptions()); // es5
 	}
 	
 	@Test
@@ -653,23 +662,23 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/gh247.js");
 		
-		th.addError(19, "'w' is already defined.");
-		th.addError(35, "'u2' used out of scope.");
-		th.addError(36, "'w2' used out of scope.");
+		th.addError(19, 13, "'w' is already defined.");
+		th.addError(35, 19, "'u2' used out of scope.");
+		th.addError(36, 19, "'w2' used out of scope.");
 		th.test(src, new LinterOptions().set("es3", true).set("undef", true).set("devel", true));
 		
 		src = th.readFile("src/test/resources/fixtures/gh618.js");
 		
-		th.reset();
-		th.addError(5, "Value of 'x' may be overwritten in IE 8 and earlier.");
-		th.addError(15, "Value of 'y' may be overwritten in IE 8 and earlier.");
+		th.newTest();
+		th.addError(5, 11, "Value of 'x' may be overwritten in IE 8 and earlier.");
+		th.addError(15, 11, "Value of 'y' may be overwritten in IE 8 and earlier.");
 		th.test(src, new LinterOptions().set("es3", true).set("undef", true).set("devel", true));
 		
-		th.reset();
+		th.newTest();
 		th.test(src, new LinterOptions().set("es3", true).set("undef", true).set("devel", true).set("node", true));
 		
 		String code = "try {} catch ({ message }) {}";
-		th.reset();
+		th.newTest("destructuring in catch blocks' parameter");
 		th.test(code, new LinterOptions().set("esnext", true));
 	}
 	
@@ -678,8 +687,8 @@ public class TestCore extends Assert
 	{
 		th.test("/*jshint maxparams:4, indent:3, maxlen:false */");
 		
-		th.reset();
-		th.addError(1, "Expected a small integer or 'false' and instead saw 'face'.");
+		th.newTest();
+		th.addError(1, 1, "Expected a small integer or 'false' and instead saw 'face'.");
 		th.test("/*jshint maxparams:face */");
 	}
 	
@@ -700,8 +709,8 @@ public class TestCore extends Assert
 			"}());"
 		};
 		
-		th.reset();
-		th.addError(2, "Creating global 'for' variable. Should be 'for (var i ...'.");
+		th.newTest();
+		th.addError(2, 6, "Creating global 'for' variable. Should be 'for (var i ...'.");
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		src = new String[]{
@@ -710,8 +719,8 @@ public class TestCore extends Assert
 			"}());"
 		};
 		
-		th.reset();
-		th.addError(2, "Bad assignment.");
+		th.newTest();
+		th.addError(2, 10, "Bad assignment.");
 		th.test(src);
 		
 		src = new String[]{
@@ -723,11 +732,11 @@ public class TestCore extends Assert
 			"})();"
 		};
 		
-		th.reset();
-		th.addError(2, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(4, "Invalid for-in loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-in loop left-hand-side: initializer is forbidden.");
+		th.newTest("bad lhs errors");
+		th.addError(2, 7, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 11, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(4, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.test(src);
 		
 		src = new String[]{
@@ -739,20 +748,20 @@ public class TestCore extends Assert
 				"})();"
 		};
 		
-		th.reset();
-		th.addError(2, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(3, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(4, "Invalid for-in loop left-hand-side: initializer is forbidden.");
-		th.addError(5, "Invalid for-in loop left-hand-side: initializer is forbidden.");
+		th.newTest("bad lhs errors (lexical)");
+		th.addError(2, 11, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 13, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(4, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
+		th.addError(5, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.test(src, new LinterOptions().set("esnext", true));
 		
-		th.reset();
+		th.newTest("Left-hand side as MemberExpression");
 		th.test(new String[]{
 			"for (x.y in {}) {}",
 			"for (x[z] in {}) {}"
 		});
 		
-		th.reset();
+		th.newTest("Left-hand side as MemberExpression (invalid)");
 		th.addError(1, 10, "Bad assignment.");
 		th.addError(2, 13, "Bad assignment.");
 		th.test(new String[]{
@@ -777,39 +786,39 @@ public class TestCore extends Assert
 			"var x = undefined;",
 			"const y = undefined;",
 			"let z = undefined;",
-		    "for(var a = undefined; a < 9; a++) {",
-		    "  var b = undefined;", // necessary - see gh-1191
-		    "  const c = undefined;",
-		    "  let d = undefined;",
-		    "  var e = function() {",
-		    "    var f = undefined;",
-		    "    const g = undefined;",
-		    "    let h = undefined;",
-		    "  };",
-		    "}",
-		    "// jshint -W080",
-		    "var i = undefined;",
-		    "const j = undefined;",
-		    "let k = undefined;",
-		    "// jshint +W080",
-		    "var l = undefined === 0;",
-		    "const m = undefined === 0;",
-		    "let n = undefined === 0;",
-		    "let [ o = undefined === 0 ] = [];",
-		    "[ o = undefined === 0] = [];",
-		    "let { p = undefined === 0, x: q = undefined === 0 } = {};",
-		    "({ p = undefined === 0, x: q = undefined === 0 } = {});"
+			"for(var a = undefined; a < 9; a++) {",
+			"  var b = undefined;", // necessary - see gh-1191
+			"  const c = undefined;",
+			"  let d = undefined;",
+			"  var e = function() {",
+			"    var f = undefined;",
+			"    const g = undefined;",
+			"    let h = undefined;",
+			"  };",
+			"}",
+			"// jshint -W080",
+			"var i = undefined;",
+			"const j = undefined;",
+			"let k = undefined;",
+			"// jshint +W080",
+			"var l = undefined === 0;",
+			"const m = undefined === 0;",
+			"let n = undefined === 0;",
+			"let [ o = undefined === 0 ] = [];",
+			"[ o = undefined === 0] = [];",
+			"let { p = undefined === 0, x: q = undefined === 0 } = {};",
+			"({ p = undefined === 0, x: q = undefined === 0 } = {});"
 		};
 		
-		th.addError(1, "It's not necessary to initialize 'x' to 'undefined'.");
-		th.addError(2, "It's not necessary to initialize 'y' to 'undefined'.");
-		th.addError(3, "It's not necessary to initialize 'z' to 'undefined'.");
-		th.addError(4, "It's not necessary to initialize 'a' to 'undefined'.");
-		th.addError(6, "It's not necessary to initialize 'c' to 'undefined'.");
-	    th.addError(7, "It's not necessary to initialize 'd' to 'undefined'.");
-	    th.addError(9, "It's not necessary to initialize 'f' to 'undefined'.");
-	    th.addError(10, "It's not necessary to initialize 'g' to 'undefined'.");
-	    th.addError(11, "It's not necessary to initialize 'h' to 'undefined'.");
+		th.addError(1, 5, "It's not necessary to initialize 'x' to 'undefined'.");
+		th.addError(2, 7, "It's not necessary to initialize 'y' to 'undefined'.");
+		th.addError(3, 5, "It's not necessary to initialize 'z' to 'undefined'.");
+		th.addError(4, 9, "It's not necessary to initialize 'a' to 'undefined'.");
+		th.addError(6, 9, "It's not necessary to initialize 'c' to 'undefined'.");
+		th.addError(7, 7, "It's not necessary to initialize 'd' to 'undefined'.");
+		th.addError(9, 9, "It's not necessary to initialize 'f' to 'undefined'.");
+		th.addError(10, 11, "It's not necessary to initialize 'g' to 'undefined'.");
+		th.addError(11, 9, "It's not necessary to initialize 'h' to 'undefined'.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -819,61 +828,63 @@ public class TestCore extends Assert
 		String src = th.readFile("src/test/resources/fixtures/es6-import-export.js");
 		
 		String[][] importConstErrors = {
-			{"51", "Attempting to override '$' which is a constant."},
-			{"52", "Attempting to override 'emGet' which is a constant."},
-		    {"53", "Attempting to override 'one' which is a constant."},
-		    {"54", "Attempting to override '_' which is a constant."},
-		    {"55", "Attempting to override 'ember2' which is a constant."},
-		    {"57", "'$' has already been declared."},
-		    {"58", "'emGet' has already been declared."},
-		    {"58", "'set' has already been declared."},
-		    {"59", "'_' has already been declared."},
-		    {"60", "'ember2' has already been declared."}
+			{"51", "1", "Attempting to override '$' which is a constant."},
+			{"52", "1", "Attempting to override 'emGet' which is a constant."},
+			{"53", "1", "Attempting to override 'one' which is a constant."},
+			{"54", "1", "Attempting to override '_' which is a constant."},
+			{"55", "1", "Attempting to override 'ember2' which is a constant."},
+			{"57", "8", "'$' has already been declared."},
+			{"58", "17", "'emGet' has already been declared."},
+			{"58", "24", "'set' has already been declared."},
+			{"59", "21", "'_' has already been declared."},
+			{"60", "13", "'ember2' has already been declared."}
 		};
 		
+		th.addError(74, 1, "Empty export: this is unnecessary and can be removed.");
+		th.addError(75, 1, "Empty export: consider replacing with `import 'source';`.");
 		for (String[] error : importConstErrors)
 		{
-			th.addError(Integer.parseInt(error[0]), error[1]);
+			th.addError(Integer.parseInt(error[0]), Integer.parseInt(error[1]), error[2]);
 		}
 		th.test(src, new LinterOptions().set("esnext", true));
 		
-		th.reset();
-		th.addError(3, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(4, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(5, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(6, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(7, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(8, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(9, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(10, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(11, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(22, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(26, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(30, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(31, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(32, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(36, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(40, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(44, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(46, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(47, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(48, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(48, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(47, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(46, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		th.addError(57, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(58, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(59, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(60, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(65, "'import' is only available in ES6 (use 'esversion: 6').");
-		th.addError(67, "'export' is only available in ES6 (use 'esversion: 6').");
-		th.addError(67, "'function*' is only available in ES6 (use 'esversion: 6').");
-		th.addError(67, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
-		for (String[] error : importConstErrors)
-		{
-			th.addError(Integer.parseInt(error[0]), error[1]);
-		}
-		th.test(src, new LinterOptions());
+		th.addError(3, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(4, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(5, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(6, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(8, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(9, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(10, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(22, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(26, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(30, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(31, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(32, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(36, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(40, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(44, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(46, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(47, 8, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(48, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(48, 16, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(47, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(46, 8, "'class' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(57, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(58, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(59, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(60, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(65, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(67, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(67, 16, "'function*' is only available in ES6 (use 'esversion: 6').");
+		th.addError(67, 26, "'yield' is available in ES6 (use 'esversion: 6') or Mozilla JS extensions (use moz).");
+		th.addError(70, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(71, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.addError(74, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(75, 1, "'export' is only available in ES6 (use 'esversion: 6').");
+		th.addError(76, 1, "'import' is only available in ES6 (use 'esversion: 6').");
+		th.test(src);
 		
 		String[] src2 = {
 				"var a = {",
@@ -882,11 +893,11 @@ public class TestCore extends Assert
 				"};"
 		};
 		
-		th.reset();
+		th.newTest();
 		th.test(src2);
 		
 		// See gh-3055 "Labels Break JSHint"
-		th.reset();
+		th.newTest("following labeled block");
 		th.test(new String[]{
 			"label: {}",
 			"export function afterLabelExported() {}",
@@ -906,8 +917,8 @@ public class TestCore extends Assert
 			"var x = 23;",
 			"var z = 42;",
 			"let c = 2;",
-		    "const d = 7;",
-		    "export { c, d };",
+			"const d = 7;",
+			"export { c, d };",
 			"export { a, x };",
 			"export var b = { baz: 'baz' };",
 			"export function boo() { return z; }",
@@ -921,8 +932,8 @@ public class TestCore extends Assert
 			"export function* gen() { yield 1; }"
 		};
 		
-		th.addError(19, "const 'c1u' is initialized to 'undefined'.");
-		th.addError(19, "const 'c2u' is initialized to 'undefined'.");
+		th.addError(19, 14, "const 'c1u' is initialized to 'undefined'.");
+		th.addError(19, 19, "const 'c2u' is initialized to 'undefined'.");
 		th.test(src1, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -946,10 +957,10 @@ public class TestCore extends Assert
 				"const b = 1;"
 		};
 		
-		th.addError(2, "'a' has already been declared.");
-		th.addError(6, "'a' was used before it was declared, which is illegal for 'const' variables.");
-		th.addError(9, "'a' has already been declared.");
-		th.addError(13, "'b' has already been declared.");
+		th.addError(2, 7, "'a' has already been declared.");
+		th.addError(6, 16, "'a' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(9, 10, "'a' has already been declared.");
+		th.addError(13, 7, "'b' has already been declared.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -958,15 +969,15 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"let a = typeof b;", // error, use in TDZ
-		    "let b;",
-		    "function d() { return typeof c; }", // d may be called after declaration, no error
-		    "let c = typeof e;", // e is not in scope, no error
-		    "{",
-		    "  let e;",
-		    "}"
+			"let b;",
+			"function d() { return typeof c; }", // d may be called after declaration, no error
+			"let c = typeof e;", // e is not in scope, no error
+			"{",
+			"  let e;",
+			"}"
 		};
 		
-		th.addError(2, "'b' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(2, 5, "'b' was used before it was declared, which is illegal for 'let' variables.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -1036,15 +1047,15 @@ public class TestCore extends Assert
 				"e();"
 		};
 		
-		th.addError(3, "Attempting to override 'a' which is a constant.");
-		th.addError(4, "Attempting to override 'b' which is a constant.");
-		th.addError(5, "Attempting to override 'a' which is a constant.");
-		th.addError(6, "Attempting to override 'a' which is a constant.");
-		th.addError(7, "Attempting to override 'a' which is a constant.");
-		th.addError(8, "Attempting to override 'a' which is a constant.");
-		th.addError(8, "You might be leaking a variable (a) here.");
-		th.addError(53, "Missing '()' invoking a constructor.");
-		th.addError(55, "Attempting to override 'f' which is a constant.");
+		th.addError(3, 1, "Attempting to override 'a' which is a constant.");
+		th.addError(4, 1, "Attempting to override 'b' which is a constant.");
+		th.addError(5, 1, "Attempting to override 'a' which is a constant.");
+		th.addError(6, 3, "Attempting to override 'a' which is a constant.");
+		th.addError(7, 1, "Attempting to override 'a' which is a constant.");
+		th.addError(8, 9, "Attempting to override 'a' which is a constant.");
+		th.addError(8, 9, "You might be leaking a variable (a) here.");
+		th.addError(53, 5, "Missing '()' invoking a constructor.");
+		th.addError(55, 3, "Attempting to override 'f' which is a constant.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -1069,27 +1080,27 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"new A();", // use in TDZ
-		    "class A {}",
-		    "class B extends C {}", // use in TDZ
-		    "class C {}",
-		    "new D();", // not defined
-		    "let E = class D {" +
-		    "  constructor() { D.static(); }",
-		    "  myfunc() { return D; }",
-		    "};",
-		    "new D();", // not defined
-		    "if (true) {",
-		    "  class F {}",
-		    "}",
-		    "new F();" // not defined
+			"class A {}",
+			"class B extends C {}", // use in TDZ
+			"class C {}",
+			"new D();", // not defined
+			"let E = class D {" +
+			"  constructor() { D.static(); }",
+			"  myfunc() { return D; }",
+			"};",
+			"new D();", // not defined
+			"if (true) {",
+			"  class F {}",
+			"}",
+			"new F();" // not defined
 		};
 		
-		th.addError(2, "'A' was used before it was declared, which is illegal for 'class' variables.");
-	    th.addError(4, "'C' was used before it was declared, which is illegal for 'class' variables.");
-	    th.addError(5, "'D' is not defined.");
-	    th.addError(9, "'D' is not defined.");
-	    th.addError(13, "'F' is not defined.");
-	    th.test(code, new LinterOptions().set("esnext", true).set("undef", true));
+		th.addError(2, 7, "'A' was used before it was declared, which is illegal for 'class' variables.");
+		th.addError(4, 7, "'C' was used before it was declared, which is illegal for 'class' variables.");
+		th.addError(5, 5, "'D' is not defined.");
+		th.addError(9, 5, "'D' is not defined.");
+		th.addError(13, 5, "'F' is not defined.");
+		th.test(code, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
 	@Test
@@ -1099,14 +1110,14 @@ public class TestCore extends Assert
 		// of this file in order to be exported.
 		// The example below is roughly similar to this Common JS:
 		//
-		//     exports.foo = foo;
+		//	   exports.foo = foo;
 		//
 		// Thus, the "foo" identifier should be seen as undefined.
 		String[] src1 = {
 			"export { foo };"
 		};
 		
-		th.addError(1, "'foo' is not defined.");
+		th.addError(1, 10, "'foo' is not defined.");
 		th.test(src1, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
@@ -1117,16 +1128,16 @@ public class TestCore extends Assert
 		// the exports from one source on through this source.
 		// The example below is roughly similar to this Common JS:
 		//
-		//     var foo;
-		//     exports.foo = require('source').foo;
+		//	   var foo;
+		//	   exports.foo = require('source').foo;
 		//
 		// Thus, the "foo" identifier should be seen as unused.
 		String[] src1 = {
 			"var foo;",
-		    "export { foo } from \"source\";"
+			"export { foo } from \"source\";"
 		};
 		
-		th.addError(1, "'foo' is defined but never used.");
+		th.addError(1, 5, "'foo' is defined but never used.");
 		th.test(src1, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -1137,16 +1148,16 @@ public class TestCore extends Assert
 		// the exports from one source on through this source.
 		// The example below is roughly similar to this Common JS:
 		//
-		//     exports.foo = require('source').foo;
-		//     var bar = foo;
+		//	   exports.foo = require('source').foo;
+		//	   var bar = foo;
 		//
 		// Thus, the "foo" identifier should be seen as undefined.
 		String[] src1 = {
 			"export { foo } from \"source\";",
-		    "var bar = foo;"
+			"var bar = foo;"
 		};
 		
-		th.addError(2, "'foo' is not defined.");
+		th.addError(2, 11, "'foo' is not defined.");
 		th.test(src1, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
@@ -1176,7 +1187,7 @@ public class TestCore extends Assert
 		// interpreted as a declaration.
 		String[] src = {
 			"let x = 1;",
-		    "export default -x;"
+			"export default -x;"
 		};
 		
 		th.test(src, new LinterOptions().set("unused", true).set("esnext", true));
@@ -1189,7 +1200,7 @@ public class TestCore extends Assert
 				"import * as angular from 'angular';"
 		};
 		
-		th.addError(1, "'angular' is defined but never used.");
+		th.addError(1, 13, "'angular' is defined but never used.");
 		th.test(src, new LinterOptions().set("esnext", true).set("unused", true));
 	}
 	
@@ -1198,8 +1209,8 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/es6-template-literal.js");
 		
-		th.addError(14, "Octal literals are not allowed in strict mode.");
-		th.addError(21, "Unclosed template literal.");
+		th.addError(14, 16, "Octal literals are not allowed in strict mode.");
+		th.addError(21, 20, "Unclosed template literal.");
 		th.test(src, new LinterOptions().set("esnext", true));
 		th.test("/* jshint esnext: true */" + src);
 	}
@@ -1209,8 +1220,8 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/es6-template-literal-tagged.js");
 		
-		th.addError(16, "Octal literals are not allowed in strict mode.");
-		th.addError(23, "Unclosed template literal.");
+		th.addError(16, 19, "Octal literals are not allowed in strict mode.");
+		th.addError(23, 23, "Unclosed template literal.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -1245,7 +1256,7 @@ public class TestCore extends Assert
 				"alert(`${a} world`);"
 		};
 		
-		th.addError(2, "'a' is not defined.");
+		th.addError(2, 10, "'a' is not defined.");
 		th.test(src, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
@@ -1257,8 +1268,8 @@ public class TestCore extends Assert
 			"alert(tag`${a} world`);"
 		};
 		
-		th.addError(2, "'tag' is not defined.");
-		th.addError(2, "'a' is not defined.");
+		th.addError(2, 7, "'tag' is not defined.");
+		th.addError(2, 13, "'a' is not defined.");
 		th.test(src, new LinterOptions().set("esnext", true).set("undef", true));
 	}
 	
@@ -1285,7 +1296,7 @@ public class TestCore extends Assert
 			"}"
 		};
 		
-		th.addError(2, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(2, 1, "Expected an assignment or function call and instead saw an expression.");
 		th.test(src, new LinterOptions().set("esnext", true));
 		
 		String[] src2 = {
@@ -1295,6 +1306,8 @@ public class TestCore extends Assert
 			"}"
 		};
 		
+		th.newTest();
+		th.addError(2, 16, "Expected an assignment or function call and instead saw an expression.");
 		th.test(src2, new LinterOptions().set("esnext", true));
 	}
 	
@@ -1326,7 +1339,7 @@ public class TestCore extends Assert
 		String[] src = {
 			"function sayHello(to) {",
 			"  return `Hello, ",
-			"    ${to}!`;",
+			"	 ${to}!`;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1336,7 +1349,7 @@ public class TestCore extends Assert
 		src = new String[]{
 			"function* sayHello(to) {",
 			"  yield `Hello, ",
-			"    ${to}!`;",
+			"	 ${to}!`;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1351,7 +1364,7 @@ public class TestCore extends Assert
 			"function tag() {}",
 			"function sayHello(to) {",
 			"  return tag`Hello, ",
-			"    ${to}!`;",
+			"	 ${to}!`;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1362,7 +1375,7 @@ public class TestCore extends Assert
 			"function tag() {}",
 			"function* sayHello(to) {",
 			"  yield tag`Hello, ",
-			"    ${to}!`;",
+			"	 ${to}!`;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1376,8 +1389,8 @@ public class TestCore extends Assert
 		String[] src = {
 			"function sayHello() {",
 			"  return `Helo",
-			"      monkey`",
-			"    .replace(\'l\', \'ll\');",
+			"	   monkey`",
+			"	 .replace(\'l\', \'ll\');",
 			"}",
 			"print(sayHello());"
 		};
@@ -1392,8 +1405,8 @@ public class TestCore extends Assert
 			"function tag() {}",
 			"function sayHello() {",
 			"  return tag`Helo",
-			"    monkey!!`",
-			"    .replace(\'l\', \'ll\');",
+			"	 monkey!!`",
+			"	 .replace(\'l\', \'ll\');",
 			"}",
 			"print(sayHello());"
 		};
@@ -1407,7 +1420,7 @@ public class TestCore extends Assert
 		String[] src = {
 			"function sayHello(to) {",
 			"  return \"Hello, \\",
-			"    \" + to;",
+			"	 \" + to;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1417,7 +1430,7 @@ public class TestCore extends Assert
 		src = new String[]{
 			"function* sayHello(to) {",
 			"  yield \"Hello, \\",
-			"    \" + to;",
+			"	 \" + to;",
 			"}",
 			"print(sayHello(\"George\"));"
 		};
@@ -1430,10 +1443,10 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/es6-export-star-from.js");
 		
-		th.addError(2, "Expected 'from' and instead saw 'foo'.");
-		th.addError(2, "Expected '(string)' and instead saw ';'.");
-		th.addError(2, "Missing semicolon.");
-		th.addError(3, "Expected '(string)' and instead saw '78'.");
+		th.addError(2, 10, "Expected 'from' and instead saw 'foo'.");
+		th.addError(2, 13, "Expected '(string)' and instead saw ';'.");
+		th.addError(2, 14, "Missing semicolon.");
+		th.addError(3, 15, "Expected '(string)' and instead saw '78'.");
 		th.test(src, new LinterOptions().set("esnext", true));
 	}
 	
@@ -1444,12 +1457,12 @@ public class TestCore extends Assert
 		String b = th.readFile("src/test/resources/fixtures/gh1802.js");
 		
 		// Real Error
-		th.addError(2, "You might be leaking a variable (b) here.");
-		th.addError(3, "You might be leaking a variable (d) here.");
-		th.addError(4, "You might be leaking a variable (f) here.");
+		th.addError(2, 11, "You might be leaking a variable (b) here.");
+		th.addError(3, 13, "You might be leaking a variable (d) here.");
+		th.addError(4, 11, "You might be leaking a variable (f) here.");
 		th.test(a, new LinterOptions().set("esnext", true));
 		
-		th.reset();
+		th.newTest();
 		
 		// False Positive
 		th.test(b);
@@ -1460,39 +1473,40 @@ public class TestCore extends Assert
 	{
 		String src = th.readFile("src/test/resources/fixtures/default-arguments.js");
 		
-		th.addError(14, "'bar' is not defined.");
-	    th.addError(14, "'num3' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(15, "'num4' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(18, "Regular parameters should not come after default parameters.");
-	    th.addError(27, "'c' is not defined.");
-	    th.addError(33, "'d' was used before it was defined.");
-	    th.addError(36, "'e' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(14, 39, "'bar' is not defined.");
+		th.addError(14, 32, "'num3' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(15, 32, "'num4' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(18, 41, "Regular parameters should not come after default parameters.");
+		th.addError(27, 10, "'c' is not defined.");
+		th.addError(33, 4, "'d' was used before it was defined.");
+		th.addError(36, 16, "'e' was used before it was declared, which is illegal for 'param' variables.");
 		th.test(src, new LinterOptions().set("esnext", true).set("undef", true).set("latedef", true));
 		
-		th.reset();
-		th.addError(14, "'num3' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(15, "'num4' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(18, "Regular parameters should not come after default parameters.");
-	    th.addError(36, "'e' was used before it was declared, which is illegal for 'param' variables.");
+		th.newTest();
+		th.addError(14, 32, "'num3' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(15, 32, "'num4' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(18, 41, "Regular parameters should not come after default parameters.");
+		th.addError(36, 16, "'e' was used before it was declared, which is illegal for 'param' variables.");
 		th.test(src, new LinterOptions().set("moz", true));
 		
-		th.reset();
-		th.addError(7, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(11, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(12, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(13, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(14, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(14, "'num3' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(15, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(15, "'num4' was used before it was declared, which is illegal for 'param' variables.");
-	    th.addError(18, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(18, "Regular parameters should not come after default parameters.");
-	    th.addError(26, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(31, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(33, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(35, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(36, "'default parameters' is only available in ES6 (use 'esversion: 6').");
-	    th.addError(36, "'e' was used before it was declared, which is illegal for 'param' variables.");
+		th.newTest();
+		th.addError(7, 27, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(7, 35, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(11, 36, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(12, 37, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(13, 37, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(14, 37, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(14, 32, "'num3' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(15, 37, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(15, 32, "'num4' was used before it was declared, which is illegal for 'param' variables.");
+		th.addError(18, 37, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(18, 41, "Regular parameters should not come after default parameters.");
+		th.addError(26, 18, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(31, 18, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(33, 6, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(35, 18, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(36, 18, "'default parameters' is only available in ES6 (use 'esversion: 6').");
+		th.addError(36, 16, "'e' was used before it was declared, which is illegal for 'param' variables.");
 		th.test(src);
 	}
 	
@@ -1501,42 +1515,64 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"(function() {",
-			  "  (function(a, a) { // warns only with shadow",
-			  "  })();",
-			  "})();",
-			  "(function() {",
-			  "  'use strict';",
-			  "  (function(a, a) { // errors because of strict mode",
-			  "  })();",
-			  "})();",
-			  "(function() {",
-			  "  (function(a, a) { // errors because of strict mode",
-			  "  'use strict';",
-			  "  })();",
-			  "})();",
-			  "(function() {",
-			  "  'use strict';",
-			  "  (function(a, a) { // errors *once* because of strict mode",
-			  "  'use strict';",
-			  "  })();",
-			  "})();"
+			"  (function(a, a) { // warns only with shadow",
+			"  })();",
+			"})();",
+			"(function() {",
+			"  'use strict';",
+			"  (function(a, a) { // errors because of strict mode",
+			"  })();",
+			"})();",
+			"(function() {",
+			"  (function(a, a) { // errors because of strict mode",
+			"  'use strict';",
+			"  })();",
+			"})();",
+			"(function() {",
+			"  'use strict';",
+			"  (function(a, a) { // errors *once* because of strict mode",
+			"  'use strict';",
+			"  })();",
+			"})();"
 		};
 		
-		th.addError(7, "'a' has already been declared.");
-	    th.addError(11, "'a' has already been declared.");
-	    th.addError(17, "'a' has already been declared.");
-	    th.addError(18, "Unnecessary directive \"use strict\".");
-	    th.test(src, new LinterOptions().set("shadow", true));
-	    
-	    th.reset();
-	    th.addError(2, "'a' is already defined.");
-	    th.addError(7, "'a' has already been declared.");
-	    th.addError(11, "'a' has already been declared.");
-	    th.addError(17, "'a' has already been declared.");
-	    th.addError(18, "Unnecessary directive \"use strict\".");
-	    th.test(src, new LinterOptions().set("shadow", "inner"));
-	    th.test(src, new LinterOptions().set("shadow", "outer"));
-	    th.test(src, new LinterOptions().set("shadow", false));
+		th.addError(7, 13, "'a' has already been declared.");
+		th.addError(11, 13, "'a' has already been declared.");
+		th.addError(17, 13, "'a' has already been declared.");
+		th.addError(18, 3, "Unnecessary directive \"use strict\".");
+		th.test(src, new LinterOptions().set("shadow", true));
+		
+		th.newTest();
+		th.addError(2, 13, "'a' is already defined.");
+		th.addError(7, 13, "'a' has already been declared.");
+		th.addError(11, 13, "'a' has already been declared.");
+		th.addError(17, 13, "'a' has already been declared.");
+		th.addError(18, 3, "Unnecessary directive \"use strict\".");
+		th.test(src, new LinterOptions().set("shadow", "inner"));
+		th.test(src, new LinterOptions().set("shadow", "outer"));
+		th.test(src, new LinterOptions().set("shadow", false));
+		
+		src = new String[] {
+			"void ((x, x) => null);",
+			"void ((x, x) => {});",
+			"void ((x, x) => { 'use strict'; });",
+			"function f() {",
+			"  'use strict';",
+			"  void ((x, x) => null);",
+			"  void ((x, x) => {});",
+			"  void ((x, x) => { 'use strict'; });",
+			"}"
+		};
+		
+		th.newTest("Arrow functions - strict mode restriction");
+		th.addError(1, 8, "'x' has already been declared.");
+		th.addError(2, 8, "'x' has already been declared.");
+		th.addError(3, 8, "'x' has already been declared.");
+		th.addError(6, 10, "'x' has already been declared.");
+		th.addError(7, 10, "'x' has already been declared.");
+		th.addError(8, 10, "'x' has already been declared.");
+		th.addError(8, 21, "Unnecessary directive \"use strict\".");
+		th.test(src, new LinterOptions().set("esversion", 6));
 	}
 	
 	// Issue #1324: Make sure that we're not mutating passed options object.
@@ -1565,7 +1601,7 @@ public class TestCore extends Assert
 		String src = "if (1 == 1) {\n" +
 				"  var foo = 2;\n" +
 				"  if (1 != 1){\n" +
-				"    var bar = 3;\n" +
+				"	 var bar = 3;\n" +
 				"  }\n"+
 				"}";
 		
@@ -1601,16 +1637,20 @@ public class TestCore extends Assert
 				"alert(va\u0072);"
 		};
 		
-		th.addError(1, "Expected an identifier and instead saw 'var' (a reserved word).");
-		th.addError(2, "Expected an identifier and instead saw 'var'.");
+		th.addError(1, 5, "Expected an identifier and instead saw 'var' (a reserved word).");
+		th.addError(2, 7, "Expected an identifier and instead saw 'var'.");
 		th.test(code);
 	}
 	
 	@Test
 	public void testUnnamedFuncStatement()
 	{
-		th.addError(1, "Missing name in function declaration.");
+		th.addError(1, 9, "Missing name in function declaration.");
 		th.test("function() {}");
+		
+		th.newTest("with 'unused' option");
+		th.addError(1, 9, "Missing name in function declaration.");
+		th.test("function() {}", new LinterOptions().set("unused", true));
 	}
 	
 	// GH-1976 "Fixed set property 'type' of undefined in `if` blockstmt"
@@ -1656,20 +1696,20 @@ public class TestCore extends Assert
 		// `(document|window)#eval` in `browser:true` should still cause warning
 		
 		// browser globals
-		th.addError(17, "eval can be harmful.");
-		th.addError(19, "eval can be harmful.");
-		th.addError(20, "eval can be harmful.");
-		th.addError(22, "eval can be harmful.");
-		th.addError(23, "eval can be harmful.");
-		th.addError(25, "eval can be harmful.");
+		th.addError(17, 1, "eval can be harmful.");
+		th.addError(19, 12, "eval can be harmful.");
+		th.addError(20, 14, "eval can be harmful.");
+		th.addError(22, 14, "eval can be harmful.");
+		th.addError(23, 16, "eval can be harmful.");
+		th.addError(25, 10, "eval can be harmful.");
 		th.test(srcBrowser, new LinterOptions().set("browser", true));
 		
 		// node globals
-		th.reset();
-		th.addError(18, "eval can be harmful.");
-		th.addError(19, "eval can be harmful.");
-		th.addError(20, "eval can be harmful.");
-		th.addError(22, "eval can be harmful.");
+		th.newTest();
+		th.addError(18, 14, "eval can be harmful.");
+		th.addError(19, 12, "eval can be harmful.");
+		th.addError(20, 1, "eval can be harmful.");
+		th.addError(22, 10, "eval can be harmful.");
 		th.test(srcNode, new LinterOptions().set("node", true));
 	}
 	
@@ -1687,47 +1727,48 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"function a() {",
-		    "  if (true) {",
-		    "    bar: switch(2) {",
-		    "    }",
-		    "    foo: switch(1) {",
-		    "      case 1:",
-		    "        (function () {",
-		    "          baz: switch(3) {",
-		    "            case 3:",
-		    "              break foo;",
-		    "            case 2:",
-		    "              break bar;",
-		    "            case 3:",
-		    "              break doesnotexist;",
-		    "          }",
-		    "        })();",
-		    "        if (true) {",
-		    "          break foo;",
-		    "        }",
-		    "        break foo;",
-		    "      case 2:",
-		    "        break bar;",
-		    "      case 3:",
-		    "        break baz;",
-		    "    }",
-		    "  }",
-		    "}"
+			"  if (true) {",
+			"    bar: switch(2) {",
+			"    }",
+			"    foo: switch(1) {",
+			"      case 1:",
+			"        (function () {",
+			"          baz: switch(3) {",
+			"            case 3:",
+			"              break foo;",
+			"            case 2:",
+			"              break bar;",
+			"            case 3:",
+			"              break doesnotexist;",
+			"          }",
+			"        })();",
+			"        if (true) {",
+			"          break foo;",
+			"        }",
+			"        break foo;",
+			"      case 2:",
+			"        break bar;",
+			"      case 3:",
+			"        break baz;",
+			"    }",
+			"  }",
+			"}"
 		};
 		
-		th.addError(10, "'foo' is not a statement label.");
-	    th.addError(12, "'bar' is not a statement label.");
-	    th.addError(14, "'doesnotexist' is not a statement label.");
-	    th.addError(22, "'bar' is not a statement label.");
-	    th.addError(24, "'baz' is not a statement label.");
-	    th.test(src);
-	    
-	    th.reset();
-	    th.addError(2, "'x' is not a statement label.");
-	    th.test(new String[]{
-	    	"x: {}",
-	    	"break x;"
-	    });
+		th.addError(10, 21, "'foo' is not a statement label.");
+		th.addError(12, 21, "'bar' is not a statement label.");
+		th.addError(14, 21, "'doesnotexist' is not a statement label.");
+		th.addError(22, 15, "'bar' is not a statement label.");
+		th.addError(24, 15, "'baz' is not a statement label.");
+		th.test(src);
+		
+		// See gh-3055 "Labels Break JSHint"
+		th.newTest("following labeled block");
+		th.addError(2, 7, "'x' is not a statement label.");
+		th.test(new String[]{
+			"x: {}",
+			"break x;"
+		});
 	}
 	
 	@Test
@@ -1735,21 +1776,21 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"function labelExample() {",
-		    "  'use strict';",
-		    "  var i;",
-		    "  example:",
-		    "    for (i = 0; i < 10; i += 1) {",
-		    "      try {",
-		    "        if (i === 5) {",
-		    "          break example;",
-		    "        } else {",
-		    "          throw new Error();",
-		    "        }",
-		    "      } catch (e) {",
-		    "        continue example;",
-		    "      }",
-		    "    }",
-		    "}"
+			"  'use strict';",
+			"  var i;",
+			"  example:",
+			"	 for (i = 0; i < 10; i += 1) {",
+			"	   try {",
+			"		 if (i === 5) {",
+			"		   break example;",
+			"		 } else {",
+			"		   throw new Error();",
+			"		 }",
+			"	   } catch (e) {",
+			"		 continue example;",
+			"	   }",
+			"	 }",
+			"}"
 		};
 		
 		th.test(src);
@@ -1760,13 +1801,13 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"switch(1) {",
-		    "  case 1:",
-		    "    break nonExistent;",
-		    "}"
+			"  case 1:",
+			"    break nonExistent;",
+			"}"
 		};
 		
-		th.addError(3, "'nonExistent' is not a statement label.");
-	    th.test(src);
+		th.addError(3, 11, "'nonExistent' is not a statement label.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1774,8 +1815,8 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"foo: {",
-		    "  break foo;",
-		    "}"
+			"  break foo;",
+			"}"
 		};
 		
 		th.test(src);
@@ -1789,13 +1830,13 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"foo: switch (i) {",
-		    "  case 1:",
-		    "    continue foo;",
-		    "}"
+			"  case 1:",
+			"    continue foo;",
+			"}"
 		};
 		
-		th.addError(3, "Unexpected 'continue'.");
-	    th.test(src);
+		th.addError(3, 14, "Unexpected 'continue'.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1803,12 +1844,12 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"if (1 == 1) {",
-		    "  break;",
-		    "}"
+			"  break;",
+			"}"
 		};
 		
-		th.addError(2, "Unexpected 'break'.");
-	    th.test(src);
+		th.addError(2, 8, "Unexpected 'break'.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1816,15 +1857,15 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"switch (i) {",
-		    "  case 1:",
-		    "    continue;", // breakage but not loopage
-		    "}",
-		    "continue;"
+			"  case 1:",
+			"    continue;", // breakage but not loopage
+			"}",
+			"continue;"
 		};
 		
-		th.addError(3, "Unexpected 'continue'.");
-	    th.addError(5, "Unexpected 'continue'.");
-	    th.test(src);
+		th.addError(3, 13, "Unexpected 'continue'.");
+		th.addError(5, 9, "Unexpected 'continue'.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1832,15 +1873,15 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"exists: while(true) {",
-		    "  if (false) {",
-		    "    continue exists;",
-		    "  }",
-		    "  continue nonExistent;",
-		    "}"
+			"  if (false) {",
+			"	 continue exists;",
+			"  }",
+			"  continue nonExistent;",
+			"}"
 		};
 		
-		th.addError(5, "'nonExistent' is not a statement label.");
-	    th.test(src);
+		th.addError(5, 12, "'nonExistent' is not a statement label.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1850,8 +1891,8 @@ public class TestCore extends Assert
 			"try{}catch(){}"
 		};
 		
-		th.addError(1, "Expected an identifier and instead saw ')'.");
-	    th.test(src);
+		th.addError(1, 12, "Expected an identifier and instead saw ')'.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1859,19 +1900,19 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"try{}",
-		    "if (true) { console.log(); }"
+			"if (true) { console.log(); }"
 		};
 		
-		th.addError(2, "Expected 'catch' and instead saw 'if'.");
-	    th.test(src);
-	    
-	    src = new String[] {
-	    	"try{}"
-	    };
-	    
-	    th.reset();
-	    th.addError(1, "Expected 'catch' and instead saw ''.");
-	    th.test(src);
+		th.addError(2, 1, "Expected 'catch' and instead saw 'if'.");
+		th.test(src);
+		
+		src = new String[] {
+			"try{}"
+		};
+		
+		th.newTest();
+		th.addError(1, 5, "Expected 'catch' and instead saw ''.");
+		th.test(src);
 	}
 	
 	@Test
@@ -1879,15 +1920,15 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"for (var key in objects) {",
-		    "  if (!objects.hasOwnProperty(key)) {",
-		    "    switch (key) {",
-		    "    }",
-		    "  }",
-		    "}"
+			"  if (!objects.hasOwnProperty(key)) {",
+			"	 switch (key) {",
+			"	 }",
+			"  }",
+			"}"
 		};
 		
-		th.addError(1, "The body of a for in should be wrapped in an if statement to filter unwanted properties from the prototype.");
-	    th.test(src, new LinterOptions().set("forin", true));
+		th.addError(1, 1, "The body of a for in should be wrapped in an if statement to filter unwanted properties from the prototype.");
+		th.test(src, new LinterOptions().set("forin", true));
 	}
 	
 	@Test
@@ -1895,67 +1936,73 @@ public class TestCore extends Assert
 	{
 		String[] src = {
 			"(function() {",
-		    "  var __proto__;",
-		    "  var __proto__;",
-		    "}());"
+			"  var __proto__;",
+			"  var __proto__;",
+			"}());"
 		};
 		
 		// JSHINT_TODO: Enable this expected warning in the next major release
-		//th.addError(3, "'__proto__' is already defined.");
-	    th.test(src, new LinterOptions().set("proto", true));
-	    
-	    src = new String[] {
-	    	"(function() {",
-	        "  let __proto__;",
-	        "  let __proto__;",
-	        "}());"
-	    };
-	    
-	    th.reset();
-	    th.addError(3, "'__proto__' has already been declared.");
-	    th.test(src, new LinterOptions().set("proto", true).set("esnext", true));
-	    
-	    src = new String[] {
-	    	"(function() {",
-	        "  const __proto__ = null;",
-	        "  const __proto__ = null;",
-	        "}());"
-	    };
-	    
-	    th.test(src, new LinterOptions().set("proto", true).set("esnext", true));
-	    
-	    src = new String[] {
-	    	"void {",
-	        "  __proto__: null,",
-	        "  __proto__: null",
-	        "};"
-	    };
-	    
-	    // JSHINT_TODO: Enable this expected warning in the next major release
-	    th.reset();
-	    //th.addError(3, "Duplicate key '__proto__'.");
-	    th.test(src, new LinterOptions().set("proto", true));
-	    
-	    src = new String[] {
-	    	"void {",
-	        "  __proto__: null,",
-	        "  get __proto__() {}",
-	        "};"
-	    };
-	    
-	    th.test(src, new LinterOptions().set("proto", true));
-	    
-	    src = new String[] {
-	    	"__proto__: while (true) {",
-	        "  __proto__: while (true) {",
-	        "    break;",
-	        "  }",
-	        "}"
-	    };
-	    
-	    th.reset();
-	    th.addError(2, "'__proto__' has already been declared.");
-	    th.test(src, new LinterOptions().set("proto", true));
+		th.newTest("Duplicate `var`s");
+		//th.addError(3, 23232323, "'__proto__' is already defined.");
+		th.test(src, new LinterOptions().set("proto", true));
+		
+		src = new String[] {
+			"(function() {",
+			"  let __proto__;",
+			"  let __proto__;",
+			"}());"
+		};
+		
+		th.newTest("Duplicate `let`s");
+		th.addError(3, 7, "'__proto__' has already been declared.");
+		th.test(src, new LinterOptions().set("proto", true).set("esnext", true));
+		
+		src = new String[] {
+			"(function() {",
+			"  const __proto__ = null;",
+			"  const __proto__ = null;",
+			"}());"
+		};
+		
+		th.newTest("Duplicate `const`s");
+		th.addError(3, 9, "'__proto__' has already been declared.");
+		th.test(src, new LinterOptions().set("proto", true).set("esnext", true));
+		
+		src = new String[] {
+			"void {",
+			"  __proto__: null,",
+			"  __proto__: null",
+			"};"
+		};
+		
+		// JSHINT_TODO: Enable this expected warning in the next major release
+		th.newTest("Duplicate keys (data)");
+		//th.addError(3, 23232323, "Duplicate key '__proto__'.");
+		th.test(src, new LinterOptions().set("proto", true));
+		
+		src = new String[] {
+			"void {",
+			"  __proto__: null,",
+			"  get __proto__() {}",
+			"};"
+		};
+		
+		// JSHINT_TODO: Enable this expected warning in the next major release
+		th.newTest("Duplicate keys (data and accessor)");
+		//th.addError(3, 23232323, "Duplicate key '__proto__'.");
+		th.test(src, new LinterOptions().set("proto", true));
+		
+		src = new String[] {
+			"__proto__: while (true) {",
+			"  __proto__: while (true) {",
+			"	 break;",
+			"  }",
+			"}"
+		};
+		
+		th.newTest("Duplicate labels");
+		th.addError(2, 12, "'__proto__' has already been declared.");
+		th.test(src, new LinterOptions().set("proto", true));
 	}
 	
 	@Test
@@ -1963,32 +2010,31 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"/* global foo: false */",
-		    "foo = 2;",
-		    "// jshint -W020",
-		    "foo = 3;",
-		    "// jshint +W020",
-		    "foo = 4;"
+			"foo = 2;",
+			"// jshint -W020",
+			"foo = 3;",
+			"// jshint +W020",
+			"foo = 4;"
 		};
 		
-		th.addError(2, "Read only.");
-	    th.addError(6, "Read only.");
-	    th.test(code);
-	    
-	    code = new String[] {
-	    	"function a() {}",
-	        "a = 2;",
-	        "// jshint -W021",
-	        "a = 3;",
-	        "// jshint +W021",
-	        "a = 4;"
-	    };
-	    
-	    th.reset();
-	    th.addError(2, "Reassignment of 'a', which is is a function. " +
-            		"Use 'var' or 'let' to declare bindings that may change.");
-	    th.addError(6, "Reassignment of 'a', which is is a function. " +
-            		"Use 'var' or 'let' to declare bindings that may change.");
-	    th.test(code);
+		th.newTest("W020");
+		th.addError(2, 1, "Read only.");
+		th.addError(6, 1, "Read only.");
+		th.test(code);
+		
+		code = new String[] {
+			"function a() {}",
+			"a = 2;",
+			"// jshint -W021",
+			"a = 3;",
+			"// jshint +W021",
+			"a = 4;"
+		};
+		
+		th.newTest("W021");
+		th.addError(2, 1, "Reassignment of 'a', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.addError(6, 1, "Reassignment of 'a', which is a function. Use 'var' or 'let' to declare bindings that may change.");
+		th.test(code);
 	}
 	
 	@Test
@@ -1996,38 +2042,39 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"function foo() {",
-		    "  return a + b;",
-		    "}",
-		    "function bar() {",
-		    "  return a + b;",
-		    "}",
-		    "let a = 1;",
-		    "const b = 2;"
+			"  return a + b;",
+			"}",
+			"function bar() {",
+			"  return a + b;",
+			"}",
+			"let a = 1;",
+			"const b = 2;"
 		};
 		
 		th.test(code, new LinterOptions().set("esversion", 6));
 		
 		code = new String[] {
 			"function x() {",
-		    "  return c;",
-		    "}",
-		    "void c;",
-		    "let c;"
+			"  return c;",
+			"}",
+			"void c;",
+			"let c;"
 		};
 		
-		th.addError(5, "'c' was used before it was declared, which is illegal for 'let' variables.");
+		th.newTest("Same-scope reference following sub-scope reference");
+		th.addError(5, 5, "'c' was used before it was declared, which is illegal for 'let' variables.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 		
 		code = new String[] {
 			"function x() {",
-		    "  return d;",
-		    "}",
-		    "({ d } = {});",
-		    "let d;"
+			"  return d;",
+			"}",
+			"({ d } = {});",
+			"let d;"
 		};
 		
-		th.reset();
-		th.addError(5, "'d' was used before it was declared, which is illegal for 'let' variables.");
+		th.newTest("Same-scope assignment following sub-scope reference");
+		th.addError(5, 5, "'d' was used before it was declared, which is illegal for 'let' variables.");
 		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 	
@@ -2036,9 +2083,9 @@ public class TestCore extends Assert
 	{
 		th.test(new String[] {
 			"var a = {",
-		    "  get x() {},",
-		    "  set x({ a, b }) {}",
-		    "};"
+			"  get x() {},",
+			"  set x({ a, b }) {}",
+			"};"
 		}, new LinterOptions().set("esversion", 6));
 	}
 	
@@ -2047,37 +2094,37 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"let a = a;",
-		    "const b = b;",
-		    "let c = () => c;",
-		    "const d = () => d;",
-		    // line 5
-		    "let e = {",
-		    "  x: e,",
-		    "  y: () => e",
-		    "};",
-		    "const f = {",
-		    "  x: f,",
-		    "  y: () => f",
-		    "};",
-		    // line 13
-		    "let g, h = g;",
-		    "const i = 0, j = i;",
-		    "let [ k, l ] = l;",
-		    "const [ m, n ] = n;",
-		    // line 17
-		    "let o = (() => o) + o;",
-		    "const p = (() => p) + p;"
+			"const b = b;",
+			"let c = () => c;",
+			"const d = () => d;",
+			// line 5
+			"let e = {",
+			"  x: e,",
+			"  y: () => e",
+			"};",
+			"const f = {",
+			"  x: f,",
+			"  y: () => f",
+			"};",
+			// line 13
+			"let g, h = g;",
+			"const i = 0, j = i;",
+			"let [ k, l ] = l;",
+			"const [ m, n ] = n;",
+			// line 17
+			"let o = (() => o) + o;",
+			"const p = (() => p) + p;"
 		};
 		
-		th.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(6, "'e' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(10, "'f' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(15, "'l' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(16, "'n' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(17, "'o' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(18, "'p' was used before it was declared, which is illegal for 'const' variables.");
-	    th.test(code, new LinterOptions().set("esversion", 6));
+		th.addError(1, 9, "'a' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(2, 11, "'b' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(6, 6, "'e' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(10, 6, "'f' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(15, 16, "'l' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(16, 18, "'n' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(17, 21, "'o' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(18, 23, "'p' was used before it was declared, which is illegal for 'const' variables.");
+		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 	
 	@Test
@@ -2085,25 +2132,25 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"let A = class extends A {};",
-		    "let B = class extends { B } {};",
-		    "let C = class extends { method() { return C; } } {};",
-		    // line 4
-		    "const D = class extends D {};",
-		    "const E = class extends { E } {};",
-		    "const F = class extends { method() { return F; } } {};",
-		    // line 7
-		    "class G extends G {}",
-		    "class H extends { H } {}",
-		    "class I extends { method() { return I; }} {}"
+			"let B = class extends { B } {};",
+			"let C = class extends { method() { return C; } } {};",
+			// line 4
+			"const D = class extends D {};",
+			"const E = class extends { E } {};",
+			"const F = class extends { method() { return F; } } {};",
+			// line 7
+			"class G extends G {}",
+			"class H extends { H } {}",
+			"class I extends { method() { return I; }} {}"
 		};
 		
-		th.addError(1, "'A' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(2, "'B' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(4, "'D' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(5, "'E' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(7, "'G' was used before it was declared, which is illegal for 'class' variables.");
-	    th.addError(8, "'H' was used before it was declared, which is illegal for 'class' variables.");
-	    th.test(code, new LinterOptions().set("esversion", 6));
+		th.addError(1, 23, "'A' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(2, 25, "'B' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(4, 25, "'D' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(5, 27, "'E' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(7, 17, "'G' was used before it was declared, which is illegal for 'class' variables.");
+		th.addError(8, 19, "'H' was used before it was declared, which is illegal for 'class' variables.");
+		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 	
 	@Test
@@ -2111,31 +2158,31 @@ public class TestCore extends Assert
 	{
 		String[] code = {
 			"for (let a   in a);",
-		    "for (const b in b);",
-		    "for (let c   of c);",
-		    "for (const d of d);",
+			"for (const b in b);",
+			"for (let c   of c);",
+			"for (const d of d);",
 
-		    // line 5
-		    "for (let e   in { e });",
-		    "for (const f in { f });",
-		    "for (let g   of { g });",
-		    "for (const h of { h });",
+			// line 5
+			"for (let e   in { e });",
+			"for (const f in { f });",
+			"for (let g   of { g });",
+			"for (const h of { h });",
 
-		    // line 9
-		    "for (let i   in { method() { return i; } });",
-		    "for (const j in { method() { return j; } });",
-		    "for (let k   of { method() { return k; } });",
-		    "for (const l of { method() { return l; } });"
+			// line 9
+			"for (let i   in { method() { return i; } });",
+			"for (const j in { method() { return j; } });",
+			"for (let k   of { method() { return k; } });",
+			"for (const l of { method() { return l; } });"
 		};
 		
-		th.addError(1, "'a' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(2, "'b' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(3, "'c' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(4, "'d' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(5, "'e' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(6, "'f' was used before it was declared, which is illegal for 'const' variables.");
-	    th.addError(7, "'g' was used before it was declared, which is illegal for 'let' variables.");
-	    th.addError(8, "'h' was used before it was declared, which is illegal for 'const' variables.");
-	    th.test(code, new LinterOptions().set("esversion", 6));
+		th.addError(1, 17, "'a' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(2, 17, "'b' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(3, 17, "'c' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(4, 17, "'d' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(5, 19, "'e' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(6, 19, "'f' was used before it was declared, which is illegal for 'const' variables.");
+		th.addError(7, 19, "'g' was used before it was declared, which is illegal for 'let' variables.");
+		th.addError(8, 19, "'h' was used before it was declared, which is illegal for 'const' variables.");
+		th.test(code, new LinterOptions().set("esversion", 6));
 	}
 }

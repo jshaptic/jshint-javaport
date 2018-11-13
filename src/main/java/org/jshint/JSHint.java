@@ -2,13 +2,13 @@ package org.jshint;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -60,7 +60,6 @@ public class JSHint
 	private Map<String, Boolean> membersOnly = null;
 	private Map<String, Boolean> predefined = null; // Global variables defined by option
 	
-	//private Object stack = null; //JSHINT_BUG: stack variable is not used anywhere can be removed
     private List<String> urls = null;
 	
 	private List<JSHintModule> extraModules = new ArrayList<JSHintModule>();
@@ -143,24 +142,19 @@ public class JSHint
 	
 	private String supplant(String str, final LinterWarning data)
 	{
-		return Reg.replaceAll("\\{([^{}]*)\\}", str, new Reg.Replacer()
-		{
-			@Override
-			public String apply(String a, List<String> groups)
-			{
-				String r = data.getSubstitution(groups.get(0));
-				return StringUtils.defaultString(r, a);
-			}
+		return Reg.replaceAll("\\{([^{}]*)\\}", str, (a, groups) -> {
+			String r = data.getSubstitution(groups.get(0));
+			return StringUtils.defaultString(r, a);
 		});
 	}
 	
 	private void combine(Map<String, Boolean> dest, Map<String, Boolean> src)
 	{
-		for (Entry<String, Boolean> entry: src.entrySet())
+		for (String name: src.keySet())
 		{
-			if (!blacklist.contains(entry.getKey()))
+			if (!blacklist.contains(name))
 			{
-				dest.put(entry.getKey(), entry.getValue());
+				dest.put(name, src.get(name));
 			}
 		}
 	}
@@ -169,18 +163,16 @@ public class JSHint
 	{
 		if (State.getOption().test("enforceall"))
 		{
-			for (Entry<String, Boolean> entry : Options.bool.get("enforcing").entrySet())
+			for (String enforceopt : Options.bool.get("enforcing").keySet())
 			{
-				String enforceopt = entry.getKey();
-				if (State.getOption().isUndefined(enforceopt) &&
-					!(Options.noenforceall.containsKey(enforceopt) && Options.noenforceall.get(enforceopt)))
+				if (State.getOption().isUndefined(enforceopt) && 
+					BooleanUtils.isNotTrue(Options.noenforceall.get(enforceopt)))
 				{
 					State.getOption().set(enforceopt, true);
 				}
 			}
-			for (Entry<String, Boolean> entry : Options.bool.get("relaxing").entrySet())
+			for (String relaxopt : Options.bool.get("relaxing").keySet())
 			{
-				String relaxopt = entry.getKey();
 				if (!State.getOption().has(relaxopt))
 				{
 					State.getOption().set(relaxopt, false);
@@ -451,6 +443,11 @@ public class JSHint
 		warning(m, t, substitutions);
 	}
 	
+	private void errorAt(String m, int l)
+	{
+		errorAt(m, l, 0);
+	}
+	
 	private void errorAt(String m, int l, int ch, String... substitutions)
 	{
 		Token t = new Token();
@@ -487,8 +484,8 @@ public class JSHint
 		{
 			for (int idx = 0; idx < body.length; idx++)
 			{
-				String[] g = body[idx].split(":");
-				String key = g.length > 0 ? g[0].trim() : "";
+				String[] g = body[idx].split(":", -1);
+				String key = g[0].trim();
 				String val = g.length > 1 ? g[1].trim() : "";
 				
 				if (key.equals("-") || key.length() == 0)
@@ -518,9 +515,9 @@ public class JSHint
 			
 			combine(predefined, predef);
 			
-			for (Entry<String, Boolean> entry : predef.entrySet())
+			for (String key : predef.keySet())
 			{
-				declared.put(entry.getKey(), directiveToken);
+				declared.put(key, directiveToken);
 			}
 		}
 		
@@ -576,7 +573,7 @@ public class JSHint
 			for (String g : body)
 			{
 				String[] gg = g.split(":");
-				String key = gg.length > 0 ? gg[0].trim() : "";
+				String key = gg[0].trim();
 				String val = gg.length > 1 ? gg[1].trim() : "";
 				
 				if (!checkOption(key, directiveToken))
@@ -1058,15 +1055,6 @@ public class JSHint
 		if (State.nextToken().getId().equals("(end)"))
 			error("E006", State.currToken());
 		
-		boolean isDangerous =
-				State.getOption().test("asi") &&
-				State.prevToken().getLine() != startLine(State.currToken()) &&
-				(State.prevToken().getId().equals("]") || State.prevToken().getId().equals(")")) &&
-				(State.currToken().getId().equals("[") || State.currToken().getId().equals("("));
-		
-		if (isDangerous)
-			warning("W014", State.currToken(), State.currToken().getId());
-		
 		advance();
 		
 		if (StringUtils.isNotEmpty(initial))
@@ -1158,8 +1146,6 @@ public class JSHint
 	
 	private void nobreaknonadjacent(Token left, Token right)
 	{
-		if (left == null) left = State.currToken();
-		if (right == null) right = State.nextToken();
 		if (!State.getOption().get("laxbreak").test() && left.getLine() != startLine(right))
 		{
 			warning("W014", right, right.getValue());
@@ -1168,7 +1154,7 @@ public class JSHint
 	
 	private void nolinebreak(Token t)
 	{
-		if (t == null) t = State.currToken();
+		// t = t; JSHINT_BUG: unnecessary assignment
 		if (t.getLine() != startLine(State.nextToken()))
 		{
 			warning("E022", t, t.getValue());
@@ -1319,25 +1305,14 @@ public class JSHint
 				
 				if (_this.getId().equals("++") || _this.getId().equals("--"))
 				{
-					if (State.getOption().get("plusplus").test())
+					if (State.getOption().test("plusplus"))
 					{
 						warning("W016", _this, _this.getId());
 					}
-					else if (_this.getRight() != null && (!_this.getRight().isIdentifier() || isReserved(_this.getRight())) &&
-							!_this.getRight().getId().equals(".") && !_this.getRight().getId().equals("["))
-					{
-						warning("W017", _this);
-					}
 					
-					if (_this.getRight() != null && _this.getRight().isMetaProperty())
+					if (_this.getRight() != null)
 					{
-						error("E031", _this);
-					}
-					// detect increment/decrement of a const
-					// in the case of a.b, right will be the "." punctuator
-					else if (_this.getRight() != null && _this.getRight().isIdentifier())
-					{
-						State.getFunct().getScope().getBlock().modify(_this.getRight().getValue(), _this);
+						checkLeftSideAssign(_this.getRight(), _this);
 					}
 				}
 				
@@ -1487,7 +1462,16 @@ public class JSHint
 				nobreaknonadjacent(State.prevToken(), State.currToken());
 				
 				_this.setLeft(left);
-				_this.setRight(new Token(doFunction(FunctionType.ARROW, left)));
+				_this.setRight(new Token(doFunction(
+					null,
+					null,
+					FunctionType.ARROW,
+					left,
+					false,
+					null,
+					false,
+					false
+				)));
 				return _this;
 			}
 		});
@@ -1590,7 +1574,7 @@ public class JSHint
 		return false;
 	}
 	
-	private boolean isGlobalEval(Token left) //JSHINT_BUG: unused variables here
+	private boolean isGlobalEval(Token left) //JSHINT_BUG: unused variable state here
 	{
 		boolean isGlobal = false;
 		
@@ -1681,11 +1665,31 @@ public class JSHint
 	
 	/**
 	 * Checks the left hand side of an assignment for issues, returns if ok
-	 * @param {token} left - the left hand side of the assignment
-	 * @param {token=} assignToken - the token for the assignment, used for reporting
-	 * @param {object=} options - optional object
-	 * @param {boolean} options.allowDestructuring - whether to allow destructuting binding
-	 * @returns {boolean} Whether the left hand side is OK
+	 * @param left - the left hand side of the assignment
+	 * @returns Whether the left hand side is OK
+	 */
+	private boolean checkLeftSideAssign(Token left)
+	{
+		return checkLeftSideAssign(left, null, false);
+	}
+	
+	/**
+	 * Checks the left hand side of an assignment for issues, returns if ok
+	 * @param left - the left hand side of the assignment
+	 * @param assignToken - the token for the assignment, used for reporting
+	 * @returns Whether the left hand side is OK
+	 */
+	private boolean checkLeftSideAssign(Token left, Token assignToken)
+	{
+		return checkLeftSideAssign(left, assignToken, false);
+	}
+	
+	/**
+	 * Checks the left hand side of an assignment for issues, returns if ok
+	 * @param left - the left hand side of the assignment
+	 * @param assignToken - the token for the assignment, used for reporting
+	 * @param allowDestructuring - whether to allow destructuting binding
+	 * @returns Whether the left hand side is OK
 	 */
 	private boolean checkLeftSideAssign(Token left, Token assignToken, boolean allowDestructuring)
 	{
@@ -1714,7 +1718,7 @@ public class JSHint
 		{
 			if (left.getLeft() == null || left.getLeft().getValue().equals("arguments") && !State.isStrict())
 			{
-				warning("E031", assignToken);
+				warning("W143", assignToken);
 			}
 			
 			State.getNameStack().set(State.prevToken());
@@ -1730,7 +1734,7 @@ public class JSHint
 				}
 				else if (left.getLeft().getValue().equals("arguments") && !State.isStrict())
 				{
-					warning("E031", assignToken);
+					warning("W143", assignToken);
 				}
 			}
 			
@@ -1741,7 +1745,8 @@ public class JSHint
 			
 			return true;
 		}
-		else if (left.isIdentifier() && !isReserved(left) && !left.isMetaProperty())
+		else if (left.isIdentifier() && !isReserved(left) && !left.isMetaProperty() &&
+				!left.getValue().equals("eval") && !left.getValue().equals("arguments"))
 		{
 			if (StringUtils.defaultString(State.getFunct().getScope().labeltype(left.getValue())).equals("exception"))
 			{
@@ -1751,14 +1756,7 @@ public class JSHint
 			return true;
 		}
 		
-		if (left == State.getSyntax().get("function"))
-		{
-			warning("W023", State.currToken());
-		}
-		else
-		{
-			error("E031", assignToken);
-		}
+		error("E031", assignToken);
 		
 		return false;
 	}
@@ -1828,7 +1826,7 @@ public class JSHint
 					warning("W016", that, that.getId());
 				}
 				
-				checkLeftSideAssign(left, that, false);
+				checkLeftSideAssign(left, that);
 				
 				that.setRight(expression(10));
 				
@@ -1851,21 +1849,8 @@ public class JSHint
 				{
 					warning("W016", _this, _this.getId());
 				}
-				else if ((!left.isIdentifier() || isReserved(left)) && !left.getId().equals(".") && !left.getId().equals("["))
-				{
-					warning("W017", _this);
-				}
 				
-				if (left.isMetaProperty())
-				{
-					error("E031", _this);
-				}
-				// detect increment/decrement of a const
-				// in the case of a.b, left will be the "." punctuator
-				else if (left != null && left.isIdentifier())
-				{
-					State.getFunct().getScope().getBlock().modify(left.getValue(), left);
-				}
+				checkLeftSideAssign(left, _this);
 				
 				_this.setLeft(left);
 				return _this;
@@ -1873,16 +1858,14 @@ public class JSHint
 		});
 		return x;
 	}
-
-	// fnparam means that this identifier is being defined as a function
-	// argument (see identifier())
-	// prop means that this identifier is that of an object property
+	
 	private String optionalidentifier()
 	{
-		return optionalidentifier(false, false, false);
+		return optionalidentifier(false, false);
 	}
-	
-	private String optionalidentifier(boolean fnparam, boolean prop, boolean preserve)
+
+	// prop means that this identifier is that of an object property
+	private String optionalidentifier(boolean prop, boolean preserve)
 	{
 		if (!State.nextToken().isIdentifier())
 		{
@@ -1910,31 +1893,20 @@ public class JSHint
 			}
 		}
 		
-		if (fnparam && val.equals("undefined"))
-		{
-			return val;
-		}
-		
 		warning("W024", State.currToken(), State.currToken().getId());
 		return val;
 	}
-
-	// fnparam means that this identifier is being defined as a function
-	// argument
-	// prop means that this identifier is that of an object property
+	
+	
 	private String identifier()
 	{
-		return identifier(false, false);
+		return identifier(false);
 	}
 	
-	private String identifier(boolean fnparam)
+	// prop means that this identifier is that of an object property
+	private String identifier(boolean prop)
 	{
-		return identifier(fnparam, false);
-	}
-	
-	private String identifier(boolean fnparam, boolean prop)
-	{
-		String i = optionalidentifier(fnparam, prop, false);
+		String i = optionalidentifier(prop, false);
 		if (i != null && !i.isEmpty())
 		{
 			return i;
@@ -1964,7 +1936,7 @@ public class JSHint
 				return null;
 			}
 			
-			return identifier(fnparam, prop);
+			return identifier(prop);
 		}
 		else
 		{
@@ -2082,6 +2054,7 @@ public class JSHint
 		// We're being more tolerant here: if someone uses
 		// a FutureReservedWord as a label, we warn but proceed
 		// anyway.
+		
 		if (res && t.getMeta() != null && t.getMeta().isFutureReservedWord() && peek().getId().equals(":"))
 		{
 			warning("W024", t, t.getId());
@@ -2102,7 +2075,6 @@ public class JSHint
 				warning("W028", State.nextToken(), t.getValue(), State.nextToken().getValue());
 			}
 			
-			//State.nextToken().label = t.value; //JSHINT_BUG: label is not used anywhere, can be removed
 			t = State.nextToken();
 		}
 		
@@ -2276,7 +2248,6 @@ public class JSHint
 			State.getFunct().getScope().stack();
 			State.getFunct().setNoblockscopedvar(false);
 			
-			//int line = State.currToken().getLine(); //JSHINT_BUG: variable line can be removed, since it's not used anywhere
 			if (!State.nextToken().getId().equals("}"))
 			{
 				indent += State.getOption().asInt("indent");
@@ -2294,6 +2265,8 @@ public class JSHint
 					}
 					directives();
 					
+					State.getFunct().setStrict(State.isStrict());
+					
 					if (State.getOption().test("strict") && State.getFunct().getContext().isGlobal())
 					{
 						if (BooleanUtils.isNotTrue(m.get("use strict")) && !State.isStrict())
@@ -2309,12 +2282,17 @@ public class JSHint
 				
 				indent -= State.getOption().asInt("indent");
 			}
+			else if (isfunc)
+			{
+				// Ensure property is set for functions with empty bodies.
+				State.getFunct().setStrict(State.isStrict());
+			}
 			
 			advance("}", t);
 			
 			if (isfunc)
 			{
-				State.getFunct().getScope().validateParams();
+				State.getFunct().getScope().validateParams(isfatarrow);
 				if (m != null)
 				{
 					State.setDirective(m);
@@ -2331,24 +2309,21 @@ public class JSHint
 			{
 				State.getFunct().getScope().stack();
 				
-				m = new HashMap<String, Boolean>();
 				if (stmt && !isfatarrow && !State.inMoz())
 				{
 					error("W118", State.currToken(), "function closure expressions");
 				}
 				
-				if (!stmt)
+				if (isfatarrow)
 				{
-					for (String d : State.getDirective().keySet())
-					{
-						m.put(d, State.getDirective().get(d));
-					}
+					State.getFunct().getScope().validateParams(true);
 				}
+				
 				expression(10);
 				
 				if (State.getOption().test("strict") && State.getFunct().getContext().isGlobal())
 				{
-					if (BooleanUtils.isNotTrue(m.get("use strict")) && !State.isStrict())
+					if (!State.isStrict())
 					{
 						warning("E007");
 					}
@@ -2516,7 +2491,6 @@ public class JSHint
 		templateMiddle.setLbp(0);
 		templateMiddle.setIdentifier(false);
 		templateMiddle.setTemplate(true);
-		//templateMiddle.middle = true; //JSHINT_BUG: middle is not used anywhere, can be removed
 		templateMiddle.setNoSubst(false);
 		
 		Token templateTail = new Token();
@@ -2588,20 +2562,22 @@ public class JSHint
 		reserve(TokenType.CATCH);
 		reserve(TokenType.DEFAULT).setReach(true);
 		reserve(TokenType.FINALLY);
-		reservevar(TokenType.ARGUMENTS, new Token.NudInnerFunction()
+		reserve(TokenType.TRUE, new Token.NudFunction()
 		{
 			@Override
-			public void apply(Token x) throws JSHintException
+			public Token apply(Token _this, int rbp) throws JSHintException
 			{
-				if (State.isStrict() && State.getFunct().isGlobal())
-				{
-					warning("E008", x);
-				}
+				return _this;
 			}
 		});
-		reservevar(TokenType.EVAL);
-		reservevar(TokenType.FALSE);
-		reservevar(TokenType.INFINITY);
+		reserve(TokenType.FALSE, new Token.NudFunction()
+		{
+			@Override
+			public Token apply(Token _this, int rbp) throws JSHintException
+			{
+				return _this;
+			}
+		});
 		reservevar(TokenType.NULL);
 		reservevar(TokenType.THIS, new Token.NudInnerFunction()
 		{
@@ -2616,8 +2592,6 @@ public class JSHint
 				}
 			}
 		});
-		reservevar(TokenType.TRUE);
-		reservevar(TokenType.UNDEFINED);
 		
 		assignop("=", "assign", 20);
 		assignop("+=", "assignadd", 20);
@@ -2683,11 +2657,12 @@ public class JSHint
 				that.setLeft(left);
 				that.setRight(expression(10));
 				advance(":");
-				expression(10); // that.elsee = expression(10); JSHINT_BUG: "else" property is not used anywhere, can be removed
+				expression(10);
 				return that;
 			}
 		}, 30);
 		
+		int orPrecendence = 40;
 		infix("||", new Token.LedInnerFunction()
 		{
 			@Override
@@ -2695,10 +2670,10 @@ public class JSHint
 			{
 				increaseComplexityCount();
 				that.setLeft(left);
-				that.setRight(expression(40));
+				that.setRight(expression(orPrecendence));
 				return that;
 			}
-		}, 40);
+		}, orPrecendence);
 		infix("&&", "and", 50);
 		bitwise("|", "bitor", 70);
 		bitwise("^", "bitxor", 80);
@@ -2855,52 +2830,8 @@ public class JSHint
 			}
 		}, 130);
 		prefix("+", "num");
-		prefix("+++", new Token.NudFunction()
-		{
-			@Override
-			public Token apply(Token _this, int rbp)
-			{
-				warning("W007");
-				_this.setArity(TokenArityType.UNARY);
-				_this.setRight(expression(150));
-				return _this;
-			}
-		});
-		infix("+++", new Token.LedInnerFunction()
-		{
-			@Override
-			public Token apply(Token _this, Token left, Token right) throws JSHintException
-			{
-				warning("W007");
-				_this.setLeft(left);
-				_this.setRight(expression(130));
-				return _this;
-			}
-		}, 130);
 		infix("-", "sub", 130);
 		prefix("-", "neg");
-		prefix("---", new Token.NudFunction()
-		{
-			@Override
-			public Token apply(Token _this, int rbp)
-			{
-				warning("W006");
-				_this.setArity(TokenArityType.UNARY);
-				_this.setRight(expression(150));
-				return _this;
-			}
-		});
-		infix("---", new Token.LedInnerFunction()
-		{
-			@Override
-			public Token apply(Token _this, Token left, Token right) throws JSHintException
-			{
-				warning("W006");
-				_this.setLeft(left);
-				_this.setRight(expression(130));
-				return _this;
-			}
-		}, 130);
 		infix("*", "mult", 140);
 		infix("/", "div", 140);
 		infix("%", "mod", 140);
@@ -3023,7 +2954,7 @@ public class JSHint
 					quit("E041", _this);
 				}
 				
-				if (bang.containsKey(_this.getRight().getId()) && bang.get(_this.getRight().getId()) == true)
+				if (BooleanUtils.isTrue(bang.get(_this.getRight().getId())))
 				{
 					warning("W018", _this, "!");
 				}
@@ -3070,7 +3001,6 @@ public class JSHint
 				{
 					if (c.isIdentifier())
 					{
-						//c.neww = true; //JSHINT_BUG: "new" property is not used anywhere, can be removed
 						switch (c.getValue())
 						{
 						case "Number":
@@ -3087,7 +3017,7 @@ public class JSHint
 							}
 							break;
 						case "Function":
-							if (!State.getOption().get("evil").test())
+							if (!State.getOption().test("evil"))
 							{
 								warning("W054");
 							}
@@ -3139,13 +3069,13 @@ public class JSHint
 			@Override
 			public Token apply(Token _this, Token left, Token that) throws JSHintException
 			{
-				String m = identifier(false, true);
+				String m = identifier(true);
 				
 				countMember(m);
 				
 				that.setLeft(left);
 				
-				// Original JSHint source code use string here, because they can, but in Java it is better to create Token
+				// PORT INFO: Original JSHint source code use string here, because they can, but in Java it is better to create Token
 				that.setRight(new Token("", 0, m)); 
 				
 				if (m != null && m.equals("hasOwnProperty") && State.nextToken().getValue().equals("="))
@@ -3155,18 +3085,18 @@ public class JSHint
 				
 				if (left != null && left.getValue().equals("arguments") && (m.equals("callee") || m.equals("caller")))
 				{
-					if (State.getOption().get("noarg").test())
+					if (State.getOption().test("noarg"))
 						warning("W059", left, m);
 					else if (State.isStrict())
 						error("E008");
 				}
-				else if (!State.getOption().get("evil").test() && left != null && left.getValue().equals("document") && 
+				else if (!State.getOption().test("evil") && left != null && left.getValue().equals("document") && 
 						(m.equals("write") || m.equals("writeln")))
 				{
 					warning("W060", left);
 				}
 				
-				if (!State.getOption().get("evil").test() && (m.equals("eval") || m.equals("execScript")))
+				if (!State.getOption().test("evil") && (m.equals("eval") || m.equals("execScript")))
 				{
 					if (isGlobalEval(left))
 					{
@@ -3183,9 +3113,15 @@ public class JSHint
 			@Override
 			public Token apply(Token _this, Token left, Token that) throws JSHintException
 			{
-				if (State.getOption().get("immed").test() && left != null && !left.isImmed() && left.getId().equals("function"))
+				if (State.getOption().test("immed") && left != null && !left.isImmed() && left.getId().equals("function"))
 				{
 					warning("W062");
+				}
+				
+				if (State.getOption().test("asi") && checkPunctuators(State.prevToken(), ")", "]") &&
+					State.prevToken().getLine() != startLine(State.currToken()))
+				{
+					warning("W014", State.currToken(), State.currToken().getId());
 				}
 				
 				int n = 0;
@@ -3203,7 +3139,7 @@ public class JSHint
 								{
 									warning("W063", left);
 								}
-								else if (State.getOption().get("newcap").test())
+								else if (State.getOption().test("newcap"))
 								{
 									warning("W064", left);
 								}
@@ -3331,7 +3267,16 @@ public class JSHint
 				// should proceed accordingly.
 				if (pn.getValue().equals("=>"))
 				{
-					return new Token(doFunction(FunctionType.ARROW, true));
+					return new Token(doFunction(
+						null,
+						null,
+						FunctionType.ARROW,
+						null,
+						true,
+						null,
+						false,
+						false
+					));
 				}
 				
 				List<Token> exprs = new ArrayList<Token>();
@@ -3442,12 +3387,21 @@ public class JSHint
 			@Override
 			public Token apply(Token _this, Token left, Token that) throws JSHintException
 			{
-				Token e = expression(10);
+				Token e = null;
 				Token s = null;
+				boolean canUseDot = false;
+				
+				if (State.getOption().test("asi") && checkPunctuators(State.prevToken(), ")", "]") &&
+					State.prevToken().getLine() != startLine(State.currToken()))
+				{
+					warning("W014", State.currToken(), State.currToken().getId());
+				}
+				
+				e = expression(10);
 				
 				if (e != null && e.getType() == TokenType.STRING)
 				{
-					if (!State.getOption().get("evil").test() && (e.getValue().equals("eval") || e.getValue().equals("execScript")))
+					if (!State.getOption().test("evil") && (e.getValue().equals("eval") || e.getValue().equals("execScript")))
 					{
 						if (isGlobalEval(left))
 						{
@@ -3456,10 +3410,25 @@ public class JSHint
 					}
 					
 					countMember(e.getValue());
-					if (!State.getOption().get("sub").test() && Reg.test(Reg.INDENTIFIER, e.getValue()))
+					if (!State.getOption().test("sub") && Reg.getIdentifier(e.getValue()).equals(e.getValue()))
 					{
 						s = State.getSyntax().get(e.getValue());
-						if (s == null || !isReserved(s))
+						if (s != null)
+						{
+							canUseDot = !isReserved(s);
+						}
+						else
+						{
+							// This branch exists to preserve legacy behavior with version 2.9.5
+							// and earlier. In those releases, `eval` and `arguments` were
+							// incorrectly interpreted as reserved keywords, so Member
+							// Expressions such as `object["eval"]` did not trigger warning W069.
+							//
+							// JSHINT_TODO: Remove in JSHint 3
+							canUseDot = !e.getValue().equals("eval") && !e.getValue().equals("arguments");
+						}
+						
+						if (canUseDot)
 						{
 							warning("W069", State.prevToken(), e.getValue());
 						}
@@ -3621,14 +3590,21 @@ public class JSHint
 							error("E034");
 						}
 						
-						i = propertyName();
-						
-						// ES6 allows for get() {...} and set() {...} method
-						// definition shorthand syntax, so we don't produce an error
-						// if linting ECMAScript 6 code.
-						if ((i == null || i.isEmpty()) && !State.inES6())
+						if (State.nextToken().getId().equals("["))
 						{
-							error("E035");
+							i = computedPropertyName() != null ? "TOKEN" : ""; //JSHINT_BUG: this returns Token not string
+						}
+						else
+						{
+							i = propertyName();
+							
+							// ES6 allows for get() {...} and set() {...} method
+							// definition shorthand syntax, so we don't produce an error
+							// if linting ECMAScript 6 code.
+							if (StringUtils.isEmpty(i) && !State.inES6())
+							{
+								error("E035");
+							}
 						}
 						
 						// We don't want to save this getter unless it's an actual getter
@@ -3639,7 +3615,16 @@ public class JSHint
 						}
 						
 						Token t = State.nextToken();
-						Functor f = doFunction();
+						Functor f = doFunction(
+							null,
+							null,
+							null,
+							null,
+							false,
+							null,
+							true,
+							false
+						);
 						List<String> p = f.getParams();
 						
 						// Don't warn about getter/setter pairs if this is an ES6 concise method
@@ -3688,7 +3673,16 @@ public class JSHint
 							{
 								warning("W104", State.currToken(), "concise methods", "6");
 							}
-							doFunction(isGeneratorMethod ? FunctionType.GENERATOR : null);
+							doFunction(
+								null,
+								null,
+								(isGeneratorMethod ? FunctionType.GENERATOR : null),
+								null,
+								false,
+								null,
+								true,
+								false
+							);
 						}
 						else
 						{
@@ -3840,7 +3834,7 @@ public class JSHint
 			advance("if");
 			advance("(");
 			State.getFunct().getComparray().setState("filter");
-			expression(10); // res.filter = expression(10); JSHINT_BUG: "filter" property is not used anywhere, can be removed
+			expression(10);
 			advance(")");
 		}
 		
@@ -3882,7 +3876,7 @@ public class JSHint
 		else
 		{
 			preserve = preserveOrToken.test();
-			id = optionalidentifier(false, true, preserve);
+			id = optionalidentifier(true, preserve);
 		}
 		
 		if (id == null)
@@ -3976,7 +3970,7 @@ public class JSHint
 			else
 			{
 				if (checkPunctuator(State.nextToken(), "...")) pastRest = true;
-				String ident = identifier(true);
+				String ident = identifier();
 				if (StringUtils.isNotEmpty(ident))
 				{
 					paramsIds.add(ident);
@@ -3996,7 +3990,7 @@ public class JSHint
 			{
 				if (!State.nextToken().getId().equals("="))
 				{
-					error("W138", State.currToken()); //JSHINT_BUG: typo, must be state.currToken() instead of State.currToken()ent
+					error("W138", State.currToken());
 				}
 			}
 			if (State.nextToken().getId().equals("="))
@@ -4005,6 +3999,12 @@ public class JSHint
 				{
 					warning("W119", State.nextToken(), "default parameters", "6");
 				}
+				
+				if (pastRest)
+				{
+					error("E062", State.nextToken());
+				}
+				
 				advance("=");
 				pastDefault = true;
 				expression(10);
@@ -4039,10 +4039,9 @@ public class JSHint
 		private String name = "";
 		private int breakage = 0;
 		private int loopage = 0;
-		//private Object tokens = null; //JSHINT_BUG: property "(tokens)" is not used anywhere, can be removed
-		//private Object properties = null; //JSHINT_BUG: property "(properties)" is not used anywhere, can be removed
 		
-		//private boolean isCatch = false; //JSHINT_BUG: property "(catch)" is not used anywhere, can be removed
+		private boolean isStrict = false;
+		
 		private boolean isGlobal = false;
 		
 		private int line = 0;
@@ -4054,9 +4053,10 @@ public class JSHint
 		private ArrayComprehension comparray = null;
 		private String generator = "";
 		private boolean isArrow = false;
+		private boolean isMethod = false;
 		private List<String> params = null;
+		private List<String> outerMutables = null;
 		
-		private boolean isCapturing = false;
 		private boolean isNoblockscopedvar = false;
 		private int last = 0;
 		private int lastcharacter = 0;
@@ -4073,6 +4073,12 @@ public class JSHint
 			setName(name);
 			setBreakage(0);
 			setLoopage(0);
+			// The strictness of the function body is tracked via a dedicated
+			// property (as opposed to via the global `state` object) so that the
+			// value can be referenced after the body has been fully parsed (i.e.
+			// when validating the identifier used in function declarations and
+			// function expressions).
+			setStrict(true);
 			
 			setGlobal(false);
 			
@@ -4085,6 +4091,7 @@ public class JSHint
 			setComparray(null);
 			setGenerator(null);
 			setArrow(false);
+			setMethod(false);
 			setParams(null);
 		
 			if (token != null)
@@ -4157,6 +4164,18 @@ public class JSHint
 		void decreaseLoopage()
 		{
 			loopage--;
+		}
+		
+		boolean isStrict()
+		{
+			return isStrict;
+		}
+		
+		Functor setStrict(boolean isStrict)
+		{
+			this.tags.add(FunctorTag.ISSTRICT);
+			this.isStrict = isStrict;
+			return this;
 		}
 		
 		boolean isGlobal()
@@ -4284,6 +4303,18 @@ public class JSHint
 			return this;
 		}
 		
+		boolean isMethod()
+		{
+			return isMethod;
+		}
+		
+		Functor setMethod(boolean isMethod)
+		{
+			this.tags.add(FunctorTag.METHOD);
+			this.isMethod = isMethod;
+			return this;
+		}
+		
 		List<String> getParams()
 		{
 			return params != null ? Collections.unmodifiableList(params) : null;
@@ -4292,19 +4323,41 @@ public class JSHint
 		Functor setParams(List<String> params)
 		{
 			this.tags.add(FunctorTag.PARAMS);
-			this.params = params;
+			if (params == null) this.params = null;
+			else this.params = new ArrayList<String>(params);
 			return this;
 		}
 		
-		boolean isCapturing()
+		Functor addParams(String... params)
 		{
-			return isCapturing;
+			if (params != null)
+			{
+				if (this.params == null) this.params = new ArrayList<String>();
+				this.params.addAll(Arrays.asList(params));
+			}
+			return this;
 		}
 		
-		Functor setCapturing(boolean isCapturing)
+		List<String> getOuterMutables()
 		{
-			this.tags.add(FunctorTag.ISCAPTURING);
-			this.isCapturing = isCapturing;
+			return outerMutables != null ? Collections.unmodifiableList(outerMutables) : null;
+		}
+		
+		Functor setOuterMutables(List<String> outerMutables)
+		{
+			this.tags.add(FunctorTag.OUTERMUTABLES);
+			if (outerMutables == null) this.outerMutables = null;
+			else this.outerMutables = new ArrayList<String>(outerMutables);
+			return this;
+		}
+		
+		Functor addOuterMutables(String... outerMutables)
+		{
+			if (outerMutables != null)
+			{
+				if (this.outerMutables == null) this.outerMutables = new ArrayList<String>();
+				this.outerMutables.addAll(Arrays.asList(outerMutables));
+			}
 			return this;
 		}
 		
@@ -4368,11 +4421,12 @@ public class JSHint
 			return this;
 		}
 		
-		private void overwrite(Functor overwrites)
+		void overwrite(Functor overwrites)
 		{
 			if (overwrites.tags.contains(FunctorTag.NAME)) setName(overwrites.name);
 			if (overwrites.tags.contains(FunctorTag.BREAKAGE)) setBreakage(overwrites.breakage);
 			if (overwrites.tags.contains(FunctorTag.LOOPAGE)) setLoopage(overwrites.loopage);
+			if (overwrites.tags.contains(FunctorTag.ISSTRICT)) setStrict(overwrites.isStrict);
 			if (overwrites.tags.contains(FunctorTag.GLOBAL)) setGlobal(overwrites.isGlobal);
 			if (overwrites.tags.contains(FunctorTag.LINE)) setLine(overwrites.line);
 			if (overwrites.tags.contains(FunctorTag.CHARACTER)) setCharacter(overwrites.character);
@@ -4383,6 +4437,7 @@ public class JSHint
 			if (overwrites.tags.contains(FunctorTag.COMPARRAY)) setComparray(overwrites.comparray);
 			if (overwrites.tags.contains(FunctorTag.GENERATOR)) setGenerator(overwrites.generator);
 			if (overwrites.tags.contains(FunctorTag.ARROW)) setArrow(overwrites.isArrow);
+			if (overwrites.tags.contains(FunctorTag.METHOD)) setMethod(overwrites.isMethod);
 			if (overwrites.tags.contains(FunctorTag.PARAMS)) setParams(overwrites.params);
 		}
 	}
@@ -4451,66 +4506,26 @@ public class JSHint
 		if (complete) advance();
 		return complete || State.nextToken().isUnclosed();
 	}
-
-	private Functor doFunction()
-	{
-		return doFunction(null, null, null, null, false, null, false);
-	}
-	
-	private Functor doFunction(FunctionType type)
-	{
-		return doFunction(null, null, type, null, false, null, false);
-	}
-	
-	private Functor doFunction(FunctionType type, Token loneArg)
-	{
-		return doFunction(null, null, type, loneArg, false, null, false);
-	}
-	
-	private Functor doFunction(FunctionType type, boolean parsedOpening)
-	{
-		return doFunction(null, null, type, null, parsedOpening, null, false);
-	}
-	
-	private Functor doFunction(Token statement)
-	{
-		return doFunction(null, statement, null, null, false, null, false);
-	}
-	
-	private Functor doFunction(Token statement, FunctionType type, String classExprBinding)
-	{
-		return doFunction(null, statement, type, null, false, classExprBinding, false);
-	}
-	
-	private Functor doFunction(String name, FunctionType type)
-	{
-		return doFunction(name, null, type, null, false, null, false);
-	}
-	
-	private Functor doFunction(String name, Token statement, FunctionType type, boolean ignoreLoopFunc)
-	{
-		return doFunction(name, statement, type, null, false, null, ignoreLoopFunc);
-	}
 	
 	/**
 	 * @param {Object} [options]
-	 * @param {token} [options.name] The identifier belonging to the function (if		JSHINT_BUG: should be string
-	 * 							  	 any)
-	 * @param {boolean} [options.statement] The statement that triggered creation		JSHINT_BUG: should be token
-	 * 										of the current function.
+	 * @param {string} [options.name] The identifier belonging to the function (if
+	 * 							  	  any)
+	 * @param {token} [options.statement] The statement that triggered creation
+	 * 									  of the current function.
 	 * @param {string} [options.type] If specified, either "generator" or "arrow"
 	 * @param {token} [options.loneArg] The argument to the function in cases
 	 * 									where it was defined using the
 	 * 									single-argument shorthand
 	 * @param {bool} [options.parsedOpening] Whether the opening parenthesis has
 	 * 										 already been parsed
-	 * @param {token} [options.classExprBinding] Define a function with this			JSHINT_BUG: should be string
-	 * 											 identifier in the new function's
-	 * 											 scope, mimicking the bahavior of
-	 * 											 class expression names within
-	 * 											 the body of member functions.
-	 */	
-	private Functor doFunction(String name, Token statement, FunctionType type, Token loneArg, boolean parsedOpening, String classExprBinding, boolean ignoreLoopFunc)
+	 * @param {string} [options.classExprBinding] Define a function with this
+	 * 											  identifier in the new function's
+	 * 											  scope, mimicking the bahavior of
+	 * 											  class expression names within
+	 * 											  the body of member functions.
+	 */
+	private Functor doFunction(String name, Token statement, FunctionType type, Token loneArg, boolean parsedOpening, String classExprBinding, boolean isMethod, boolean ignoreLoopFunc)
 	{
 		Token token = null;
 		boolean isGenerator = type == FunctionType.GENERATOR;
@@ -4525,12 +4540,12 @@ public class JSHint
 			.setStatement(statement)
 			.setContext(State.getFunct())
 			.setArrow(isArrow)
+			.setMethod(isMethod)
 			.setGenerator(isGenerator)
 		));
 		
 		Functor f = State.getFunct();
 		token = State.currToken();
-		//token.funct = State.funct; // JSHINT_BUG: Looks like this one is not used, can be removed
 		
 		functions.add(State.getFunct());
 		
@@ -4545,6 +4560,11 @@ public class JSHint
 		{
 			State.getFunct().getScope().getBlock().add(internallyAccessibleName,
 				StringUtils.isNotEmpty(classExprBinding) ? "class" : "function", State.currToken(), false);
+		}
+		
+		if (!isArrow)
+		{
+			State.getFunct().getScope().getFunct().add("arguments", "var", token, false);
 		}
 		
 		// create the param scope (params added in functionparams)
@@ -4604,9 +4624,9 @@ public class JSHint
 			// If the function we just parsed accesses any non-local variables
 		    // trigger a warning. Otherwise, the function is safe even within
 		    // a loop.
-			if (f.isCapturing())
+			if (f.getOuterMutables() != null)
 			{
-				warning("W083", token);
+				warning("W083", token, String.join(", ", f.getOuterMutables()));
 			}
 		}
 		
@@ -4790,9 +4810,9 @@ public class JSHint
 		if (checkPunctuators(State.nextToken(), "[", "{"))
 		{
 			ids = destructuringPatternRecursive(false, isAssignment);
-			for (Identifier id : ids)
+			for (int idx = 0; idx < ids.size(); idx++)
 			{
-				identifiers.add(new Identifier(id.id, id.token));
+				identifiers.add(new Identifier(ids.get(idx).id, ids.get(idx).token));
 			}
 		}
 		else if (checkPunctuator(State.nextToken(), ","))
@@ -4814,7 +4834,7 @@ public class JSHint
 				Token assignTarget = expression(20);
 				if (assignTarget != null)
 				{
-					checkLeftSideAssign(assignTarget, null, false);
+					checkLeftSideAssign(assignTarget);
 					
 					// if the target was a simple identifier, add it to the list to return
 					if (assignTarget.isIdentifier())
@@ -4874,7 +4894,7 @@ public class JSHint
 					}
 					id = State.prevToken();
 					value = expression(10);
-					if (value != null && value.getType() == TokenType.UNDEFINED)
+					if (value != null && value.isIdentifier() && value.getValue().equals("undefined"))
 					{
 						warning("W080", id, id.getValue());
 					}
@@ -4929,7 +4949,7 @@ public class JSHint
 						// in this case we are assigning (not declaring), so check assignment
 						if (isAssignment)
 						{
-							checkLeftSideAssign(State.currToken(), null, false);
+							checkLeftSideAssign(State.currToken());
 						}
 						identifiers.add(new Identifier(stringId, State.currToken()));
 					}
@@ -4941,7 +4961,7 @@ public class JSHint
 					advance("=");
 					id = State.prevToken();
 					value = expression(10);
-					if (value != null && value.getType() == TokenType.UNDEFINED)
+					if (value != null && value.isIdentifier() && value.getValue().equals("undefined"))
 					{
 						warning("W080", id, id.getValue());
 					}
@@ -5060,16 +5080,11 @@ public class JSHint
 				Token id = State.prevToken();
 				// don't accept `in` in expression if prefix is used for ForIn/Of loop.
 				Token value = expression(prefix ? 120 : 10);
-				if (!prefix && value != null && value.getType() == TokenType.UNDEFINED)
+				if (!prefix && value != null && value.isIdentifier() && value.getValue().equals("undefined"))
 				{
 					warning("W080", id, id.getValue());
 				}
-				if (lone)
-				{
-					// JSHINT_BUG: this block doesn't make any sense because variable first isn't used anywhere
-					//tokens.get(0).first = value;
-				}
-				else
+				if (!lone)
 				{
 					destructuringPatternMatch(names, value);
 				}
@@ -5109,6 +5124,9 @@ public class JSHint
 	
 	private Token classdef(Token _this, int rbp, boolean isStatement)
 	{
+		boolean wasInClassBody = State.isInClassBody();
+		State.setInClassBody(true);
+		
 		if (!State.inES6())
 		{
 			warning("W104", State.currToken(), "class", "6");
@@ -5134,6 +5152,8 @@ public class JSHint
 		
 		classtail(_this);
 		
+		State.setInClassBody(wasInClassBody);
+		
 		if (isStatement)
 		{
 			State.getFunct().getScope().initialize(_this.getName());
@@ -5144,22 +5164,18 @@ public class JSHint
 
 	private void classtail(Token c)
 	{
-		boolean wasInClassBody = State.isInClassBody();
 		
 		// ClassHeritage(opt)
 		if (State.nextToken().getValue().equals("extends"))
 		{
 			advance("extends");
-			expression(10); // c.heritage = expression(10); JSHINT_BUG: "heritage" property is not used anywhere, can be removed
+			expression(10);
 		}
 		
-		State.setInClassBody(true);
 		advance("{");
 		// ClassBody(opt)
 		classbody(c);
-		c.setBody(""); //JSHINT_BUG: method classbody doesn't return anything, so body always empty
 		advance("}");
-		State.setInClassBody(wasInClassBody);
 	}
 
 	private void classbody(Token c)
@@ -5168,7 +5184,7 @@ public class JSHint
 		UniversalContainer staticProps = ContainerFactory.nullContainer().create();
 		boolean computed = false;
 		
-		while (!State.nextToken().getId().equals("}")) //JSHINT_BUG: for can be chaged to while, since i variable is not used anyhow
+		while (!State.nextToken().getId().equals("}"))
 		{
 			Token name = State.nextToken();
 			boolean isStatic = false;
@@ -5259,7 +5275,16 @@ public class JSHint
 				}
 				if (!State.nextToken().getValue().equals("("))
 				{
-					doFunction(c);
+					doFunction(
+						null,
+						c,
+						null,
+						null,
+						false,
+						null,
+						true,
+						false
+					);
 				}
 			}
 			
@@ -5296,10 +5321,50 @@ public class JSHint
 			
 			propertyName(new UniversalContainer(name));
 			
-			doFunction(c, isGenerator ? FunctionType.GENERATOR : null, c.isNamedExpr() ? c.getName() : null);
+			doFunction(
+				null,
+				c,
+				(isGenerator ? FunctionType.GENERATOR : null),
+				null,
+				false,
+				(c.isNamedExpr() ? c.getName() : null),
+				true,
+				false
+			);
 		}
 		
 		checkProperties(props);
+	}
+	
+	/**
+	 * Determine if SuperCall or SuperProperty may be used in the current context
+	 * (as described by the provided "functor" object).
+	 * 
+	 * @param {string} type - one of "property" or "call"
+	 * @param {object} funct - a "functor" object describing the current function
+	 * 						   context
+	 * 
+	 * @returns {boolean}
+	 */
+	private boolean supportsSuper(String type, Functor funct)
+	{
+		if (type.equals("property") && funct.isMethod())
+		{
+			return true;
+		}
+		
+		if (type.equals("call") && funct.getStatement() != null &&
+			funct.getStatement().getId().equals("class"))
+		{
+			return true;
+		}
+		
+		if (funct.isArrow())
+		{
+			return supportsSuper(type, funct.getContext());
+		}
+		
+		return false;
 	}
 	
 	private void buildStatementTable()
@@ -5346,7 +5411,13 @@ public class JSHint
 					else
 					{
 						tokens = new ArrayList<Identifier>();
-						tokens.add(new Identifier(identifier(), State.currToken()));
+						String id = identifier();
+						
+						if (StringUtils.isNotEmpty(id))
+						{
+							tokens.add(new Identifier(id, State.currToken()));
+						}
+						
 						lone = true;
 					}
 					
@@ -5367,8 +5438,8 @@ public class JSHint
 							}
 							else if (State.getOption().get("futurehostile").equals(false))
 							{
-								if ((!State.inES5() && Vars.ecmaIdentifiers.get(5).containsKey(t.id) && Vars.ecmaIdentifiers.get(5).get(t.id).equals(false)) ||
-									(!State.inES6() && Vars.ecmaIdentifiers.get(6).containsKey(t.id) && Vars.ecmaIdentifiers.get(6).get(t.id).equals(false)))
+								if ((!State.inES5() && BooleanUtils.isFalse(Vars.ecmaIdentifiers.get(5).get(t.id))) ||
+									(!State.inES6() && BooleanUtils.isFalse(Vars.ecmaIdentifiers.get(6).get(t.id))))
 								{
 									warning("W129", t.token, t.id);
 								}
@@ -5403,16 +5474,12 @@ public class JSHint
 						Token id = State.prevToken();
 						// don't accept `in` in expression if prefix is used for ForIn/Of loop.
 						Token value = expression(prefix ? 120 : 10);
-						if (value != null && !prefix && State.getFunct().getLoopage() == 0 && value.getType() == TokenType.UNDEFINED)
+						if (value != null && !prefix && State.getFunct().getLoopage() == 0 &&
+							value.isIdentifier() && value.getValue().equals("undefined"))
 						{
 							warning("W080", id, id.getValue());
 						}
-						if (lone)
-						{
-							// JSHINT_BUG: this block doesn't make any sense because variable first isn't used anywhere
-							//tokens.get(0).first = value;
-						}
-						else
+						if (!lone)
 						{
 							destructuringPatternMatch(names, value);
 						}
@@ -5461,20 +5528,45 @@ public class JSHint
 				{
 					warning("W082", State.currToken());
 				}
-				String i = optionalidentifier();
+				Token nameToken = StringUtils.isNotEmpty(optionalidentifier()) ? State.currToken() : null;
 				
-				State.getFunct().getScope().addlabel(i, "function", State.currToken());
-				
-				if (StringUtils.isEmpty(i))
+				if (nameToken == null)
 				{
 					warning("W025");
 				}
-				else if (inexport)
+				else
 				{
-					State.getFunct().getScope().setExported(i, State.prevToken());
+					State.getFunct().getScope().addlabel(nameToken.getValue(), generator ? "generator function" : "function", true, State.currToken());
+					
+					if (inexport)
+					{
+						State.getFunct().getScope().setExported(nameToken.getValue(), State.prevToken());
+					}
 				}
 				
-				doFunction(i, _this, generator ? FunctionType.GENERATOR : null, inblock); // a declaration may already have warned
+				Functor f = doFunction(
+					(nameToken != null ? nameToken.getValue() : null),
+					_this,
+					(generator ? FunctionType.GENERATOR : null),
+					null,
+					false,
+					null,
+					false,
+					inblock // a declaration may already have warned
+				);
+				
+				// If the function declaration is strict because the surrounding code is
+				// strict, the invalid name will trigger E008 when the scope manager
+				// attempts to create a binding in the strict environment record. An error
+				// should only be signaled here when the function itself enables strict
+				// mode (the scope manager will not report an error because a declaration
+				// does not introduce a binding into the function's environment record).
+				boolean enablesStrictMode = f.isStrict() && !State.isStrict();
+				if (nameToken != null && (f.getName().equals("arguments") || f.getName().equals("eval")) &&
+					enablesStrictMode)
+				{
+					error("E008", nameToken);
+				}
 				if (State.nextToken().getId().equals("(") && State.nextToken().getLine() == State.currToken().getLine())
 				{
 					error("E039");
@@ -5500,8 +5592,24 @@ public class JSHint
 					generator = true;
 				}
 				
-				String i = optionalidentifier();
-				doFunction(i, generator ? FunctionType.GENERATOR : null);
+				Token nameToken = StringUtils.isNotEmpty(optionalidentifier()) ? State.currToken() : null;
+				
+				Functor f = doFunction(
+					(nameToken != null ? nameToken.getValue() : null),
+					null,
+					(generator ? FunctionType.GENERATOR : null),
+					null,
+					false,
+					null,
+					false,
+					false
+				);
+				
+				if (nameToken != null && (f.getName().equals("arguments") || f.getName().equals("eval")) &&
+					f.isStrict())
+				{
+					error("E008", nameToken);
+				}
 				return _this;
 			}
 		});
@@ -5708,6 +5816,7 @@ public class JSHint
 				advance(")", t);
 				t = State.nextToken();
 				advance("{");
+				State.getFunct().getScope().stack();
 				
 				if (State.nextToken().getFrom() == indent)
 					noindent = true;
@@ -5779,6 +5888,7 @@ public class JSHint
 							indent -= State.getOption().asInt("indent");
 						
 						advance("}", t);
+						State.getFunct().getScope().unstack();
 						State.getFunct().decreaseBreakage();
 						State.getFunct().setVerb("");
 						return null;
@@ -5820,7 +5930,6 @@ public class JSHint
 						indent -= State.getOption().asInt("indent");
 					}
 				}
-				//JSHINT_BUG: no need to return this, because this code is unreachable
 			}
 		}).setLabelled(true);
 		
@@ -5907,10 +6016,11 @@ public class JSHint
 						else if (initializer == null && checkPunctuator(nextop, "=")) initializer = nextop;
 					}
 				}
-				while (level > 0 || !(nextop.getValue().equals("in") || nextop.getValue().equals("of")) && !nextop.getValue().equals(";") &&
-					   nextop.getType() != TokenType.END); // Is this a JSCS bug? This looks really weird.
+				while (
+					(level > 0 || !(nextop.getValue().equals("in") || nextop.getValue().equals("of")) && !nextop.getValue().equals(";")) &&
+					nextop.getType() != TokenType.END);
 				
-				// if we're in a for (� in|of �) statement
+				// if we're in a for (... in|of ...) statement
 				if (nextop.getValue().equals("in") || nextop.getValue().equals("of"))
 				{
 					if (nextop.getValue().equals("of"))
@@ -5975,7 +6085,7 @@ public class JSHint
 									targets.add(target);
 								}
 								
-								checkLeftSideAssign(target, nextop, false);
+								checkLeftSideAssign(target, nextop);
 							}
 							
 							if (checkPunctuator(State.nextToken(), "="))
@@ -6267,7 +6377,6 @@ public class JSHint
 				
 				if (State.nextToken().getValue().equals("*"))
 				{
-					//delegatingYield = true; JSHINT_BUG: this property is not used anywhere can be removed
 					advance("*");
 				}
 				
@@ -6423,8 +6532,17 @@ public class JSHint
 				
 				// FromClause
 				advance("from");
-			    advance("(string)");
-			    return _this;
+				advance("(string)");
+				
+				// Support for ES2015 modules was released without warning for `import`
+				// declarations that lack bindings. Issuing a warning would therefor
+				// constitute a breaking change.
+				// JSHINT_TODO: enable this warning in JSHint 3
+				// if (hasBindings) {
+				//   warning("W142", this, "import", moduleSpecifier);
+				// }	
+				
+				return _this;
 			}
 		}).setExps(true);
 		
@@ -6435,6 +6553,7 @@ public class JSHint
 			{
 				boolean ok = true;
 				String identifier;
+				Token moduleSpecifier = null;
 				
 				if (!State.inES6())
 				{
@@ -6492,7 +6611,7 @@ public class JSHint
 					// ExportDeclaration :: export ExportClause
 					advance("{");
 					List<Token> exportedTokens = new ArrayList<Token>();
-					for (;;)
+					while (!checkPunctuator(State.nextToken(), "}"))
 					{
 						if (!State.nextToken().isIdentifier())
 						{
@@ -6512,25 +6631,17 @@ public class JSHint
 							advance();
 						}
 						
-						if (State.nextToken().getValue().equals(","))
+						if (!checkPunctuator(State.nextToken(), "}"))
 						{
 							advance(",");
 						}
-						else if (State.nextToken().getValue().equals("}"))
-						{
-							advance("}");
-					        break;
-						}
-						else
-						{
-							error("E024", State.nextToken(), State.nextToken().getValue());
-							break;
-						}
 					}
+					advance("}");
 					if (State.nextToken().getValue().equals("from"))
 					{
 						// ExportDeclaration :: export ExportClause FromClause
 						advance("from");
+						moduleSpecifier = State.nextToken();
 						advance("(string)");
 					}
 					else if (ok)
@@ -6540,6 +6651,20 @@ public class JSHint
 							State.getFunct().getScope().setExported(token.getValue(), token);
 						}
 					}
+					
+					if (exportedTokens.size() == 0)
+					{
+						if (moduleSpecifier != null)
+						{
+							warning("W142", _this, "export", moduleSpecifier.getValue());
+						}
+						else
+						{
+							warning("W141", _this, "export");
+						}
+					}
+					
+					
 					return _this;
 				}
 				
@@ -6620,7 +6745,35 @@ public class JSHint
 		futureReservedWord(TokenType.PUBLIC, new Token.Meta(true, true, false, null));
 		futureReservedWord(TokenType.SHORT);
 		futureReservedWord(TokenType.STATIC, new Token.Meta(true, true, false, null));
-		futureReservedWord(TokenType.SUPER, new Token.Meta(true, true, false, null));
+		futureReservedWord(TokenType.SUPER, new Token.Meta(true, false, false, new Token.NudFunction()
+		{
+			@Override
+			public Token apply(Token _this, int rbp) throws JSHintException
+			{
+				Token next = State.nextToken();
+				
+				if(checkPunctuators(next, "[", "."))
+				{
+					if(!supportsSuper("property", State.getFunct()))
+					{
+						error("E063", _this);
+					}
+				}
+				else if (checkPunctuator(next, "("))
+				{
+					if(!supportsSuper("call", State.getFunct()))
+					{
+						error("E064", _this);
+					}
+				}
+				else
+				{
+					error("E024", next, StringUtils.defaultIfEmpty(next.getValue(), next.getId()));
+				}
+				
+				return _this;
+			}
+		}));
 		futureReservedWord(TokenType.SYNCHRONIZED);
 		futureReservedWord(TokenType.TRANSIENT);
 		futureReservedWord(TokenType.VOLATILE);
@@ -6681,7 +6834,6 @@ public class JSHint
 				}
 				if (checkPunctuator(pn, ";"))
 				{
-					//isBlock = true; //JSHINT_BUG: isBlock variable is not used anywhere
 					notJson = true;
 				}
 			}
@@ -6840,7 +6992,6 @@ public class JSHint
 	{
 		private class Variable
 		{
-			//private Functor funct; //JSHINT_BUG: is not used anywhere can be removed
 			private Token token;
 			private String value;
 			private boolean undef;
@@ -6909,7 +7060,7 @@ public class JSHint
 			for (Variable v : current.variables)
 			{
 				if (v.unused)
-					warning("W098", v.token, v.value); // JSHINT_BUG: typo, must be v.token.raw_text instead of v.raw_text 
+					warning("W098", v.token, StringUtils.defaultIfEmpty(v.token.getRawText(), v.value));
 				if (v.undef)
 					State.getFunct().getScope().getBlock().use(v.value, v.token);
 			}
@@ -7120,46 +7271,56 @@ public class JSHint
 		addModule(new Style());
 	}
 	
-	public boolean lint(String source) throws JSHintException
+	public boolean lint(String s) throws JSHintException
 	{
-		return lint(source, null, null);
+		return lint(s, null, null);
 	}
 	
-	public boolean lint(String source, LinterOptions options) throws JSHintException
+	public boolean lint(String s, LinterOptions options) throws JSHintException
 	{
-		return lint(source, options, null);
+		return lint(s, options, null);
 	}
 	
-	public boolean lint(String source, LinterOptions options, LinterGlobals globals) throws JSHintException
+	public boolean lint(String s, LinterOptions options, LinterGlobals globals) throws JSHintException
 	{
-		String s = StringUtils.defaultString(source);
 		LinterOptions o = new LinterOptions(options);
 		LinterGlobals g = (globals == null ? new LinterGlobals() : globals);
 		
 		init(o, g);
+		
+		if (s == null)
+		{
+			errorAt("E004", 0);
+			return false;
+		}
 		
 		s = o.cleanSource(s);
 		
 		return run(new Lexer(s), o, g);
 	}
 	
-	public boolean lint(String[] source) throws JSHintException
+	public boolean lint(String[] s) throws JSHintException
 	{
-		return lint(source, null, null);
+		return lint(s, null, null);
 	}
 	
-	public boolean lint(String[] source, LinterOptions options) throws JSHintException
+	public boolean lint(String[] s, LinterOptions options) throws JSHintException
 	{
-		return lint(source, options, null);
+		return lint(s, options, null);
 	}
 	
-	public boolean lint(String[] source, LinterOptions options, LinterGlobals globals) throws JSHintException
+	public boolean lint(String[] s, LinterOptions options, LinterGlobals globals) throws JSHintException
 	{
-		String[] s = ArrayUtils.nullToEmpty(source);
 		LinterOptions o = new LinterOptions(options);
 		LinterGlobals g = (globals == null ? new LinterGlobals() : globals);
 		
 		init(o, g);
+		
+		if (s == null)
+		{
+			errorAt("E004", 0);
+			return false;
+		}
 		
 		//JSHINT_BUG: where is ignore delimiters for source array??
 		
@@ -7177,7 +7338,6 @@ public class JSHint
 		else
 		{
 			errors = new ArrayList<LinterWarning>();
-			//undefs = null; //JSHINT_BUG: variable undef is not used anywhere, can be removed
 			internals = new ArrayList<InternalSource>();
 			blacklist = new HashSet<String>();
 			scriptScope = "(main)";
@@ -7470,8 +7630,6 @@ public class JSHint
 			Functor f = functions.get(i);
 			DataSummary.Function fu = new DataSummary.Function();
 			
-			//JSHINT_BUG: very strange fors in original code, probably bug or just dead code, and this is the only place where functionicity variable is used, so can also be removed
-			
 			fu.setName(f.getName());
 			fu.setParam(f.getParams());
 			fu.setLine(f.getLine());
@@ -7545,6 +7703,7 @@ public class JSHint
 		NAME, 				// "(name)"
 		BREAKAGE,			// "(breakage)"
 		LOOPAGE,			// "(loopage)"
+		ISSTRICT,			// "(isStrict)"
 		GLOBAL,				// "(global)"
 		LINE,				// "(line)"
 		CHARACTER,			// "(character)"
@@ -7555,8 +7714,9 @@ public class JSHint
 		COMPARRAY,			// "(comparray)"
 		GENERATOR,			// "(generator)"
 		ARROW,				// "(arrow)"
+		METHOD,				// "(method)"
 		PARAMS,				// "(params)"
-		ISCAPTURING,		// "(isCapturing)"
+		OUTERMUTABLES,		// "(outerMutables)"
 		NOBLOCKSCOPEDVAR,	// "(noblockscopedvar)")
 		LAST,				// "(last)"
 		LASTCHARACTER,		// "(lastcharacter)"

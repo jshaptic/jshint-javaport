@@ -12,7 +12,7 @@ public class DefaultReporter implements JSHintReporter
 	public void generate(List<ReporterResult> results, List<DataSummary> data, String verbose)
 	{
 		int len = results.size();
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		String prevfile = null;
 		
 		for (ReporterResult result : results)
@@ -22,21 +22,21 @@ public class DefaultReporter implements JSHintReporter
 			
 			if (StringUtils.isNotEmpty(prevfile) && !prevfile.equals(file))
 			{
-				str += "\n";
+				str.append("\n");
 			}
 			prevfile = file;
 			
-			str += file + ": line " + error.getLine() + ", col " + error.getCharacter() + ", " + error.getReason();
+			str.append(file + ": line " + error.getLine() + ", col " + error.getCharacter() + ", " + error.getReason());
 			
 			if (StringUtils.isNotEmpty(verbose))
 			{
-				str += " (" + error.getCode() + ")";
+				str.append(" (" + error.getCode() + ")");
 			}
 			
-			str += "\n";
+			str.append("\n");
 		}
 		
-		if (StringUtils.isNotEmpty(str))
+		if (str.length() > 0)
 		{
 			System.out.println(str + "\n" + len + " error" + (len == 1 ? "" : "s"));
 		}

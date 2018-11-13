@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.jshint.utils.ConsumerFunction;
 import org.jshint.utils.EventContext;
 import com.github.jshaptic.js4j.UniversalContainer;
 
@@ -75,7 +74,7 @@ public class Token
 	private NudFunction nud = null; // Null denotation
 	private FudFunction fud = null; // First null denotation
 	private LedFunction led = null; // Left denotation
-	private ConsumerFunction check = null;
+	private Runnable check = null;
 	
 	public Token()
 	{
@@ -884,12 +883,12 @@ public class Token
 		this.led = led;
 	}
 
-	ConsumerFunction getCheck()
+	Runnable getCheck()
 	{
 		return check;
 	}
 
-	void setCheck(ConsumerFunction check)
+	void setCheck(Runnable check)
 	{
 		this.check = check;
 	}
@@ -936,7 +935,7 @@ public class Token
 	
 	void check() throws JSHintException
 	{
-		if (check != null) check.accept();
+		if (check != null) check.run();
 	}
 	
 	static class Meta
