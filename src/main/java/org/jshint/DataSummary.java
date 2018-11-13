@@ -131,10 +131,24 @@ public class DataSummary
 	{
 		StringBuilder summary = new StringBuilder();
 		if (errors != null) {
-			errors.forEach(error -> {
-				summary.append("line " + error.getLine() + ", col " + error.getCharacter()+ ", " + error.getReason() + " (" + error.getCode() + ")");
-				summary.append("\n");
-			});
+			summary.append("Warnings:\n");
+			errors.forEach(error ->
+				summary.append(" line " + error.getLine() + ", col " + error.getCharacter()+ ": " + error.getReason() + " (" + error.getCode() + ")\n")
+			);
+			summary.append("\n");
+		}
+		if (implieds != null) {
+			summary.append("Undefined variables:\n");
+			implieds.forEach(implied ->
+				summary.append(" " + implied.getName() + "\n")
+			);
+			summary.append("\n");
+		}
+		if (unused != null) {
+			summary.append("Unused variables:\n");
+			unused.forEach(unused ->
+				summary.append(" line " + unused.getLine() + ", col " + unused.getCharacter()+ ": '" + unused.getName() + "'\n")
+			);
 		}
 		return summary.toString();
 	}
