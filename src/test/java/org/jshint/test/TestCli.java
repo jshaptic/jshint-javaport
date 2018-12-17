@@ -1247,6 +1247,33 @@ public class TestCli extends Assert
 	}
 	
 	@Test(groups = {"useStdin"})
+	public void testUseStdinNoFilename()
+	{
+		CliWrapper cli = setUpUseStdinCli();
+		
+		String dir = System.getProperty("user.dir") + "/src/test/resources/examples/";
+		cli.stubCwd(() -> dir);
+		
+		cli.interpret("--reporter=SimpleReporter", "-");
+		
+		cli.stdinSend("void 0;");
+		cli.stdinEnd();
+		
+		List<ReporterResult> errors = cli.getTestReporter().getResults();
+		assertTrue(errors.size() == 0, "should not report errors");
+		assertEquals(cli.getExitCode(), 0, "status code should be 2 when there is a linting error.");
+		
+		cli.interpret("--reporter=SimpleReporter", "-");
+		
+		cli.stdinSend("? This is not JavaScript.");
+		cli.stdinEnd();
+		
+		errors = cli.getTestReporter().getResults();
+		assertTrue(errors.size() > 0, "should report some number of errors");
+		assertEquals(cli.getExitCode(), 2, "status code should be 2 when there is a linting error.");
+	}
+	
+	@Test(groups = {"useStdin"})
 	public void testUseStdinFilenameOverridesOption()
 	{
 		CliWrapper cli = setUpUseStdinCli();
