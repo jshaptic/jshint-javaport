@@ -58,7 +58,6 @@ public class ScopeManager
 	 * @param declared - a hash for JSHint label names that were defined
 	 *                   as global bindings via linting configuration
 	 *
-	 * @return a scope manager
 	 */
 	public ScopeManager(Map<String, Boolean> predefined, Map<String, Boolean> exported, Map<String, Token> declared)
 	{
@@ -614,7 +613,7 @@ public class ScopeManager
 	 * Add a function parameter to the current scope.
 	 * 
 	 * @param labelName - the value of the identifier
-	 * @param token
+	 * @param token - indetifier token
 	 */
 	public void addParam(String labelName, Token token)
 	{
@@ -625,7 +624,7 @@ public class ScopeManager
 	 * Add a function parameter to the current scope.
 	 * 
 	 * @param labelName - the value of the identifier
-	 * @param token
+	 * @param token - indetifier token
 	 * @param type - JSHint label type; defaults to "param"
 	 */
 	public void addParam(String labelName, Token token, String type)
@@ -766,7 +765,7 @@ public class ScopeManager
 	 *
 	 * @param labelName - the value of the identifier
 	 *
-	 * @return
+	 * @return true if given name is defined, false otherwise
 	 */
 	public boolean has(String labelName)
 	{
@@ -837,7 +836,7 @@ public class ScopeManager
      * Mark a JSHint label as "exported" by an ES2015 module
      * 
      * @param labelName - the value of the identifier
-     * @param token
+     * @param token - identifier token
      */
 	public void setExported(String labelName, Token token)
 	{
@@ -864,7 +863,7 @@ public class ScopeManager
 	 * the internal `block.add` or `func.add` methods depending on the type.
 	 * Produces warnings and errors as necessary.
 	 *
-	 * @param labelName
+	 * @param labelName - the value of the identifier
 	 * @param type - the type of the label e.g. "param", "var",
 	 *               "let, "const", "import", "function",
 	 *               "generator function", "async function",
@@ -881,7 +880,7 @@ public class ScopeManager
 	 * the internal `block.add` or `func.add` methods depending on the type.
 	 * Produces warnings and errors as necessary.
 	 *
-	 * @param labelName
+	 * @param labelName - the value of the identifier
 	 * @param type - the type of the label e.g. "param", "var",
 	 *               "let, "const", "import", "function",
 	 *               "generator function", "async function",
@@ -1006,13 +1005,13 @@ public class ScopeManager
 		/**
 	     * Return the type of the provided JSHint label given certain options
 	     *
-	     * @param labelName
+	     * @param labelName - the value of the identifier
 	     * @param onlyBlockscoped - only include block scoped
 	     *                          labels
 	     * @param excludeParams - exclude the param scope
 	     * @param excludeCurrent - exclude the current scope
 	     *
-	     * @return
+	     * @return type of the label
 	     */
 		public String labeltype(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -1040,7 +1039,7 @@ public class ScopeManager
 	     *
 	     * @param labelName - the value of the identifier
 	     *
-	     * @return
+	     * @return  true if `break` statement exists, false otherwise
 	     */
 		public boolean hasBreakLabel(String labelName)
 		{
@@ -1065,10 +1064,12 @@ public class ScopeManager
 	     * scope.
 	     *
 	     * @param labelName - the value of the identifier
-	     * @param options - options as supported by the
-	     *                  `funct.labeltype` method
+	     * @param onlyBlockscoped - only include block scoped
+	     *                          labels
+	     * @param excludeParams - exclude the param scope
+	     * @param excludeCurrent - exclude the current scope
 	     *
-	     * @return
+	     * @return true if given name is defined in the current function, false otherwise
 	     */
 		public boolean has(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -1114,6 +1115,7 @@ public class ScopeManager
 		 * Resolve a reference to a binding and mark the corresponding JSHint
 		 * label as "used."
 		 *
+		 * @param labelName - the value of the identifier
 		 * @param token - the token value that triggered the reference
 		 */
 		public void use(String labelName, Token token)

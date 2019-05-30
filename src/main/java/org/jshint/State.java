@@ -270,7 +270,7 @@ public final class State
 	/**
 	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
 	 * 
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 8 should be accepted, false otherwise
 	 */
 	public static boolean inES9()
 	{
@@ -280,7 +280,7 @@ public final class State
 	/**
 	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
 	 *
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 8 should be accepted, false otherwise
 	 */
 	public static boolean inES8()
 	{
@@ -290,7 +290,7 @@ public final class State
 	/**
 	 * Determine if constructs introduced in ECMAScript 7 should be accepted.
 	 *
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 7 should be accepted, false otherwise
 	 */
 	public static boolean inES7()
 	{
@@ -300,7 +300,7 @@ public final class State
 	/**
 	 * Determine if constructs introduced in ECMAScript 6 should be accepted.
 	 * 
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 6 should be accepted, false otherwise
 	 */
 	public static boolean inES6()
 	{
@@ -313,7 +313,7 @@ public final class State
 	 * @param strict - When `true`, do not interpret the `moz` option
 	 * 				   as ECMAScript 6
 	 * 
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 6 should be accepted, false otherwise
 	 */
 	public static boolean inES6(boolean strict)
 	{
@@ -328,7 +328,7 @@ public final class State
 	/**
 	 * Determine if constructs introduced in ECMAScript 5 should be accepted.
 	 * 
-	 * @return
+	 * @return true if constructs introduced in ECMAScript 5 should be accepted, false otherwise
 	 */
 	public static boolean inES5()
 	{
