@@ -27,7 +27,7 @@ public class JslintXmlReporter implements JSHintReporter
 		{
 			if (StringUtils.isNotEmpty(s))
 			{
-				s = s.replaceAll(r, pairs.get(r));
+				s = StringUtils.replace(s, r, pairs.get(r));
 			}
 		}
 		return s != null ? s : "";
@@ -41,7 +41,7 @@ public class JslintXmlReporter implements JSHintReporter
 		
 		for (ReporterResult result : results)
 		{
-			String file = result.getFile().replace("^\\./", "");
+			String file = StringUtils.removeStart(result.getFile(), "./");
 			if (!files.containsKey(file))
 			{
 				files.put(file, new ArrayList<LinterWarning>());

@@ -1,3 +1,6 @@
+## 2.10.1
+##### Released: 08 February 2019
+  * New version of JSHint v2.10.1 is ported
 ## 2.9.7
 ##### Released: 17 December 2018
   * New version of JSHint v2.9.7 is ported

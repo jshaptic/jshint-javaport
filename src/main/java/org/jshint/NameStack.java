@@ -5,6 +5,26 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * The NameStack class is used to approximate function name inference as
+ * introduced by ECMAScript 2015. In that edition, the `name` property of
+ * function objects is set according to the function's syntactic form. For
+ * certain forms, this value depends on values available to the runtime during
+ * execution. For example:
+ *
+ *     var fnName = function() {};
+ *
+ * In the program code above, the function object's `name` property is set to
+ * `"fnName"` during execution.
+ *
+ * This general "name inference" behavior extends to a number of additional
+ * syntactic forms, not all of which can be implemented statically. `NameStack`
+ * is a support class representing a "best-effort" attempt to implement the
+ * specified behavior in cases where this may be done statically.
+ *
+ * For more information on this behavior, see the following blog post:
+ * https://bocoup.com/blog/whats-in-a-function-name
+ */
 public class NameStack
 {
 	private List<Token> stack;
@@ -62,7 +82,7 @@ public class NameStack
 		// the `function` keyword (i.e. for in-line accessor methods). In other
 		// cases, the `function` expression itself will introduce an empty entry on
 		// the top of the stack, and this should be ignored.
-		if (nameToken == null || nameToken.getType() == TokenType.CLASS)
+		if (nameToken == null || nameToken.getType() == Token.Type.CLASS)
 		{
 			nameToken = (stack.size() > length()-2 && length() > 1) ? stack.get(length()-2) : null;
 		}
@@ -72,9 +92,9 @@ public class NameStack
 			return "(empty)";
 		}
 		
-		TokenType type = nameToken.getType();
+		Token.Type type = nameToken.getType();
 		
-		if (type != TokenType.STRING && type != TokenType.NUMBER && type != TokenType.IDENTIFIER && type != TokenType.DEFAULT)
+		if (type != Token.Type.STRING && type != Token.Type.NUMBER && type != Token.Type.IDENTIFIER && type != Token.Type.DEFAULT)
 		{
 			return "(expression)";
 		}

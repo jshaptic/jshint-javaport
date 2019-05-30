@@ -5,8 +5,11 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -50,26 +53,26 @@ public class TestCli extends Assert
 		CliWrapper cli = setUpGroupCli();
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "var a = function () {}; a();";
-			if (Reg.test("file1\\.json$", path)) return "wat";
-			if (Reg.test("file2\\.json$", path)) return "{\"node\":true,\"globals\":{\"foo\":true,\"bar\":true}}";
-			if (Reg.test("file4\\.json$", path)) return "{\"extends\":\"file3.json\"}";
-			if (Reg.test("file5\\.json$", path)) return "{\"extends\":\"file2.json\"}";
-			if (Reg.test("file6\\.json$", path)) return "{\"extends\":\"file2.json\",\"node\":false}";
-			if (Reg.test("file7\\.json$", path)) return "{\"extends\":\"file2.json\",\"globals\":{\"bar\":false,\"baz\":true}}";
-			if (Reg.test("file8\\.json$", path)) return "{\"extends\":\"file7.json\",\"overrides\":{\"file.js\":{\"globals\":{\"foo\":true,\"bar\":true}}}}";
-			if (Reg.test("file9\\.json$", path)) return "{\"extends\":\"file8.json\",\"overrides\":{\"file.js\":{\"globals\":{\"baz\":true,\"bar\":false}}}}";
+			if (path.endsWith("file.js")) return "var a = function () {}; a();";
+			if (path.endsWith("file1.json")) return "wat";
+			if (path.endsWith("file2.json")) return "{\"node\":true,\"globals\":{\"foo\":true,\"bar\":true}}";
+			if (path.endsWith("file4.json")) return "{\"extends\":\"file3.json\"}";
+			if (path.endsWith("file5.json")) return "{\"extends\":\"file2.json\"}";
+			if (path.endsWith("file6.json")) return "{\"extends\":\"file2.json\",\"node\":false}";
+			if (path.endsWith("file7.json")) return "{\"extends\":\"file2.json\",\"globals\":{\"bar\":false,\"baz\":true}}";
+			if (path.endsWith("file8.json")) return "{\"extends\":\"file7.json\",\"overrides\":{\"file.js\":{\"globals\":{\"foo\":true,\"bar\":true}}}}";
+			if (path.endsWith("file9.json")) return "{\"extends\":\"file8.json\",\"overrides\":{\"file.js\":{\"globals\":{\"baz\":true,\"bar\":false}}}}";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
-			if (Reg.test("file1\\.json$", path)) return true;
-			if (Reg.test("file2\\.json$", path)) return true;
-			if (Reg.test("file3\\.json$", path)) return false;
-			if (Reg.test("file4\\.json$", path)) return true;
-			if (Reg.test("file5\\.json$", path)) return true;
-			if (Reg.test("file6\\.json$", path)) return true;
+			if (path.endsWith("file.js")) return true;
+			if (path.endsWith("file1.json")) return true;
+			if (path.endsWith("file2.json")) return true;
+			if (path.endsWith("file3.json")) return false;
+			if (path.endsWith("file4.json")) return true;
+			if (path.endsWith("file5.json")) return true;
+			if (path.endsWith("file6.json")) return true;
 			return false;
 		});
 		
@@ -160,16 +163,16 @@ public class TestCli extends Assert
 		CliWrapper cli = setUpGroupCli();
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "a();";
-			if (Reg.test("prereq.js$", path)) return "var a = 1;";
-			if (Reg.test("config.json$", path)) return "{\"undef\":true,\"prereq\":[\"prereq.js\", \"prereq2.js\"]}";
+			if (path.endsWith("file.js")) return "a();";
+			if (path.endsWith("prereq.js")) return "var a = 1;";
+			if (path.endsWith("config.json")) return "{\"undef\":true,\"prereq\":[\"prereq.js\", \"prereq2.js\"]}";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
-			if (Reg.test("prereq.js$", path)) return true;
-			if (Reg.test("config.json$", path)) return true;
+			if (path.endsWith("file.js")) return true;
+			if (path.endsWith("prereq.js")) return true;
+			if (path.endsWith("config.json")) return true;
 			return false;
 		});
 		
@@ -186,16 +189,16 @@ public class TestCli extends Assert
 		CliWrapper cli = setUpGroupCli();
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "a();";
-			if (Reg.test("prereq.js$", path)) return "var a = 1;";
-			if (Reg.test("config.json$", path)) return "{\"undef\":true}";
+			if (path.endsWith("file.js")) return "a();";
+			if (path.endsWith("prereq.js")) return "var a = 1;";
+			if (path.endsWith("config.json")) return "{\"undef\":true}";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
-			if (Reg.test("prereq.js$", path)) return true;
-			if (Reg.test("config.json$", path)) return true;
+			if (path.endsWith("file.js")) return true;
+			if (path.endsWith("prereq.js")) return true;
+			if (path.endsWith("config.json")) return true;
 			return false;
 		});
 		
@@ -212,18 +215,18 @@ public class TestCli extends Assert
 		CliWrapper cli = setUpGroupCli();
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "a(); b();";
-			if (Reg.test("prereq.js$", path)) return "var a = 1;";
-			if (Reg.test("prereq2.js$", path)) return "var b = 2;";
-			if (Reg.test("config.json$", path)) return "{\"undef\":true,\"prereq\":[\"prereq.js\"]}";
+			if (path.endsWith("file.js")) return "a(); b();";
+			if (path.endsWith("prereq.js")) return "var a = 1;";
+			if (path.endsWith("prereq2.js")) return "var b = 2;";
+			if (path.endsWith("config.json")) return "{\"undef\":true,\"prereq\":[\"prereq.js\"]}";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
-			if (Reg.test("prereq.js$", path)) return true;
-			if (Reg.test("prereq2.js$", path)) return true;
-			if (Reg.test("config.json$", path)) return true;
+			if (path.endsWith("file.js")) return true;
+			if (path.endsWith("prereq.js")) return true;
+			if (path.endsWith("prereq2.js")) return true;
+			if (path.endsWith("config.json")) return true;
 			return false;
 		});
 		
@@ -244,16 +247,16 @@ public class TestCli extends Assert
 		cli.stubCwd(() -> dir);
 		
 		cli.stubCat(path -> {
-			if (Reg.test("foo\\.js$", path)) return "a()";
-			if (Reg.test("bar\\.js$", path)) return "a()";
-			if (Reg.test("config\\.json$", path)) return config;
+			if (path.endsWith("foo.js")) return "a()";
+			if (path.endsWith("bar.js")) return "a()";
+			if (path.endsWith("config.json")) return config;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("foo\\.js$", path)) return true;
-			if (Reg.test("bar\\.js$", path)) return true;
-			if (Reg.test("config\\.json$", path)) return true;
+			if (path.endsWith("foo.js")) return true;
+			if (path.endsWith("bar.js")) return true;
+			if (path.endsWith("config.json")) return true;
 			return false;
 		});
 		
@@ -282,14 +285,14 @@ public class TestCli extends Assert
 		cli.stubCwd(() -> dir);
 		
 		cli.stubCat(path -> {
-			if (Reg.test("bar\\.js$", path)) return "a()";
-			if (Reg.test("config\\.json$", path)) return config;
+			if (path.endsWith("bar.js")) return "a()";
+			if (path.endsWith("config.json")) return config;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("bar\\.js$", path)) return true;
-			if (Reg.test("config\\.json$", path)) return true;
+			if (path.endsWith("bar.js")) return true;
+			if (path.endsWith("config.json")) return true;
 			return false;
 		});
 		
@@ -323,12 +326,12 @@ public class TestCli extends Assert
 		cli.restoreStdout();
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "func()";
+			if (path.endsWith("file.js")) return "func()";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -398,7 +401,7 @@ public class TestCli extends Assert
 		cli.stubExists(path -> {
 			if (path.equals(localRc)) return true;
 			if (path.equals(localNpm)) return true;
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -408,7 +411,7 @@ public class TestCli extends Assert
 			// stub npm file
 			if (path.equals(localNpm)) return "{"; // malformed package.json
 			// stub src file
-			if (Reg.test("file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -426,7 +429,7 @@ public class TestCli extends Assert
 		
 		cli.stubExists(path -> {
 			if (path.equals(localRc)) return true;
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -434,7 +437,7 @@ public class TestCli extends Assert
 			// stub rc file
 			if (path.equals(localRc)) return "{\"evil\": true}";
 			// stub src file
-			if (Reg.test("file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -451,7 +454,7 @@ public class TestCli extends Assert
 		
 		cli.stubExists(path -> {
 			if (path.equals(homeRc)) return true;
-			if (Reg.test("/file\\.js$", path)) return true;
+			if (path.endsWith("/file.js")) return true;
 			return false;
 		});
 		
@@ -459,7 +462,7 @@ public class TestCli extends Assert
 			// stub rc file
 			if (path.equals(homeRc)) return "{\"evil\": true}";
 			// stub src file (in root where we are unlikely to find a .jshintrc)
-			if (Reg.test("/file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("/file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -482,7 +485,7 @@ public class TestCli extends Assert
 		
 		cli.stubExists(path -> {
 			if (path.equals(localRc)) return true;
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -490,7 +493,7 @@ public class TestCli extends Assert
 			// stub rc file
 			if (path.equals(localRc)) return "{\"evil\": true}";
 			// stub src file
-			if (Reg.test("file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -514,7 +517,7 @@ public class TestCli extends Assert
 		
 		cli.stubExists(path -> {
 			if (path.equals(parentRc)) return true;
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -522,7 +525,7 @@ public class TestCli extends Assert
 			// stub rc file
 			if (path.equals(parentRc)) return "{\"evil\": true}";
 			// stub src file
-			if (Reg.test("file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -542,7 +545,7 @@ public class TestCli extends Assert
 		
 		cli.stubExists(path -> {
 			if (path.equals(projectRc)) return true;
-			if (Reg.test("file\\.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -550,7 +553,7 @@ public class TestCli extends Assert
 			// stub rc file
 			if (path.equals(projectRc)) return "{\"evil\": true}";
 			// stub src file
-			if (Reg.test("file\\.js$", path)) return "eval('a=2');";
+			if (path.endsWith("file.js")) return "eval('a=2');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -618,14 +621,14 @@ public class TestCli extends Assert
 		cli.stubCwd(() -> dir);
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file\\.js$", path)) return "This is not Javascript.";
-			if (Reg.test("\\.jshintignore$", path)) return "**/ignored-dir/**";
+			if (path.endsWith("file.js")) return "This is not Javascript.";
+			if (path.endsWith(".jshintignore")) return "**/ignored-dir/**";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file\\.js$", path)) return true;
-			if (Reg.test("\\.jshintignore$", path)) return true;
+			if (path.endsWith("file.js")) return true;
+			if (path.endsWith(".jshintignore")) return true;
 			return false;
 		});
 		
@@ -685,16 +688,15 @@ public class TestCli extends Assert
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test(".*", path)) return true;
-			return false;
+			return true;
 		});
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file2?\\.js$", path)) return "console.log('Hello');";
-			if (Reg.test("ignore[\\/\\\\]file\\d\\.js$", path)) return "console.log('Hello, ignore me');";
-			if (Reg.test("ignore[\\/\\\\]dir[\\/\\\\]file\\d\\.js$", path)) return "print('Ignore me');";
-			if (Reg.test("node_script$", path)) return "console.log('Hello, ignore me');";
-			if (Reg.test("\\.jshintignore$", path)) return IOUtils.getPathUtils().join("ignore", "**");
+			if (path.endsWith("file.js") || path.endsWith("file2.js")) return "console.log('Hello');";
+			if (Reg.test(Pattern.compile("ignore[\\/\\\\]file\\d\\.js$"), path)) return "console.log('Hello, ignore me');";
+			if (Reg.test(Pattern.compile("ignore[\\/\\\\]dir[\\/\\\\]file\\d\\.js$"), path)) return "print('Ignore me');";
+			if (path.endsWith("node_script")) return "console.log('Hello, ignore me');";
+			if (path.endsWith(".jshintignore")) return IOUtils.getPathUtils().join("ignore", "**");
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -712,22 +714,23 @@ public class TestCli extends Assert
 		cli.restoreCat();
 		
 		cli.stubIsDirectory(path -> {
-			if (Reg.test("src[\\/\\\\]lib$", path)) return true;
+			if (path.endsWith("src")) return true;
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib$"), path)) return true;
 			return false;
 		});
 		
 		cli.stubLs(path -> {
-			if (Reg.test("src$", path)) return Arrays.asList("lib", "file4.js");
-			if (Reg.test("src[\\/\\\\]lib$", path)) return Arrays.asList("file5.js");
+			if (path.endsWith("src")) return Arrays.asList("lib", "file4.js");
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib$"), path)) return Arrays.asList("file5.js");
 			return null;
 		});
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file2?\\.js$", path)) return "console.log('Hello');";
-			if (Reg.test("file3\\.json$", path)) return "{}";
-			if (Reg.test("src[\\/\\\\]file4\\.js$", path)) return "print('Hello');";
-			if (Reg.test("src[\\/\\\\]lib[\\/\\\\]file5\\.js$", path)) return "print('Hello');";
-			if (Reg.test("\\.jshintignore$", path)) return "";
+			if (path.endsWith("file.js") || path.endsWith("file2.js")) return "console.log('Hello');";
+			if (path.endsWith("file3.json")) return "{}";
+			if (Reg.test(Pattern.compile("src[\\/\\\\]file4\\.js$"), path)) return "print('Hello');";
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib[\\/\\\\]file5\\.js$"), path)) return "print('Hello');";
+			if (path.endsWith(".jshintignore")) return "";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -741,12 +744,12 @@ public class TestCli extends Assert
 		assertEquals(args.get().getIgnores(), Collections.emptyList());
 		
 		cli.stubCat(path -> {
-			if (Reg.test("file2?\\.js$", path)) return "console.log('Hello');";
-			if (Reg.test("file3\\.json$", path)) return "{}";
-			if (Reg.test("src[\\/\\\\]file4\\.js$", path)) return "print('Hello');";
-			if (Reg.test("src[\\/\\\\]lib[\\/\\\\]file5\\.js$", path)) return "print('Hello');";
-			if (Reg.test("\\.jshintignore$", path)) return "";
-			if (Reg.test("reporter\\.js$", path)) return "console.log('Hello');";
+			if (path.endsWith("file.js") || path.endsWith("file2.js")) return "console.log('Hello');";
+			if (path.endsWith("file3.json")) return "{}";
+			if (Reg.test(Pattern.compile("src[\\/\\\\]file4\\.js$"), path)) return "print('Hello');";
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib[\\/\\\\]file5\\.js$"), path)) return "print('Hello');";
+			if (path.endsWith(".jshintignore")) return "";
+			if (path.endsWith("reporter.js")) return "console.log('Hello');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -763,7 +766,7 @@ public class TestCli extends Assert
 		CliWrapper cli = setUpGroupCli();
 		
 		cli.stubExists(path -> {
-			if (Reg.test("file.js$", path)) return true;
+			if (path.endsWith("file.js")) return true;
 			return false;
 		});
 		
@@ -784,19 +787,21 @@ public class TestCli extends Assert
 		String dir = System.getProperty("user.dir") + "/src/test/resources/examples/";
 		cli.stubCwd(() -> dir);
 		
-		List<String[]> demoFiles = new ArrayList<String[]>();
-		demoFiles.add(new String[] {"file2?\\.js$", "console.log('Hello');"});
-		demoFiles.add(new String[] {"ignore[\\/\\\\]file\\d\\.js$", "console.log('Hello, ignore me');"});
-		demoFiles.add(new String[] {"ignore[\\/\\\\]dir[\\/\\\\]file\\d\\.js$", "print('Ignore me');"});
-		demoFiles.add(new String[] {"node_script$", "console.log('Hello, ignore me');"});
+		Map<Pattern, String> demoFiles = new HashMap<Pattern, String>();
+		demoFiles.put(Pattern.compile("file2?\\.js$"), "console.log('Hello');");
+		demoFiles.put(Pattern.compile("ignore[\\/\\\\]file\\d\\.js$"), "console.log('Hello, ignore me');");
+		demoFiles.put(Pattern.compile("ignore[\\/\\\\]dir[\\/\\\\]file\\d\\.js$"), "print('Ignore me');");
+		demoFiles.put(Pattern.compile("node_script$"), "console.log('Hello, ignore me');");
 		
 		cli.stubExists(path -> {
-			for (String[] file : demoFiles) if (Reg.test(file[0], path)) return true;
+			for (Pattern file : demoFiles.keySet())
+				if (Reg.test(file, path)) return true;
 			return false;
 		});
 		
 		cli.stubCat(path -> {
-			for (String[] file : demoFiles) if (Reg.test(file[0], path)) return file[1];
+			for (Pattern file : demoFiles.keySet())
+				if (Reg.test(file, path)) return demoFiles.get(file);
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -815,32 +820,34 @@ public class TestCli extends Assert
 		assertEquals(files.get(1), "file2.js");
 		assertEquals(files.get(2), "node_script");
 		
-		demoFiles.add(new String[] {"file2?\\.js$", "console.log('Hello');"});
-		demoFiles.add(new String[] {"file3\\.json$", "{}"});
-		demoFiles.add(new String[] {"src[\\/\\\\]file4\\.js$", "print('Hello');"});
-		demoFiles.add(new String[] {"src[\\/\\\\]lib[\\/\\\\]file5\\.js$", "print('Hello'); "});
+		// demoFiles.put(new String[] {"file2?\\.js$", "console.log('Hello');"}); JSHINT_BUG: copy paste
+		demoFiles.put(Pattern.compile("file3\\.json$"), "{}");
+		demoFiles.put(Pattern.compile("src[\\/\\\\]file4\\.js$"), "print('Hello');");
+		demoFiles.put(Pattern.compile("src[\\/\\\\]lib[\\/\\\\]file5\\.js$"), "print('Hello'); ");
 		
 		cli.stubExists(path -> {
-			for (String[] file : demoFiles) if (Reg.test(file[0], path)) return true;
-			if (Reg.test("src$", path)) return true;
-			if (Reg.test("src[\\/\\\\]lib$", path)) return true;
+			for (Pattern file : demoFiles.keySet())
+				if (Reg.test(file, path)) return true;
+			if (path.endsWith("src")) return true;
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib$"), path)) return true;
 			return false;
 		});
 		
 		cli.stubIsDirectory(path -> {
-			if (Reg.test("src$", path)) return true;
-			if (Reg.test("src[\\/\\\\]lib$", path)) return true;
+			if (path.endsWith("src")) return true;
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib$"), path)) return true;
 			return false;
 		});
 		
 		cli.stubLs(path -> {
-			if (Reg.test("src$", path)) return Arrays.asList("lib", "file4.js");
-			if (Reg.test("src[\\/\\\\]lib$", path)) return Arrays.asList("file5.js");
+			if (path.endsWith("src")) return Arrays.asList("lib", "file4.js");
+			if (Reg.test(Pattern.compile("src[\\/\\\\]lib$"), path)) return Arrays.asList("file5.js");
 			return null;
 		});
 		
 		cli.stubCat(path -> {
-			for (String[] file : demoFiles) if (Reg.test(file[0], path)) return file[1];
+			for (Pattern file : demoFiles.keySet())
+				if (Reg.test(file, path)) return demoFiles.get(file);
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -867,7 +874,7 @@ public class TestCli extends Assert
 		
 		cli.stubCwd(() -> System.getProperty("user.dir") + "/src/test/resources/");
 		cli.stubCat(path -> {
-			if (Reg.test("reporter\\.js$", path)) return "console.log('Hello');";
+			if (path.endsWith("reporter.js")) return "console.log('Hello');";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -890,13 +897,14 @@ public class TestCli extends Assert
 		cli.stubCwd(() -> dir);
 		
 		cli.stubExists(path -> {
-			if (Reg.test("(pass\\.js|fail\\.js)$", path)) return true;
+			if (path.endsWith("pass.js")) return true;
+			if (path.endsWith("fail.js")) return true;
 			return false;
 		});
 		
 		cli.stubCat(path -> {
-			if (Reg.test("pass\\.js$", path)) return "function test() { return 0; }";
-			if (Reg.test("fail\\.js$", path)) return "console.log('Hello')";
+			if (path.endsWith("pass.js")) return "function test() { return 0; }";
+			if (path.endsWith("fail.js")) return "console.log('Hello')";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
@@ -987,12 +995,12 @@ public class TestCli extends Assert
 		}, "\n");
 		
 		cli.stubCat(path -> {
-			if (Reg.test("indent\\.html$", path)) return html;
+			if (path.endsWith("indent.html")) return html;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("indent\\.html$", path)) return true;
+			if (path.endsWith("indent.html")) return true;
 			return false;
 		});
 		
@@ -1032,12 +1040,12 @@ public class TestCli extends Assert
 		}, "\n");
 		
 		cli.stubCat(path -> {
-			if (Reg.test("indent\\.html$", path)) return html;
+			if (path.endsWith("indent.html")) return html;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("indent\\.html$", path)) return true;
+			if (path.endsWith("indent.html")) return true;
 			return false;
 		});
 		
@@ -1071,12 +1079,12 @@ public class TestCli extends Assert
 		}, "\n");
 		
 		cli.stubCat(path -> {
-			if (Reg.test("firstLine\\.html$", path)) return html;
+			if (path.endsWith("firstLine.html")) return html;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("firstLine\\.html$", path)) return true;
+			if (path.endsWith("firstLine.html")) return true;
 			return false;
 		});
 		
@@ -1118,12 +1126,12 @@ public class TestCli extends Assert
 		}, "\n");
 		
 		cli.stubCat(path -> {
-			if (Reg.test("sameLine\\.html$", path)) return html;
+			if (path.endsWith("sameLine.html")) return html;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("sameLine\\.html$", path)) return true;
+			if (path.endsWith("sameLine.html")) return true;
 			return false;
 		});
 		
@@ -1163,14 +1171,14 @@ public class TestCli extends Assert
 		}, "\n");
 		
 		cli.stubCat(path -> {
-			if (Reg.test("indent\\.html$", path)) return html;
-			if (Reg.test("another\\.html$", path)) return "\n\n<script>a && a();</script>";
+			if (path.endsWith("indent.html")) return html;
+			if (path.endsWith("another.html")) return "\n\n<script>a && a();</script>";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("indent\\.html$", path)) return true;
-			if (Reg.test("another\\.html$", path)) return true;
+			if (path.endsWith("indent.html")) return true;
+			if (path.endsWith("another.html")) return true;
 			return false;
 		});
 		
@@ -1220,12 +1228,12 @@ public class TestCli extends Assert
 		String jshintrc = "{ \"undef\": true }";
 		
 		cli.stubCat(path -> {
-			if (Reg.test("[/\\\\]fake[/\\\\]\\.jshintrc$", path)) return jshintrc;
+			if (Reg.test(Pattern.compile("[/\\\\]fake[/\\\\]\\.jshintrc$"), path)) return jshintrc;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("fake[/\\\\]\\.jshintrc$", path)) return true;
+			if (Reg.test(Pattern.compile("fake[/\\\\]\\.jshintrc$"), path)) return true;
 			return false;
 		});
 		
@@ -1284,13 +1292,13 @@ public class TestCli extends Assert
 		String jshintrc = "{ \"undef\": false, \"overrides\": { \"**/fake/**\": { \"undef\": true } } }";
 		
 		cli.stubCat(path -> {
-			if (Reg.test("\\.jshintrc$", path)) return jshintrc;
+			if (path.endsWith(".jshintrc")) return jshintrc;
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("fake[/\\\\]\\.jshintrc$", path)) return true;
-			if (Reg.test("\\.jshintrc$", path)) return true;
+			if (Reg.test(Pattern.compile("fake[/\\\\]\\.jshintrc$"), path)) return true;
+			if (path.endsWith(".jshintrc")) return true;
 			return false;
 		});
 		
@@ -1330,12 +1338,12 @@ public class TestCli extends Assert
 		cli.stubStdout();
 		
 		cli.stubCat(path -> {
-			if (Reg.test("\\.jshintignore$", path)) return "ignore-me.js";
+			if (path.endsWith(".jshintignore")) return "ignore-me.js";
 			throw new UncheckedIOException(new IOException("Method 'cat' is overridden for testing purposes"));
 		});
 		
 		cli.stubExists(path -> {
-			if (Reg.test("\\.jshintignore$", path)) return true;
+			if (path.endsWith(".jshintignore")) return true;
 			return false;
 		});
 		

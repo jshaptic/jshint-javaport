@@ -16,3 +16,5 @@ test/annexB/language/literals/regexp/quantifiable-assertion-followed-by.js(defau
 test/annexB/language/literals/regexp/quantifiable-assertion-followed-by.js(strict mode)
 test/annexB/language/literals/regexp/quantifiable-assertion-not-followed-by.js(default)
 test/annexB/language/literals/regexp/quantifiable-assertion-not-followed-by.js(strict mode)
+test/language/literals/regexp/u-unicode-esc.js(default)
+test/language/literals/regexp/u-unicode-esc.js(strict mode)

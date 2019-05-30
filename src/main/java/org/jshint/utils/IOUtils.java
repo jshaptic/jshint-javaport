@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
@@ -19,7 +20,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jshint.Reg;
 
 public class IOUtils
 {
@@ -27,13 +27,18 @@ public class IOUtils
 	private static ShellUtils shell = new ShellUtils(path);
 	private static CliUtils cli = new CliUtils();
 	
-	private static boolean isWindows = (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
+	private static final boolean isWindows = (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
 	// Regex to split a windows path into three parts: [*, device, slash, tail] windows-only
-	private static Pattern splitDeviceRe = Pattern.compile("^([a-zA-Z]:|[\\\\\\/]{2}[^\\\\\\/]+[\\\\\\/]+[^\\\\\\/]+)?([\\\\\\/])?([\\s\\S]*?)$");
+	private static final Pattern splitDeviceRe = Pattern.compile("^([a-zA-Z]:|[\\\\\\/]{2}[^\\\\\\/]+[\\\\\\/]+[^\\\\\\/]+)?([\\\\\\/])?([\\s\\S]*?)$");
 	// Split a filename into [root, dir, basename, ext], unix version 'root' is just a slash, or nothing.
-	private static Pattern splitPathRe = Pattern.compile("^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$");
+	private static final Pattern splitPathRe = Pattern.compile("^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$");
 	// Regex to split the tail part of the above into [*, dir, basename, ext]
-	private static Pattern splitTailRe = Pattern.compile("^([\\s\\S]*?)((?:\\.{1,2}|[^\\\\\\/]+?|)(\\.[^.\\/\\\\]*|))(?:[\\\\\\/]*)$");
+	private static final Pattern splitTailRe = Pattern.compile("^([\\s\\S]*?)((?:\\.{1,2}|[^\\\\\\/]+?|)(\\.[^.\\/\\\\]*|))(?:[\\\\\\/]*)$");
+	
+	private static final Pattern pathSeparator = Pattern.compile("[\\\\\\/]+");
+	private static final Pattern startsWithPathSeparator = Pattern.compile("^[\\\\\\/]+");
+	private static final Pattern nonUncPath = Pattern.compile("^[\\\\\\/]{2}[^\\\\\\/]");
+	private static final Pattern startsWithTwoPathSeparators = Pattern.compile("^[\\\\\\/]{2,}");
 	
 	private static final CommandLineParser parser = new DefaultParser();
 	
@@ -94,15 +99,15 @@ public class IOUtils
 		private String[] win32SplitPath(String filename)
 		{
 			// Separate device+slash from tail
-			String[] result = Reg.exec(splitDeviceRe, filename);
+			String[] result = exec(splitDeviceRe, filename);
 			String device = (result.length > 1 ? StringUtils.defaultString(result[1]) : "") + (result.length > 2 ? StringUtils.defaultString(result[2]) : "");
 			String tail = result.length > 3 ? StringUtils.defaultString(result[3]) : "";
 			
 			// Split the tail into dir, basename and extension
-			String[] result2 = Reg.exec(splitTailRe, tail);
-			String dir = result2.length > 1 ? StringUtils.defaultString(result2[1]) : "";
-			String basename = result2.length > 2 ? StringUtils.defaultString(result2[2]) : "";
-			String ext = result2.length > 3 ? StringUtils.defaultString(result2[3]) : "";
+			result = exec(splitTailRe, tail);
+			String dir = result.length > 1 ? StringUtils.defaultString(result[1]) : "";
+			String basename = result.length > 2 ? StringUtils.defaultString(result[2]) : "";
+			String ext = result.length > 3 ? StringUtils.defaultString(result[3]) : "";
 			
 			return new String[]{device, dir, basename, ext};
 		}
@@ -111,7 +116,7 @@ public class IOUtils
 		{
 			StatPath sp = new StatPath();
 			
-			String[] result = Reg.exec(splitDeviceRe, path);
+			String[] result = exec(splitDeviceRe, path);
 			sp.device = result.length > 1 ? StringUtils.defaultString(result[1]): "";
 			sp.isUnc = StringUtils.isNotEmpty(sp.device) && sp.device.charAt(1) != ':';
 			sp.isAbsolute = sp.isUnc || (result.length > 2 && StringUtils.isNotEmpty(result[2])); // UNC paths are always absolute
@@ -121,7 +126,7 @@ public class IOUtils
 		
 		private String normalizeUNCRoot(String device)
 		{
-			return "\\\\" + device.replaceFirst("^[\\\\\\/]+", "").replaceAll("[\\\\\\/]+", "\\");
+			return "\\\\" + pathSeparator.matcher(startsWithPathSeparator.matcher(device).replaceFirst("")).replaceAll("\\");
 		}
 		
 		private String win32Resolve(String... paths)
@@ -190,7 +195,7 @@ public class IOUtils
 			// fails)
 			
 			// Normalize the tail path
-			resolvedTail = StringUtils.join(normalizeArray(resolvedTail.split("[\\\\\\/]+"), !resolvedAbsolute), "\\");
+			resolvedTail = StringUtils.join(normalizeArray(pathSeparator.split(resolvedTail), !resolvedAbsolute), "\\");
 			
 			return StringUtils.defaultString(resolvedDevice + (resolvedAbsolute ? "\\" : "") + resolvedTail, ".");
 		}
@@ -202,10 +207,11 @@ public class IOUtils
 			boolean isUnc = result.isUnc;
 			boolean isAbsolute = result.isAbsolute;
 			String tail = result.tail;
-			boolean trailingSlash = Reg.test("[\\\\\\/]$", tail);
+			boolean trailingSlash = tail.endsWith("/") || tail.endsWith("\\");
+			
 			
 			// Normalize the tail path
-			tail = StringUtils.join(normalizeArray(tail.split("[\\\\\\/]+"), !isAbsolute), "\\");
+			tail = StringUtils.join(normalizeArray(pathSeparator.split(tail), !isAbsolute), "\\");
 			
 			if (StringUtils.isEmpty(tail) && !isAbsolute)
 			{
@@ -260,9 +266,9 @@ public class IOUtils
 			// This means that the user can use join to construct UNC paths from
 			// a server name and a share name; for example:
 			//   path.join('//server', 'share') -> '\\\\server\\share\')
-			if (Reg.test("^[\\\\\\/]{2}[^\\\\\\/]", rootPath))
+			if (nonUncPath.matcher(rootPath).find())
 			{
-				joined = joined.replaceFirst("^[\\\\\\/]{2,}", "\\");
+				joined = startsWithTwoPathSeparators.matcher(joined).replaceFirst("\\");
 			}
 			
 			return win32Normalize(joined);
@@ -291,7 +297,7 @@ public class IOUtils
 		
 		private String[] posixSplitPath(String filename)
 		{
-			String[] result = Reg.exec(splitPathRe, filename);
+			String[] result = exec(splitPathRe, filename);
 			return ArrayUtils.subarray(result, 1, result.length);
 		}
 		
@@ -319,7 +325,7 @@ public class IOUtils
 			// handle relative paths to be safe (might happen when process.cwd() fails)
 						
 			// Normalize the tail path
-			resolvedPath = StringUtils.join(normalizeArray(resolvedPath.split("/"), !resolvedAbsolute), "/");
+			resolvedPath = StringUtils.join(normalizeArray(resolvedPath.split("/", -1), !resolvedAbsolute), "/");
 			
 			return StringUtils.defaultString((resolvedAbsolute ? "/" : "") + resolvedPath, ".");
 		}
@@ -330,7 +336,7 @@ public class IOUtils
 			boolean trailingSlash = StringUtils.isNotEmpty(path) && path.charAt(path.length() - 1) == '/';
 			
 			// Normalize the path
-			path = StringUtils.join(normalizeArray(path.split("/"), !isAbsolute), "/");
+			path = StringUtils.join(normalizeArray(path.split("/", -1), !isAbsolute), "/");
 			
 			if (StringUtils.isEmpty(path) && !isAbsolute)
 			{
@@ -527,5 +533,25 @@ public class IOUtils
 		boolean isUnc = false;
 		boolean isAbsolute = false;
 		String tail = "";
+	}
+	
+	private static String[] exec(Pattern p, String input)
+	{
+		String[] result;
+		
+		Matcher m = p.matcher(StringUtils.defaultString(input));
+		if (m.find())
+		{
+			int groupCount = m.groupCount() + 1;
+			result = new String[groupCount];
+			
+			for (int i = 0; i < groupCount; i++)
+			{
+				result[i] = m.group(i);
+			}
+			return result;
+		}
+		else
+			return null;
 	}
 }

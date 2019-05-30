@@ -292,7 +292,7 @@ public class TestOptions extends Assert
 	    th.test(esnextSrc, new LinterOptions().set("esversion", 2015).set("latedef", "nofunc"));
 	    
 	    th.newTest("shouldn't warn when marking a var as exported");
-	    th.test("var a;", new LinterOptions().addExporteds("a").set("latedef", true));
+	    th.test("var a;", new LinterOptions().setExporteds("a").set("latedef", true));
 	}
 	
 	@Test
@@ -1162,6 +1162,73 @@ public class TestOptions extends Assert
 	    th.addError(56, 13, "'topBlock3' is already defined.");
 	    th.addError(59, 13, "'topBlock4' is already defined.");
 	    th.test(code);
+	}
+	
+	// Regression test for gh-3354
+	@Test(groups = {"unused"})
+	public void testUnusedMethodNames()
+	{
+		th.newTest("object methods - ES5");
+		th.test(new String[] {
+			"var p;",
+			"void {",
+			"  get p() { void p; },",
+			"  set p(_) { void p; void _; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 5));
+		
+		th.newTest("object methods - ES6");
+		th.test(new String[] {
+			"var m, g;",
+			"void {",
+			"  m() { void m; },",
+			"  *g() { yield g; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 6));
+		
+		th.newTest("object methods - ES8");
+		th.test(new String[] {
+			"var m;",
+			"void {",
+			"  async m() { void m; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 8));
+		
+		th.newTest("object methods - ES9");
+		th.test(new String[] {
+			"var m;",
+			"void {",
+			"  async * m() { yield m; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 9));
+		
+		th.newTest("class methods - ES6");
+		th.test(new String[] {
+			"var m, g, p, s;",
+			"void class {",
+			"  m() { void m; }",
+			"  *g() { yield g; }",
+			"  get p() { void p; }",
+			"  set p() { void p; }",
+			"  static s() { void s; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 6));
+		
+		th.newTest("class methods - ES8");
+		th.test(new String[] {
+			"var m;",
+			"void class {",
+			"  async m() { void m; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 8));
+		
+		th.newTest("class methods - ES9");
+		th.test(new String[] {
+			"var m;",
+			"void class {",
+			"  async * m() { yield m; }",
+			"};"
+		}, new LinterOptions().set("unused", true).set("esversion", 9));
 	}
 	
 	@Test
@@ -2518,7 +2585,7 @@ public class TestOptions extends Assert
 		th.newTest();
 		th.addError(14, 20, "'NodeFilter' is not defined.");
 		th.addError(15, 19, "'Node' is not defined.");
-		th.test(src, new LinterOptions().set("undef", true).set("browser", true).addPredefineds("-Node", "-NodeFilter"));
+		th.test(src, new LinterOptions().set("undef", true).set("browser", true).setPredefineds("-Node", "-NodeFilter"));
 		
 		th.newTest();
 		th.addError(3, 9, "'event' is not defined.");
@@ -2774,6 +2841,9 @@ public class TestOptions extends Assert
 		// Can override default hard
 		th.newTest();
 		th.test(src, new LinterOptions().set("enforceall", true).set("nonbsp", false).set("bitwise", false).set("sub", true).set("undef", false).set("unused", false).set("asi", true));
+		
+		th.newTest("Does not enable 'regexpu'.");
+		th.test("void /./;", new LinterOptions().set("enforceall", true));
 	};
 	
 	@Test
@@ -2782,7 +2852,7 @@ public class TestOptions extends Assert
 		String src = th.readFile("src/test/resources/fixtures/removeglobals.js");
 		
 		th.addError(1, 1, "'JSON' is not defined.");
-		th.test(src, new LinterOptions().set("undef", true).addPredefineds("-JSON", "myglobal"));
+		th.test(src, new LinterOptions().set("undef", true).setPredefineds("-JSON", "myglobal"));
 	};
 	
 	@Test
@@ -3187,7 +3257,105 @@ public class TestOptions extends Assert
 	    th.addError(17, 9, "Unnecessary grouping operator.");
 	    th.addError(18, 9, "Unnecessary grouping operator.");
 		th.test(code, new LinterOptions().set("singleGroups", true).set("esnext", true));
-	};
+	}
+	
+	@Test(groups = {"singleGroups"})
+	public void testSingleGroupsExponentiation()
+	{
+		th.newTest();
+		th.addError(1, 1, "Unnecessary grouping operator.");
+		th.addError(2, 6, "Unnecessary grouping operator.");
+		th.test(new String[] {
+			"(2) ** 2;",
+			"2 ** (2);"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+		
+		th.newTest("UpdateExpression");
+		th.addError(2, 1, "Unnecessary grouping operator.");
+		th.addError(3, 1, "Unnecessary grouping operator.");
+		th.addError(4, 1, "Unnecessary grouping operator.");
+		th.addError(5, 1, "Unnecessary grouping operator.");
+		th.addError(6, 6, "Unnecessary grouping operator.");
+		th.addError(7, 6, "Unnecessary grouping operator.");
+		th.addError(8, 6, "Unnecessary grouping operator.");
+		th.addError(9, 6, "Unnecessary grouping operator.");
+		th.test(new String[] {
+			"var x;",
+			"(++x) ** 2;",
+			"(x++) ** 2;",
+			"(--x) ** 2;",
+			"(x--) ** 2;",
+			"2 ** (++x);",
+			"2 ** (x++);",
+			"2 ** (--x);",
+			"2 ** (x--);"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+		
+		th.newTest("UnaryExpression");
+		th.addError(1, 16, "Variables should not be deleted.");
+		th.addError(8, 10, "Variables should not be deleted.");
+		th.test(new String[] {
+			"delete (2 ** 3);",
+			"void (2 ** 3);",
+			"typeof (2 ** 3);",
+			"+(2 ** 3);",
+			"-(2 ** 3);",
+			"~(2 ** 3);",
+			"!(2 ** 3);",
+			"(delete 2) ** 3;",
+			"(void 2) ** 3;",
+			"(typeof 2) ** 3;",
+			"(+2) ** 3;",
+			"(-2) ** 3;",
+			"(~2) ** 3;",
+			"(!2) ** 3;"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+		
+		th.newTest("MultiplicativeExpression");
+		th.addError(2, 5, "Unnecessary grouping operator.");
+		th.addError(4, 1, "Unnecessary grouping operator.");
+		th.addError(6, 5, "Unnecessary grouping operator.");
+		th.addError(8, 1, "Unnecessary grouping operator.");
+		th.addError(10, 5, "Unnecessary grouping operator.");
+		th.addError(12, 1, "Unnecessary grouping operator.");
+		th.test(new String[] {
+			"(2 * 3) ** 4;",
+			"2 * (3 ** 4);",
+			"2 ** (3 * 4);",
+			"(2 ** 3) * 4;",
+			"(2 / 3) ** 4;",
+			"2 / (3 ** 4);",
+			"2 ** (3 / 4);",
+			"(2 ** 3) / 4;",
+			"(2 % 3) ** 4;",
+			"2 % (3 ** 4);",
+			"2 ** (3 % 4);",
+			"(2 ** 3) % 4;"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+		
+		th.newTest("AdditiveExpression");
+		th.addError(2, 5, "Unnecessary grouping operator.");
+		th.addError(4, 1, "Unnecessary grouping operator.");
+		th.addError(6, 5, "Unnecessary grouping operator.");
+		th.addError(8, 1, "Unnecessary grouping operator.");
+		th.test(new String[] {
+			"(2 + 3) ** 4;",
+			"2 + (3 ** 4);",
+			"2 ** (3 + 4);",
+			"(2 ** 3) + 4;",
+			"(2 - 3) ** 4;",
+			"2 - (3 ** 4);",
+			"2 ** (3 - 4);",
+			"(2 ** 3) - 4;"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+		
+		th.newTest("Exponentiation");
+		th.addError(2, 6, "Unnecessary grouping operator.");
+		th.test(new String[] {
+			"(2 ** 3) ** 4;",
+			"2 ** (3 ** 4);"
+		}, new LinterOptions().set("singleGroups", true).set("expr", true).set("esversion", 7));
+	}
 	
 	@Test(groups = {"singleGroups"})
 	public void testSingleGroupsObjectLiterals()
@@ -3200,13 +3368,17 @@ public class TestOptions extends Assert
 		    // Invalid forms
 		    "var a = ({}).method();",
 		    "if (({}).method()) {}",
-		    "var b = { a: ({}).method() };"
+		    "var b = { a: ({}).method() };",
+		    "for (({}); ;) {}",
+		    "for (; ;({})) {}"
 		};
 		
 		th.newTest("grouping operator not required");
 		th.addError(4, 9, "Unnecessary grouping operator.");
 	    th.addError(5, 5, "Unnecessary grouping operator.");
 	    th.addError(6, 14, "Unnecessary grouping operator.");
+	    th.addError(7, 6, "Unnecessary grouping operator.");
+	    th.addError(8, 9, "Unnecessary grouping operator.");
 		th.test(code, new LinterOptions().set("singleGroups", true));
 	};
 	
@@ -3322,12 +3494,16 @@ public class TestOptions extends Assert
 		    "([ x ] = [ 1 ]);",
 		    // expressions
 		    "1, ({ x } = { x : 1 });",
-		    "1, ([ x ] = [ 1 ]);"
+		    "1, ([ x ] = [ 1 ]);",
+		    "for (({ x } = { X: 1 }); ;) {}",
+		    "for (; ;({ x } = { X: 1 })) {}"
 		};
 		
 		th.addError(2, 1, "Unnecessary grouping operator.");
 	    th.addError(3, 4, "Unnecessary grouping operator.");
 	    th.addError(4, 4, "Unnecessary grouping operator.");
+	    th.addError(5, 6, "Unnecessary grouping operator.");
+	    th.addError(6, 9, "Unnecessary grouping operator.");
 	    th.test(code, new LinterOptions().set("esversion", 6).set("singleGroups", true).set("expr", true));
 	}
 	
@@ -3457,7 +3633,7 @@ public class TestOptions extends Assert
 		th.test(code, new LinterOptions());
 		
 		th.newTest("ES5 with opt-out");
-		th.test(code, new LinterOptions().addPredefineds("-JSON"));
+		th.test(code, new LinterOptions().setPredefineds("-JSON"));
 		
 		th.newTest("ESNext without option");
 	    th.addError(1, 5, "Redefinition of 'JSON'.");
@@ -3509,7 +3685,7 @@ public class TestOptions extends Assert
 		th.test(code, new LinterOptions()
 			.set("esnext", true)
 			.set("futurehostile", false)
-			.addPredefineds(
+			.setPredefineds(
 				"-JSON",
 				"-Map",
 				"-Promise",
@@ -3584,7 +3760,7 @@ public class TestOptions extends Assert
 		th.test(code, new LinterOptions()
 			.set("esnext", true)
 			.set("futurehostile", false)
-			.addPredefineds(
+			.setPredefineds(
 				"-JSON",
 		        "-Map",
 		        "-Promise",
@@ -3658,7 +3834,7 @@ public class TestOptions extends Assert
 		th.test(code, new LinterOptions()
 			.set("esnext", true)
 			.set("futurehostile", false)
-			.addPredefineds(
+			.setPredefineds(
 				"-JSON",
 		        "-Map",
 		        "-Promise",
@@ -3860,7 +4036,9 @@ public class TestOptions extends Assert
 		th.test("function await() {}", new LinterOptions().set("esversion", 6).set("module", true));
 		
 		th.newTest();
-		th.addError(1, 1, "Expected an identifier and instead saw 'await' (a reserved word).");
+		th.addError(1, 1, "Expected an assignment or function call and instead saw an expression.");
+		th.addError(1, 6, "Missing semicolon.");
+		th.addError(1, 1, "Unrecoverable syntax error. (100% scanned).");
 		th.test("await: while (false) {}", new LinterOptions().set("esversion", 6).set("module", true));
 		
 		th.newTest();
@@ -3878,11 +4056,21 @@ public class TestOptions extends Assert
 		    "// jshint esversion: 4",
 		    "// jshint esversion: 5",
 		    "// jshint esversion: 6",
-		    "// jshint esversion: 2015"
+		    "// jshint esversion: 2015",
+		    "// jshint esversion: 7",
+		    "// jshint esversion: 2016",
+		    "// jshint esversion: 8",
+		    "// jshint esversion: 2017",
+		    "// jshint esversion: 9",
+		    "// jshint esversion: 2018",
+		    "// jshint esversion: 10",
+		    "// jshint esversion: 2019"
 		};
 		
 		th.newTest("Value");
 		th.addError(2, 1, "Bad option value.");
+		th.addError(12, 1, "Bad option value.");
+		th.addError(13, 1, "Bad option value.");
 		th.test(code);
 		
 		String[] es5code = {
@@ -3921,8 +4109,15 @@ public class TestOptions extends Assert
 		th.newTest("ES6 syntax as ES6");
 		th.test(es6code, new LinterOptions().set("esversion", 6));
 		
+		
 		th.newTest("ES6 syntax as ES6 (via option value `2015`)");
-		th.test(es5code, new LinterOptions().set("esversion", 2015));
+		th.test(es5code, new LinterOptions().set("esversion", 2015)); //JSHINT_BUG: is it correct that es5code passed here?
+		
+		th.newTest("ES6 syntax as ES7");
+		th.test(es6code, new LinterOptions().set("esversion", 7));
+		
+		th.newTest("ES6 syntax as ES8");
+		th.test(es6code, new LinterOptions().set("esversion", 8));
 		
 		// Array comprehensions aren't defined in ECMAScript 6,
 		// but they can be enabled using the `esnext` option
@@ -3934,6 +4129,14 @@ public class TestOptions extends Assert
 		th.newTest("array comprehensions - esversion: 6");
 		th.addError(2, 9, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
 		th.test(arrayComprehension, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("array comprehensions - esversion: 7");
+		th.addError(2, 9, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.test(arrayComprehension, new LinterOptions().set("esversion", 7));
+		
+		th.newTest("array comprehensions - esversion: 8");
+		th.addError(2, 9, "'array comprehension' is only available in Mozilla JavaScript extensions (use moz option).");
+		th.test(arrayComprehension, new LinterOptions().set("esversion", 8));
 		
 		th.newTest("array comprehensions - esnext: true");
 		th.test(arrayComprehension, new LinterOptions().set("esnext", true));
@@ -4050,5 +4253,232 @@ public class TestOptions extends Assert
 	    th.addError(8, 14, "Extra comma. (it breaks older versions of IE)");
 	    th.addError(10, 20, "Extra comma. (it breaks older versions of IE)");
 	    th.test(code, new LinterOptions().set("trailingcomma", true).set("es3", true));
+	}
+	
+	@Test
+	public void testUnstable()
+	{
+		 th.newTest("Accepts programmatic configuration.");
+		 th.test("", new LinterOptions().setUnstables());
+		 
+		 th.newTest("Accepts empty in-line directive (single-line comment).");
+		 th.test("// jshint.unstable");
+		 
+		 th.newTest("Rejects empty in-line directive (multi-line comment).");
+		 th.addError(1, 1, "Bad unstable option: ''.");
+		 th.test("/* jshint.unstable */");
+		 
+		 th.newTest("Rejects non-existent names specified via programmatic configuration.");
+		 th.addError(0, 0, "Bad unstable option: 'nonExistentOptionName'.");
+		 th.test("", new LinterOptions().setUnstables("nonExistentOptionName"));
+		 
+		 th.newTest("Rejects non-existent names specified via in-line directive (single-line comment).");
+		 th.addError(1, 1, "Bad unstable option: 'nonExistentOptionName'.");
+		 th.test("// jshint.unstable nonExistentOptionName: true");
+		 
+		 th.newTest("Rejects non-existent names specified via in-line directive (multi-line comment).");
+		 th.addError(1, 1, "Bad unstable option: 'nonExistentOptionName'.");
+		 th.test("/* jshint.unstable nonExistentOptionName: true */");
+		 
+		 th.newTest("Rejects stable names specified via programmatic configuration.");
+		 th.addError(0, 0, "Bad unstable option: 'undef'.");
+		 th.test("", new LinterOptions().setUnstables("undef"));
+		 
+		 th.newTest("Rejects stable names specified via in-line directive (single-line comment).");
+		 th.addError(1, 1, "Bad unstable option: 'undef'.");
+		 th.test("// jshint.unstable undef: true");
+		 
+		 th.newTest("Rejects stable names specified via in-line directive (multi-line comment).");
+		 th.addError(1, 1, "Bad unstable option: 'undef'.");
+		 th.test("/* jshint.unstable undef: true */");
+	}
+	
+	@Test
+	public void testLeanswitch()
+	{
+		String[] code = {
+			"switch (0) {",
+			"  case 0:",
+			"  default:",
+			"    break;",
+			"}"
+		};
+		th.newTest("empty case clause followed by default");
+		th.test(code);
+		th.newTest("empty case clause followed by default");
+		th.addError(2, 9, "Superfluous 'case' clause.");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+		
+		code = new String[] {
+			"switch (0) {",
+			"  case 0:",
+			"  case 1:",
+			"    break;",
+			"}"
+		};
+		th.newTest("empty case clause followed by case");
+		th.test(code);
+		th.newTest("empty case clause followed by case");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+		
+		code = new String[] {
+			"switch (0) {",
+			"  default:",
+			"  case 0:",
+			"    break;",
+			"}"
+		};
+		th.newTest("empty default clause followed by case");
+		th.test(code);
+		th.newTest("empty default clause followed by case");
+		th.addError(3, 3, "Superfluous 'case' clause.");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+		
+		code = new String[] {
+			"switch (0) {",
+			"  case 0:",
+			"    void 0;",
+			"  default:",
+			"    break;",
+			"}"
+		};
+		th.newTest("non-empty case clause followed by default");
+		th.addError(3, 11, "Expected a 'break' statement before 'default'.");
+		th.test(code);
+		th.newTest("non-empty case clause followed by default");
+		th.addError(3, 11, "Expected a 'break' statement before 'default'.");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+		
+		code = new String[] {
+			"switch (0) {",
+			"  case 0:",
+			"    void 0;",
+			"  case 1:",
+			"    break;",
+			"}"
+		};
+		th.newTest("non-empty case clause followed by case");
+		th.addError(3, 11, "Expected a 'break' statement before 'case'.");
+		th.test(code);
+		th.newTest("non-empty case clause followed by case");
+		th.addError(3, 11, "Expected a 'break' statement before 'case'.");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+		
+		code = new String[] {
+			"switch (0) {",
+			"  default:",
+			"    void 0;",
+			"  case 0:",
+			"    break;",
+			"}"
+		};
+		th.newTest("non-empty default clause followed by case");
+		th.addError(3, 11, "Expected a 'break' statement before 'case'.");
+		th.test(code);
+		th.newTest("non-empty default clause followed by case");
+		th.addError(3, 11, "Expected a 'break' statement before 'case'.");
+		th.test(code, new LinterOptions().set("leanswitch", true));
+	}
+	
+	@Test
+	public void testNoreturnawait()
+	{
+		String[] code = {
+			"void function() {",
+			"  return await;",
+			"};",
+			"void function() {",
+			"  return await(null);",
+			"};",
+			"void async function() {",
+			"  return null;",
+			"};",
+			"void async function() {",
+			"  return 'await';",
+			"};",
+			"void async function() {",
+			"  try {",
+			"    return await null;",
+			"  } catch (err) {}",
+			"};",
+			"void async function() {",
+			"  try {",
+			"    void async function() {",
+			"      return await null;",
+			"    };",
+			"  } catch (err) {}",
+			"};",
+			"void async function() {",
+			"  return await null;",
+			"};"
+		};
+		
+		th.newTest("function expression (disabled)");
+		th.test(code, new LinterOptions().set("esversion", 8));
+		
+		th.newTest("function expression (enabled)");
+		th.addError(21, 14, "Unnecessary `await` expression.");
+		th.addError(26, 10, "Unnecessary `await` expression.");
+		th.test(code, new LinterOptions().set("esversion", 8).set("noreturnawait", true));
+		
+		code = new String[] {
+			"void (() => await);",
+			"void (() => await(null));",
+			"void (async () => null);",
+			"void (async () => 'await');",
+			"void (async () => await null);",
+			"void (async () => { await null; });"
+		};
+		
+		th.newTest("arrow function (disabled)");
+		th.test(code, new LinterOptions().set("esversion", 8));
+		
+		th.newTest("arrow function (enabled)");
+		th.addError(5, 19, "Unnecessary `await` expression.");
+		th.test(code, new LinterOptions().set("esversion", 8).set("noreturnawait", true));
+	}
+	
+	@Test
+	public void testRegexpu()
+	{
+		th.newTest("restricted outside of ES6 - via API");
+		th.addError(0, 0, "The 'regexpu' option is only available when linting ECMAScript 6 code.");
+		th.test("void 0;", new LinterOptions().set("regexpu", true));
+		
+		th.newTest("restricted outside of ES6 - via directive");
+		th.addError(1, 1, "The 'regexpu' option is only available when linting ECMAScript 6 code.");
+		th.test(new String[] {
+			"// jshint regexpu: true",
+			"void 0;"
+		});
+		
+		th.newTest("missing");
+		th.addError(1, 6, "Regular expressions should include the 'u' flag.");
+		th.addError(2, 6, "Regular expressions should include the 'u' flag.");
+		th.addError(3, 6, "Regular expressions should include the 'u' flag.");
+		th.test(new String[] {
+			"void /./;",
+			"void /./g;",
+			"void /./giym;"
+		}, new LinterOptions().set("regexpu", true).set("esversion", 6));
+		
+		th.newTest("in use");
+		th.test(new String[] {
+			"void /./u;",
+			"void /./ugiym;",
+			"void /./guiym;",
+			"void /./giuym;",
+			"void /./giyum;",
+			"void /./giymu;"
+		}, new LinterOptions().set("esversion", 6));
+		
+		th.newTest("missing - option set when parsing precedes option enablement");
+		th.addError(3, 8, "Regular expressions should include the 'u' flag.");
+		th.test(new String[] {
+			"(function() {",
+			"  // jshint regexpu: true",
+			"  void /./;",
+			"}());"
+		}, new LinterOptions().set("esversion", 6));
 	}
 }

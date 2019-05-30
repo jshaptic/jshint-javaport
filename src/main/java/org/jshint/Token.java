@@ -4,26 +4,29 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jshint.utils.EventContext;
-import com.github.jshaptic.js4j.UniversalContainer;
 
-public class Token
+public final class Token implements Cloneable
 {
 	private String id = "";
 	private String value = "";
-	private TokenType type = null;
+	private Type type = null;
 	private String name = "";
-	private TokenArityType arity = null;
+	private ArityType arity = null;
 	private String raw_text = "";
 	private String body = "";
 	private String accessorType = "";
-	private LtBoundaryType ltBoundary = null;
+	private BoundaryType ltBoundary = null;
 	
 	private int lbp = 0; // Left binding power
+	private int rbp = 0; // Right binding power
 	private int startLine = 0;
 	private int line = 0;
 	private int from = 0;
@@ -41,8 +44,7 @@ public class Token
 	private boolean isForgiveUndef = false;
 	private boolean isReach = false;
 	private boolean isBeginsStmt = false;
-	private boolean isDelim = false;
-	private boolean isNamedExpr = false;
+	private boolean isDelim = false; //JSHINT_BUG: this property only used to write values, not to read can be removed
 	private boolean isNoSubst = false;
 	private boolean isTemplate = false;
 	private boolean isTail = false;
@@ -53,6 +55,10 @@ public class Token
 	private boolean isSpecial = false;
 	private boolean isProperty = false;
 	private boolean isMetaProperty = false;
+	private boolean isDeclaration = false;
+	private boolean hasComma  = false;
+	private boolean hasInitializer  = false;
+	private boolean isFunctor = false;
 	
 	private boolean ignoreUndef = false;
 	private boolean ignoreW020 = false;
@@ -61,19 +67,20 @@ public class Token
 	private Token left = null;
 	private Token right = null;
 	private Token tag = null;
+	private Token token = null;
 	private List<Token> exprs = null;
 	private List<Token> cases = null;
 	private List<Token> firstTokens = null;
-	private List<JSHint.Identifier> destructAssign = null;
+	private List<Token> destructAssign = null;
 	private ScopeManager.Scope function = null;
 	private Lexer.LexerContext context = null;
 	
-	private boolean isFunctor = false;
-	
 	private Meta meta = null;
-	private NudFunction nud = null; // Null denotation
-	private FudFunction fud = null; // First null denotation
-	private LedFunction led = null; // Left denotation
+	private Function<Token, IntFunction<IntFunction<Token>>> nud = null; // Null denotation
+	private Function<Token, IntFunction<Token>> fud = null; // First null denotation
+	private Function<Token, IntFunction<Function<Token, Token>>> led = null; // Left denotation
+	private Function<Token, IntPredicate> useFud = null;
+	private Function<Token, IntPredicate> isFunc = null;
 	private Runnable check = null;
 	
 	public Token()
@@ -81,15 +88,16 @@ public class Token
 		
 	}
 	
-	public Token(TokenType type)
+	public Token(Type type)
 	{
 		setType(type);
 	}
 	
-	public Token(String id, int lbp, String value)
+	public Token(String id, int lbp, int rpb, String value)
 	{
 		setId(id);
 		setLbp(lbp);
+		setRbp(rpb);
 		setValue(value);
 	}
 	
@@ -98,72 +106,6 @@ public class Token
 		setName(name);
 		setLine(line);
 		setCharacter(character);
-	}
-	
-	public Token(Token original)
-	{
-		setId(original.getId());
-		setValue(original.getValue());
-		setType(original.getType());
-		setName(original.getName());
-		setArity(original.getArity());
-		setRawText(original.getRawText());
-		setBody(original.getBody());
-		setAccessorType(original.getAccessorType());
-		setLtBoundary(original.getLtBoundary());
-		
-		setLbp(original.getLbp());
-		setStartLine(original.getStartLine());
-		setLine(original.getLine());
-		setFrom(original.getFrom());
-		setCharacter(original.getCharacter());
-		setDepth(original.getDepth());
-		
-		setIdentifier(original.isIdentifier());
-		setInfix(original.isInfix());
-		setBlock(original.isBlock());
-		setAssign(original.isAssign());
-		setExps(original.isExps());
-		setImmed(original.isImmed());
-		setParen(original.isParen());
-		setInBracelessBlock(original.isInBracelessBlock());
-		setForgiveUndef(original.isForgiveUndef());
-		setReach(original.isReach());
-		setBeginsStmt(original.isBeginsStmt());
-		setDelim(original.isDelim());
-		setNamedExpr(original.isNamedExpr());
-		setNoSubst(original.isNoSubst());
-		setTemplate(original.isTemplate());
-		setTail(original.isTail());
-		setUnclosed(original.isUnclosed());
-		setCaseFallsThrough(original.isCaseFallsThrough());
-		setReserved(original.isReserved());
-		setLabelled(original.isLabelled());
-		setSpecial(original.isSpecial());
-		setProperty(original.isProperty());
-		setMetaProperty(original.isMetaProperty());
-		
-		setIgnoreUndef(original.isIgnoreUndef());
-		setIgnoreW020(original.isIgnoreW020());
-		setIgnoreW021(original.isIgnoreW021());
-		
-		setLeft(original.getLeft());
-		setRight(original.getRight());
-		setTag(original.getTag());
-		setExprs(original.getExprs());
-		setCases(original.getCases());
-		setFirstTokens(original.getFirstTokens());
-		setDestructAssign(original.getDestructAssign());
-		setFunction(original.getFunction());
-		setContext(original.getContext());
-		
-		setFunctor(original.isFunctor());
-		
-		setMeta(original.getMeta());
-		setNud(original.getNud());
-		setFud(original.getFud());
-		setLed(original.getLed());
-		setCheck(original.getCheck());
 	}
 	
 	Token(EventContext context)
@@ -177,14 +119,10 @@ public class Token
 		setProperty(context.isProperty());
 	}
 	
-	Token(JSHint.Functor functor)
+	Token(String id, Token token)
 	{
-		setFunctor(true);
-	}
-	
-	Token(JSHint.Identifier identifier)
-	{
-		setId(identifier.getId());
+		setId(id);
+		setToken(token);
 	}
 	
 	public String getId()
@@ -207,12 +145,12 @@ public class Token
 		this.value = StringUtils.defaultString(value);
 	}
 
-	public TokenType getType()
+	public Type getType()
 	{
 		return type;
 	}
 
-	public void setType(TokenType type)
+	public void setType(Type type)
 	{
 		this.type = type;
 	}
@@ -227,12 +165,12 @@ public class Token
 		this.name = StringUtils.defaultString(name);
 	}
 
-	public TokenArityType getArity()
+	public ArityType getArity()
 	{
 		return arity;
 	}
 
-	public void setArity(TokenArityType arity)
+	public void setArity(ArityType arity)
 	{
 		this.arity = arity;
 	}
@@ -267,12 +205,12 @@ public class Token
 		this.accessorType = StringUtils.defaultString(accessorType);
 	}
 
-	public LtBoundaryType getLtBoundary()
+	public BoundaryType getLtBoundary()
 	{
 		return ltBoundary;
 	}
 
-	public void setLtBoundary(LtBoundaryType ltBoundary)
+	public void setLtBoundary(BoundaryType ltBoundary)
 	{
 		this.ltBoundary = ltBoundary;
 	}
@@ -285,6 +223,16 @@ public class Token
 	public void setLbp(int lbp)
 	{
 		this.lbp = lbp;
+	}
+	
+	public int getRbp()
+	{
+		return rbp;
+	}
+
+	public void setRbp(int rbp)
+	{
+		this.rbp = rbp;
 	}
 
 	public int getStartLine()
@@ -407,7 +355,7 @@ public class Token
 		this.isParen = isParen;
 	}
 
-	public boolean isInBracelessBlock()
+	public boolean inBracelessBlock()
 	{
 		return inBracelessBlock;
 	}
@@ -455,16 +403,6 @@ public class Token
 	public void setDelim(boolean isDelim)
 	{
 		this.isDelim = isDelim;
-	}
-
-	public boolean isNamedExpr()
-	{
-		return isNamedExpr;
-	}
-
-	public void setNamedExpr(boolean isNamedExpr)
-	{
-		this.isNamedExpr = isNamedExpr;
 	}
 
 	public boolean isNoSubst()
@@ -566,6 +504,46 @@ public class Token
 	{
 		this.isMetaProperty = isMetaProperty;
 	}
+	
+	public boolean isDeclaration()
+	{
+		return isDeclaration;
+	}
+
+	public void setDeclaration(boolean isDeclaration)
+	{
+		this.isDeclaration = isDeclaration;
+	}
+	
+	public boolean hasComma()
+	{
+		return hasComma;
+	}
+
+	public void setHasComma(boolean hasComma)
+	{
+		this.hasComma = hasComma;
+	}
+	
+	public boolean hasInitializer()
+	{
+		return hasInitializer;
+	}
+
+	public void setHasInitializer(boolean hasInitializer)
+	{
+		this.hasInitializer = hasInitializer;
+	}
+	
+	public boolean isFunctor()
+	{
+		return isFunctor;
+	}
+	
+	public void setFunctor(boolean isFunctor)
+	{
+		this.isFunctor = isFunctor;
+	}
 
 	public boolean isIgnoreUndef()
 	{
@@ -625,6 +603,16 @@ public class Token
 	public void setTag(Token tag)
 	{
 		this.tag = tag;
+	}
+	
+	public Token getToken()
+	{
+		return token;
+	}
+
+	public void setToken(Token token)
+	{
+		this.token = token;
 	}
 
 	public List<Token> getExprs()
@@ -691,12 +679,12 @@ public class Token
 		}
 	}
 	
-	public List<JSHint.Identifier> getDestructAssign()
+	public List<Token> getDestructAssign()
 	{
 		return destructAssign;
 	}
 
-	public void setDestructAssign(List<JSHint.Identifier> destructAssign)
+	public void setDestructAssign(List<Token> destructAssign)
 	{
 		this.destructAssign = destructAssign;
 	}
@@ -724,55 +712,23 @@ public class Token
 	@Override
     public int hashCode()
 	{
-        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
-            .append(id)
-            .append(value)
-            .append(type)
-            .append(name)
-            .append(arity)
-            .append(raw_text)
-            .append(body)
-            .append(accessorType)
-            .append(lbp)
-            .append(startLine)
-            .append(line)
-            .append(from)
-            .append(character)
-            .append(depth)
-            .append(isIdentifier)
-            .append(isInfix)
-            .append(isBlock)
-            .append(isAssign)
-            .append(isExps)
-            .append(isImmed)
-            .append(isParen)
-            .append(inBracelessBlock)
-            .append(isReach)
-            .append(isBeginsStmt)
-            .append(isDelim)
-            .append(isNamedExpr)
-            .append(isNoSubst)
-            .append(isTemplate)
-            .append(isTail)
-            .append(isUnclosed)
-            .append(isCaseFallsThrough)
-            .append(isReserved)
-            .append(isLabelled)
-            .append(isSpecial)
-            .append(isProperty)
-            .append(isMetaProperty)
-            .append(ignoreUndef)
-            .append(ignoreW020)
-            .append(ignoreW021)
-            .append(left)
-            .append(right)
-            .append(exprs)
-            .append(cases)
-            .append(firstTokens)
-            .append(destructAssign)
-            .append(function)
-            .append(context)
-            .toHashCode();
+        return Objects.hash(
+        	id,
+        	value,
+    		type,
+    		name,
+    		arity,
+    		raw_text,
+    		body,
+    		accessorType,
+    		ltBoundary,
+	    	lbp,
+    		rbp,
+    		startLine,
+    		line,
+    		from,
+    		character,
+    		depth);
 	}
 	
 	@Override
@@ -791,56 +747,36 @@ public class Token
 			.append(this.raw_text, other.raw_text)
 			.append(this.body, other.body)
 			.append(this.accessorType, other.accessorType)
+			.append(this.ltBoundary, other.ltBoundary)
 			.append(this.lbp, other.lbp)
+			.append(this.rbp, other.rbp)
 			.append(this.startLine, other.startLine)
 			.append(this.line, other.line)
 			.append(this.from, other.from)
 			.append(this.character, other.character)
 			.append(this.depth, other.depth)
-			.append(this.isIdentifier, other.isIdentifier)
-			.append(this.isInfix, other.isInfix)
-			.append(this.isBlock, other.isBlock)
-			.append(this.isAssign, other.isAssign)
-			.append(this.isExps, other.isExps)
-			.append(this.isImmed, other.isImmed)
-			.append(this.isParen, other.isParen)
-			.append(this.inBracelessBlock, other.inBracelessBlock)
-			.append(this.isReach, other.isReach)
-			.append(this.isBeginsStmt, other.isBeginsStmt)
-			.append(this.isDelim, other.isDelim)
-			.append(this.isNamedExpr, other.isNamedExpr)
-			.append(this.isNoSubst, other.isNoSubst)
-			.append(this.isTemplate, other.isTemplate)
-			.append(this.isTail, other.isTail)
-			.append(this.isUnclosed, other.isUnclosed)
-			.append(this.isCaseFallsThrough, other.isCaseFallsThrough)
-			.append(this.isReserved, other.isReserved)
-			.append(this.isLabelled, other.isLabelled)
-			.append(this.isSpecial, other.isSpecial)
-			.append(this.isProperty, other.isProperty)
-			.append(this.isMetaProperty, other.isMetaProperty)
-			.append(this.ignoreUndef, other.ignoreUndef)
-			.append(this.ignoreW020, other.ignoreW020)
-			.append(this.ignoreW021, other.ignoreW021)
-			.append(this.left, other.left)
-			.append(this.right, other.right)
-			.append(this.exprs, other.exprs)
-			.append(this.cases, other.cases)
-			.append(this.firstTokens, other.firstTokens)
-			.append(this.destructAssign, other.destructAssign)
-			.append(this.function, other.function)
-			.append(this.context, other.context)
 			.isEquals();
 	}
 	
-	boolean isFunctor()
+	@Override
+	public Token clone()
 	{
-		return isFunctor;
+		try
+		{
+			return (Token)super.clone();
+		}
+		catch (CloneNotSupportedException e)
+		{
+			return null;
+		}
 	}
 	
-	void setFunctor(boolean isFunctor)
+	// PORT INFO: special setter, which is used to mark, that there is functor object in property 'right'
+	void setRight(JSHint.Functor functor)
 	{
-		this.isFunctor = isFunctor;
+		Token right = new Token();
+		right.setFunctor(true);
+		this.right = right;
 	}
 
 	Meta getMeta()
@@ -852,121 +788,27 @@ public class Token
 	{
 		this.meta = meta;
 	}
-
-	NudFunction getNud()
-	{
-		return nud;
-	}
-
-	void setNud(NudFunction nud)
-	{
-		this.nud = nud;
-	}
-
-	FudFunction getFud()
-	{
-		return fud;
-	}
-
-	void setFud(FudFunction fud)
-	{
-		this.fud = fud;
-	}
-
-	LedFunction getLed()
-	{
-		return led;
-	}
-
-	void setLed(LedFunction led)
-	{
-		this.led = led;
-	}
-
-	Runnable getCheck()
-	{
-		return check;
-	}
-
-	void setCheck(Runnable check)
-	{
-		this.check = check;
-	}
-	
-	static interface NudFunction
-	{
-		public Token apply(Token _this, int rbp) throws JSHintException;
-	}
-	
-	static interface NudInnerFunction
-	{
-		public void apply(Token x) throws JSHintException;
-	}
-	
-	Token nud(int rbp) throws JSHintException
-	{
-		return nud != null ? nud.apply(this, rbp) : null;
-	}
-	
-	static interface FudFunction
-	{
-		public Token apply(Token _this, UniversalContainer context) throws JSHintException;
-	}
-	
-	Token fud(UniversalContainer context) throws JSHintException
-	{
-		return fud != null ? fud.apply(this, context) : null;
-	}
-	
-	static interface LedFunction
-	{
-		public Token apply(Token _this, Token t) throws JSHintException;
-	}
-	
-	static interface LedInnerFunction
-	{
-		public Token apply(Token _this, Token left, Token right) throws JSHintException;
-	}
-	
-	Token led(Token t) throws JSHintException
-	{
-		return led != null ? led.apply(this, t) : null;
-	}
-	
-	void check() throws JSHintException
-	{
-		if (check != null) check.run();
-	}
 	
 	static class Meta
 	{
-		private boolean isFutureReservedWord = false;
 		private boolean es5 = false;
+		private boolean isFutureReservedWord = false;
 		private boolean strictOnly = false;
 		private boolean moduleOnly = false;
-		private NudFunction nud = null;
+		private Function<Token, IntFunction<IntFunction<Token>>> nud = null;
 		
 		Meta()
 		{
 			
 		}
 		
-		Meta(boolean es5, boolean strictOnly, boolean moduleOnly, NudFunction nud)
+		Meta(boolean es5, boolean isFutureReservedWord, boolean strictOnly, boolean moduleOnly, Function<Token, IntFunction<IntFunction<Token>>> nud)
 		{
 			setES5(es5);
+			setFutureReservedWord(isFutureReservedWord);
 			setStrictOnly(strictOnly);
 			setModuleOnly(moduleOnly);
 			setNud(nud);
-		}
-
-		boolean isFutureReservedWord()
-		{
-			return isFutureReservedWord;
-		}
-
-		void setFutureReservedWord(boolean isFutureReservedWord)
-		{
-			this.isFutureReservedWord = isFutureReservedWord;
 		}
 
 		boolean isES5()
@@ -977,6 +819,16 @@ public class Token
 		void setES5(boolean es5)
 		{
 			this.es5 = es5;
+		}
+		
+		boolean isFutureReservedWord()
+		{
+			return isFutureReservedWord;
+		}
+
+		void setFutureReservedWord(boolean isFutureReservedWord)
+		{
+			this.isFutureReservedWord = isFutureReservedWord;
 		}
 
 		boolean isStrictOnly()
@@ -999,14 +851,228 @@ public class Token
 			this.moduleOnly = moduleOnly;
 		}
 
-		NudFunction getNud()
+		Function<Token, IntFunction<IntFunction<Token>>> getNud()
 		{
 			return nud;
 		}
 
-		void setNud(NudFunction nud)
+		void setNud(Function<Token, IntFunction<IntFunction<Token>>> nud)
 		{
 			this.nud = nud;
 		}
+	}
+	
+	// NULL DENOTATION
+
+	Function<Token, IntFunction<IntFunction<Token>>> getNud()
+	{
+		return nud;
+	}
+
+	void setNud(Function<Token, IntFunction<IntFunction<Token>>> nud)
+	{
+		this.nud = nud;
+	}
+	
+	Token nud(int context, int rbp) throws JSHintException
+	{
+		return nud(this, context, rbp);
+	}
+	
+	Token nud(Token _this, int context, int rbp) throws JSHintException
+	{
+		return nud.apply(_this).apply(context).apply(rbp);
+	}
+	
+	// FIRST NULL DENOTATION
+
+	Function<Token, IntFunction<Token>> getFud()
+	{
+		return fud;
+	}
+
+	void setFud(Function<Token, IntFunction<Token>> fud)
+	{
+		this.fud = fud;
+	}
+	
+	Token fud(int context) throws JSHintException
+	{
+		return fud.apply(this).apply(context);
+	}
+	
+	// LEFT DENOTATION
+
+	Function<Token, IntFunction<Function<Token, Token>>> getLed()
+	{
+		return led;
+	}
+
+	void setLed(Function<Token, IntFunction<Function<Token, Token>>> led)
+	{
+		this.led = led;
+	}
+	
+	Token led(int context, Token t) throws JSHintException
+	{
+		return led.apply(this).apply(context).apply(t);
+	}
+	
+	// USE FIRST NULL DENOTATION
+	
+	Function<Token, IntPredicate> getUseFud()
+	{
+		return useFud;
+	}
+
+	void setUseFud(Function<Token, IntPredicate> useFud)
+	{
+		this.useFud = useFud;
+	}
+	
+	boolean useFud(int context) throws JSHintException
+	{
+		return useFud.apply(this).test(context);
+	}
+	
+	// IS FUNCTION
+	
+	Function<Token, IntPredicate> getIsFunc()
+	{
+		return isFunc;
+	}
+
+	void setIsFunc(Function<Token, IntPredicate> isFunc)
+	{
+		this.isFunc = isFunc;
+	}
+	
+	boolean isFunc(int context) throws JSHintException
+	{
+		return isFunc.apply(this).test(context);
+	}
+
+	Runnable getCheck()
+	{
+		return check;
+	}
+
+	void setCheck(Runnable check)
+	{
+		this.check = check;
+	}
+	
+	void check() throws JSHintException
+	{
+		if (check != null) check.run();
+	}
+	
+	public static enum Type
+	{
+		NONE("(none)"),
+		IDENTIFIER("(identifier)"),
+		PUNCTUATOR("(punctuator)"),
+		STRING("(string)"),
+		NUMBER("(number)"),
+		NEGATIVE("(negative)"),
+		POSITIVE("(positive)"),
+		NEGATIVE_WITH_CONTINUE("(negative-with-continue)"),
+		TEMPLATE("(template)"),
+		TEMPLATEMIDDLE("(template middle)"),
+		TEMPLATETAIL("(template tail)"),
+		NOSUBSTTEMPLATE("(no subst template)"),
+		REGEXP("(regexp)"),
+		ENDLINE("(endline)"),
+		END("(end)"),
+		
+		UNDEFINED("undefined"),
+		NULL("null"),
+		TRUE("true"),
+		FALSE("false"),
+		
+		ABSTRACT("abstract"),
+		ARGUMENTS("arguments"),
+		AWAIT("await"),
+		BOOLEAN("boolean"),
+		BYTE("byte"),
+		CASE("case"),
+		CATCH("catch"),
+		CHAR("char"),
+		CLASS("class"),
+		DEFAULT("default"),
+		DOUBLE("double"),
+		ELSE("else"),
+		ENUM("enum"),
+		EVAL("eval"),
+		EXPORT("export"),
+		EXTENDS("extends"),
+		FINAL("final"),
+		FINALLY("finally"),
+		FLOAT("float"),
+		GOTO("goto"),
+		IMPLEMENTS("implements"),
+		IMPORT("import"),
+		INFINITY("Infinity"),
+		INT("int"),
+		INTERFACE("interface"),
+		LONG("long"),
+		NATIVE("native"),
+		PACKAGE("package"),
+		PRIVATE("private"),
+		PROTECTED("protected"),
+		PUBLIC("public"),
+		SHORT("short"),
+		STATIC("static"),
+		SUPER("super"),
+		SYNCHRONIZED("synchronized"),
+		THIS("this"),
+		TRANSIENT("transient"),
+		VOLATILE("volatile"),
+		
+		PLAIN("plain"),
+		JSLINT("jslint"),
+		JSHINT("jshint"),
+		JSHINT_UNSTABLE("jshint.unstable"),
+		GLOBALS("globals"),
+		MEMBERS("members"),
+		EXPORTED("exported"),
+		FALLS_THROUGH("falls through");
+		
+		private final String value;
+		
+		Type(String value)
+		{
+			this.value = value;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return value;
+		}
+		
+		public static Type fromString(String value)
+		{
+			for (Type t : Type.values())
+			{
+	            if (t.value.equals(value))
+	            {
+	                return t;
+	            }
+	        }
+			
+			throw new IllegalArgumentException("No token type was found, which corresponds to string " + value);
+		}
+	}
+	
+	public static enum ArityType
+	{
+		UNARY
+	}
+	
+	public enum BoundaryType
+	{
+		BEFORE,
+		AFTER
 	}
 }

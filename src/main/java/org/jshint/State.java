@@ -267,52 +267,71 @@ public final class State
 		return getOption().test("moz");
 	}
 	
-	/** Checks whether current configuration is ES6 compliant.
+	/**
+	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
 	 * 
-	 * @return true if current environment is ES6, false otherwise.
-	 * @see #inES6(boolean)
+	 * @return
+	 */
+	public static boolean inES9()
+	{
+		return esVersion >= 9;
+	}
+	
+	/**
+	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
+	 *
+	 * @return
+	 */
+	public static boolean inES8()
+	{
+		return esVersion >= 8;
+	}
+	
+	/**
+	 * Determine if constructs introduced in ECMAScript 7 should be accepted.
+	 *
+	 * @return
+	 */
+	public static boolean inES7()
+	{
+		return esVersion >= 7;
+	}
+	
+	/**
+	 * Determine if constructs introduced in ECMAScript 6 should be accepted.
+	 * 
+	 * @return
 	 */
 	public static boolean inES6()
 	{
 		return inES6(false);
 	}
 	
-	/** Checks whether current configuration is ES6 compliant.
+	/**
+	 * Determine if constructs introduced in ECMAScript 6 should be accepted.
 	 * 
-	 * @param strict When true, only consider ES6 when in "esversion: 6" code.
-	 * @return true if current environment is ES6, false otherwise.
+	 * @param strict - When `true`, do not interpret the `moz` option
+	 * 				   as ECMAScript 6
+	 * 
+	 * @return
 	 */
 	public static boolean inES6(boolean strict)
 	{
-		if (strict)
+		if (!strict && getOption().test("moz"))
 		{
-			return esVersion == 6;
+			return true;
 		}
-		return getOption().test("moz") || esVersion >= 6;
-	}
-	
-	/** Checks whether current configuration is ES5 compliant.
-	 * 
-	 * @return true if current environment is ES5, false otherwise.
-	 * @see #inES5(boolean)
-	 */
-	public static boolean inES5()
-	{
-		return inES5(false);
+		
+		return esVersion >= 6;
 	}
 	
 	/**
-	 * Checks whether current configuration is ES5 compliant.
+	 * Determine if constructs introduced in ECMAScript 5 should be accepted.
 	 * 
-	 * @param strict When true, return true only when esVersion is exactly 5
-	 * @return true if current environment is ES5, false otherwise.
+	 * @return
 	 */
-	public static boolean inES5(boolean strict)
+	public static boolean inES5()
 	{
-		if (strict)
-		{
-			return (esVersion == 0 || esVersion == 5) && !getOption().test("moz");
-		}
 		return esVersion == 0 || esVersion >= 5 || getOption().test("moz");
 	}
 	
@@ -371,8 +390,11 @@ public final class State
 	}
 	
 	public static void reset()
-	{
-		option = ContainerFactory.createObject();
+	{	
+		prev = null;
+		next = null;
+		curr = null;
+		option = ContainerFactory.createObject("unstable", ContainerFactory.createObject());
 		esVersion = 5;
 		funct = null;
 		ignored = ContainerFactory.createObject();

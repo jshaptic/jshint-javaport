@@ -12,7 +12,7 @@ public class Messages
 	public static final Map<String, String> errors = ImmutableMap.<String, String>builder()
 	
 		// JSHint options
-		.put("E001", "Bad option: '{a}'.")
+		.put("E001", "Bad {a}option: '{b}'.")
 		.put("E002", "Bad option value.")
 		
 		// JSHint input
@@ -88,6 +88,8 @@ public class Messages
 		.put("E062", "Rest parameter does not a support default value.")
 		.put("E063", "Super property may only be used within method bodies.")
 		.put("E064", "Super call may only be used within class method bodies.")
+		.put("E065", "Functions defined outside of strict mode with non-simple parameter lists may not enable strict mode.")
+		.put("E066", "Asynchronous iteration is only available with for-of loops.")
 		.build();
 	
 	//WARNING MESSAGES
@@ -129,7 +131,7 @@ public class Messages
 		.put("W036", "Unexpected /*member '{a}'.")
 		.put("W037", "'{a}' is a statement label.")
 		.put("W038", "'{a}' used out of scope.")
-		.put("W039", "'{a}' is not allowed.")
+		.put("W039", "")
 		.put("W040", "If a strict mode function is executed using function invocation, its 'this' value will be undefined.")
 		.put("W041", "")
 		.put("W042", "Avoid EOL escaping.")
@@ -194,7 +196,7 @@ public class Messages
 		.put("W102", "")
 		.put("W103", "The '{a}' property is deprecated.")
 		.put("W104", "'{a}' is available in ES{b} (use 'esversion: {b}') or Mozilla JS extensions (use moz).")
-		.put("W105", "Unexpected {a} in '{b}'.")
+		.put("W105", "")
 		.put("W106", "Identifier '{a}' is not in camel case.")
 		.put("W107", "Script URL.")
 		.put("W108", "Strings must use doublequote.")
@@ -232,6 +234,11 @@ public class Messages
 		.put("W141", "Empty {a}: this is unnecessary and can be removed.")
 		.put("W142", "Empty {a}: consider replacing with `import '{b}';`.")
 		.put("W143", "Assignment to properties of a mapped arguments object may cause unexpected changes to formal parameters.")
+		.put("W144", "'{a}' is a non-standard language feature. Enable it using the '{b}' unstable option.")
+		.put("W145", "Superfluous 'case' clause.")
+		.put("W146", "Unnecessary `await` expression.")
+		.put("W147", "Regular expressions should include the 'u' flag.")
+		.put("W148", "Unnecessary RegExp 's' flag.")
 		.build();
 	
 	//INFO MESSAGES

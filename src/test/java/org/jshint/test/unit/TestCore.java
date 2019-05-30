@@ -73,6 +73,26 @@ public class TestCore extends Assert
 		th.addError(2, 1, "Read only.");
 		th.addError(3, 1, "Read only.");
 		th.test(codeArray, new LinterOptions().set("es3", true).set("unused", true).addPredefined("foo", false));
+		
+		jshint.lint("x = null;", new LinterOptions().set("undef", true).addGlobal("x", true));
+		
+		assertEquals(jshint.generateSummary().getErrors(), Collections.emptyList());
+		
+		jshint.lint("x = null;", new LinterOptions().set("undef", true).addGlobal("x", false));
+		
+		assertEquals(jshint.generateSummary().getErrors().size(), 1);
+		
+		jshint.lint("parseInt('');", new LinterOptions().set("undef", true).addGlobal("-parseInt", true));
+		
+		assertEquals(jshint.generateSummary().getErrors().size(), 1);
+		
+		jshint.lint("x = null;", new LinterOptions().set("undef", true).addGlobal("x", false), new LinterGlobals(true, "x"));
+		
+		assertEquals(jshint.generateSummary().getErrors(), Collections.emptyList(), "`predef` parameter takes precedence over `globals` option");
+		
+		jshint.lint("x = null;", new LinterOptions().set("undef", true).addGlobal("x", true), new LinterGlobals(false, "x"));
+		
+		assertEquals(jshint.generateSummary().getErrors().size(), 1, "`predef` parameter takes precedence over `globals` option");
 	}
 	
 	@Test
@@ -299,7 +319,6 @@ public class TestCore extends Assert
 		String src = th.readFile("src/test/resources/fixtures/switchFallThrough.js");
 		
 		th.addError(3, 18, "Expected a 'break' statement before 'case'.");
-		th.addError(18, 7, "Expected a 'break' statement before 'default'.");
 		th.addError(40, 12, "Unexpected ':'.");
 		th.test(src);
 	}
@@ -626,7 +645,6 @@ public class TestCore extends Assert
 		th.test(src, new LinterOptions().set("es3", true));
 		
 		th.newTest();
-		th.addError(5, 5, "Expected an identifier and instead saw 'let' (a reserved word).");
 		th.addError(10, 7, "Expected an identifier and instead saw 'let' (a reserved word).");
 		th.test(src); // es5
 	}
@@ -734,8 +752,8 @@ public class TestCore extends Assert
 		
 		th.newTest("bad lhs errors");
 		th.addError(2, 7, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(3, 11, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(4, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
+		th.addError(3, 6, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(4, 8, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.addError(5, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.test(src);
 		
@@ -749,8 +767,8 @@ public class TestCore extends Assert
 		};
 		
 		th.newTest("bad lhs errors (lexical)");
-		th.addError(2, 11, "Invalid for-in loop left-hand-side: more than one ForBinding.");
-		th.addError(3, 13, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(2, 6, "Invalid for-in loop left-hand-side: more than one ForBinding.");
+		th.addError(3, 6, "Invalid for-in loop left-hand-side: more than one ForBinding.");
 		th.addError(4, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.addError(5, 6, "Invalid for-in loop left-hand-side: initializer is forbidden.");
 		th.test(src, new LinterOptions().set("esnext", true));
@@ -768,6 +786,21 @@ public class TestCore extends Assert
 			"for (x+y in {}) {}",
 			"for ((this) in {}) {}"
 		});
+		
+		th.newTest("expression context");
+		th.test(new String[]{
+			"for (0 ? 0 in {} : 0 ; false; false ) {}",
+			"for (x[0 in {}] ; false; false ) {}",
+			"for (x = function() { return 0 in {}; } ; false; false ) {}"
+		});
+		
+		th.newTest("expression context (ES2015 forms)");
+		th.test(new String[]{
+			"for (({ [x in {}]: null }); false; false ) {}",
+			"for (var { prop = 'x' in {} } of [{}]) {}",
+			"for (x = () => { return 0 in {}; } ; false; false ) {}",
+			"for (x = function(x = 0 in {}) {} ; false; false ) {}"
+		}, new LinterOptions().set("esversion", 2015));
 	}
 	
 	@Test
@@ -1581,7 +1614,7 @@ public class TestCore extends Assert
 	{
 		JSHint jshint = new JSHint();
 		
-		LinterOptions options = new LinterOptions().addPredefineds("sup");
+		LinterOptions options = new LinterOptions().setPredefineds("sup");
 		jshint.lint("", options);
 		
 		assertTrue(options.getPredefineds().size() == 1);

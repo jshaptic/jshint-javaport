@@ -111,7 +111,7 @@ public class File262
 		return value != null ? String.valueOf(value) : "";
 	}
 	
-	@SuppressWarnings({ "unused", "unchecked" })
+	@SuppressWarnings("unchecked")
 	private static List<String> getAsStringList(Object value)
 	{
 		return value != null ? (List<String>)value : Collections.emptyList();

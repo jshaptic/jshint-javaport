@@ -6,6 +6,11 @@
       <class name="org.jshint.test.unit.TestCore"/>
     </classes>
   </test>
+  <test name="RestSpread">
+    <classes>
+      <class name="org.jshint.test.unit.TestObjRestSpread"/>
+    </classes>
+  </test>
   <test name="Parser">
     <classes>
       <class name="org.jshint.test.unit.TestParser"/>

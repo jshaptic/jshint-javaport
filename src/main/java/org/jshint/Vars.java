@@ -68,6 +68,10 @@ public class Vars
 			.put("Uint8ClampedArray", false)
 			.put("WeakMap", false)
 			.put("WeakSet", false)
+			.build())
+		.put(8, ImmutableMap.<String, Boolean>builder()
+			.put("Atomics", false)
+			.put("SharedArrayBuffer", false)
 			.build()).build();
 	
 	// Global variables commonly provided by a web browser environment.
@@ -75,11 +79,11 @@ public class Vars
 	public static final Map<String, Boolean> browser = ImmutableMap.<String, Boolean>builder()
 		.put("Audio", false)
 		.put("Blob", false)
-		.put("addEventListener", false)
+		.put("addEventListener", false) // EventTarget
 		.put("applicationCache", false)
-		.put("atob", false)
+		.put("atob", false) // WindowOrWorkerGlobalScope
 		.put("blur", false)
-		.put("btoa", false)
+		.put("btoa", false) // WindowOrWorkerGlobalScope
 		.put("cancelAnimationFrame", false)
 		.put("CanvasGradient", false)
 		.put("CanvasPattern", false)
@@ -96,15 +100,17 @@ public class Vars
 		.put("CSSStyleDeclaration", false)
 		.put("CSSStyleRule", false)
 		.put("CSSStyleSheet", false)
-		.put("clearInterval", false)
-		.put("clearTimeout", false)
+		.put("clearInterval", false) // WindowOrWorkerGlobalScope
+		.put("clearTimeout", false) // WindowOrWorkerGlobalScope
 		.put("close", false)
 		.put("closed", false)
 		.put("Comment", false)
 		.put("CompositionEvent", false)
+		.put("createImageBitmap", false) // WindowOrWorkerGlobalScope
 		.put("CustomEvent", false)
 		.put("DOMParser", false)
 		.put("defaultStatus", false)
+		.put("dispatchEvent", false) // EventTarget
 		.put("Document", false)
 		.put("document", false)
 		.put("DocumentFragment", false)
@@ -233,12 +239,14 @@ public class Vars
 		.put("openDatabase", false)
 		.put("opener", false)
 		.put("Option", false)
+		.put("origin", false) // WindowOrWorkerGlobalScope
 		.put("parent", false)
 		.put("performance", false)
 		.put("print", false)
+		.put("queueMicrotask", false) // WindowOrWorkerGlobalScope
 		.put("Range", false)
 		.put("requestAnimationFrame", false)
-		.put("removeEventListener", false)
+		.put("removeEventListener", false) // EventTarget
 		.put("Request", false)
 		.put("resizeBy", false)
 		.put("resizeTo", false)
@@ -248,8 +256,8 @@ public class Vars
 		.put("scrollBy", false)
 		.put("scrollTo", false)
 		.put("sessionStorage", false)
-		.put("setInterval", false)
-		.put("setTimeout", false)
+		.put("setInterval", false) // WindowOrWorkerGlobalScope
+		.put("setTimeout", false) // WindowOrWorkerGlobalScope
 		.put("SharedWorker", false)
 		.put("status", false)
 		.put("Storage", false)
@@ -452,10 +460,22 @@ public class Vars
 		.build();
 	
 	public static final Map<String, Boolean> worker = ImmutableMap.<String, Boolean>builder()
+		.put("addEventListener", true) // EventTarget
+		.put("atob", true) // WindowOrWorkerGlobalScope
+		.put("btoa", true) // WindowOrWorkerGlobalScope
+		.put("clearInterval", true) // WindowOrWorkerGlobalScope
+		.put("clearTimeout", true) // WindowOrWorkerGlobalScope
+		.put("createImageBitmap", true) // WindowOrWorkerGlobalScope
+		.put("dispatchEvent", true) // EventTarget
 		.put("importScripts", true)
 		.put("onmessage", true)
+		.put("origin", true) // WindowOrWorkerGlobalScope
 		.put("postMessage", true)
+		.put("queueMicrotask", true) // WindowOrWorkerGlobalScope
+		.put("removeEventListener", true) // EventTarget
 		.put("self", true)
+		.put("setInterval", true) // WindowOrWorkerGlobalScope
+		.put("setTimeout", true) // WindowOrWorkerGlobalScope
 		.put("FileReaderSync", true)
 		.build();
 	

@@ -177,7 +177,7 @@ public class TestThirdparty extends Assert
 		
 		th.addError(177, 43, "'key' is defined but never used.");
 	    th.addError(191, 50, "'key' is defined but never used.");
-		th.test(src, new LinterOptions().set("singleGroups", true).set("undef", true).set("unused", true).set("laxbreak", true).addPredefineds("-JSON"), new LinterGlobals(true, "JSON"));
+		th.test(src, new LinterOptions().set("singleGroups", true).set("undef", true).set("unused", true).set("laxbreak", true).setPredefineds("-JSON"), new LinterGlobals(true, "JSON"));
 	}
 	
 	@Test

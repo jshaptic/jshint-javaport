@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 public class Test262 extends Assert
 {	
 	private static final Pattern commentPattern = Pattern.compile("#.*$");
+	private static final Pattern lineStartPattern = Pattern.compile("^", Pattern.MULTILINE);
 	
 	/**
 	 * JSHint "error" messages generally indicate a parsing failure and "warning"
@@ -130,7 +131,7 @@ public class Test262 extends Assert
 	// JSHINT_BUG: in original results-interpreter/src/whitelist.js file this is parsed incorrectly - comment lines are not filtered out
 	private Set<String> parseWhitelist(String contents)
 	{
-		return Arrays.stream(contents.split("\n"))
+		return Arrays.stream(contents.split("\n", -1))
 			.map(line -> commentPattern.matcher(line).replaceFirst("").trim())
 			.filter(line -> line.length() > 0)
 			.collect(Collectors.toSet());
@@ -138,7 +139,7 @@ public class Test262 extends Assert
 	
 	private String normalizePath(Path path)
 	{
-		return path.toString().replaceAll("\\\\", "/");
+		return StringUtils.replace(path.toString(), "\\", "/");
 	}
 	
 	private boolean runTest(File262 test)
@@ -148,7 +149,7 @@ public class Test262 extends Assert
 		
 		try
 		{
-			jshint.lint(test.getContents(), new LinterOptions().set("esversion", 6).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
+			jshint.lint(test.getContents(), new LinterOptions().set("esversion", 9).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
 		}
 		catch(Exception e)
 		{
@@ -224,16 +225,17 @@ public class Test262 extends Assert
 		badnews(unrecognized, "non-existent programs specified in the expectations file", badnews, badnewsDetails);
 		
 		System.out.println("Testing complete.");
+		System.out.println();
 		System.out.println("Summary:");
-		System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(goodnews, "\n")).replaceAll(" v "));
+		System.out.println(lineStartPattern.matcher(StringUtils.join(goodnews, "\n")).replaceAll(" v "));
 		
 		if (!passed)
 		{
 			System.out.println("");
-			System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(badnews, "\n")).replaceAll(" X "));
+			System.out.println(lineStartPattern.matcher(StringUtils.join(badnews, "\n")).replaceAll(" X "));
 			System.out.println("");
 			System.out.println("Details:");
-			System.out.println(Pattern.compile("^", Pattern.MULTILINE).matcher(StringUtils.join(badnewsDetails, "\n")).replaceAll("   "));
+			System.out.println(lineStartPattern.matcher(StringUtils.join(badnewsDetails, "\n")).replaceAll("   "));
 		}
 	}
 	

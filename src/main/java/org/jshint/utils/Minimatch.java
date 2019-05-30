@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Port of a minimatch library. Based on version 3.0.2
@@ -55,7 +56,12 @@ public class Minimatch
 	private final static char[] reSpecials = {'(', ')', '.', '*', '{', '}', '+', '?', '[', ']', '^', '$', '\\', '!'};
 	
 	// normalizes slashes.
-	private final static String slashSplit = "\\/+";
+	private final static Pattern slashSplit = Pattern.compile("\\/+");
+	
+	private final static Pattern numericSequence = Pattern.compile("^-?\\d+\\.\\.-?\\d+(?:\\.\\.-?\\d+)?$");
+	private final static Pattern alphaSequence = Pattern.compile("^[a-zA-Z]\\.\\.[a-zA-Z](?:\\.\\.-?\\d+)?$");
+	private final static Pattern tailNormalizer = Pattern.compile("((?:\\\\{2}){0,64})(\\\\?)\\|");
+	private final static Pattern nestedParensNormalizer = Pattern.compile("\\)[+*?]?");
 	
 	private Minimatch() {}
 	
@@ -91,20 +97,14 @@ public class Minimatch
 	
 	private static String escapeBraces(String pattern)
 	{
-		return pattern.replaceAll(Pattern.quote("\\\\"), escSlash)
-					  .replaceAll(Pattern.quote("\\{"), escOpen)
-					  .replaceAll(Pattern.quote("\\}"), escClose)
-					  .replaceAll(Pattern.quote("\\,"), escComma)
-					  .replaceAll(Pattern.quote("\\."), escPeriod);
+		return StringUtils.replaceEach(pattern, new String[]{"\\\\", "\\{", "\\}", "\\,", "\\."},
+			new String[]{escSlash, escOpen, escClose, escComma, escPeriod});
 	}
 	
 	private static String unescapeBraces(String pattern)
 	{
-		return pattern.replaceAll(Pattern.quote(escSlash), "\\")
-					  .replaceAll(Pattern.quote(escOpen), "{")
-					  .replaceAll(Pattern.quote(escClose), "}")
-					  .replaceAll(Pattern.quote(escComma), ",")
-					  .replaceAll(Pattern.quote(escPeriod), ".");
+		return StringUtils.replaceEach(pattern, new String[]{escSlash, escOpen, escClose, escComma, escPeriod},
+			new String[]{"\\", "{", "}", ",", "."});
 	}
 	
 	// Basically just str.split(","), but handling cases
@@ -142,7 +142,8 @@ public class Minimatch
 	
 	private static boolean isPadded(String el)
 	{
-		return Pattern.compile("^-?0\\d").matcher(el).find();
+		return (el.length() >= 3 && el.startsWith("-0") && Character.isDigit(el.charAt(2))) ||
+			(el.length() >= 2 && el.startsWith("0") && Character.isDigit(el.charAt(1)));
 	}
 	
 	private static boolean testLteOrGte(int i, int y, boolean reversed)
@@ -182,14 +183,14 @@ public class Minimatch
 		String body = m[1];
 		String post = m[2];
 		
-		boolean isNumericSequence = Pattern.compile("^-?\\d+\\.\\.-?\\d+(?:\\.\\.-?\\d+)?$").matcher(body).find();
-		boolean isAlphaSequence = Pattern.compile("^[a-zA-Z]\\.\\.[a-zA-Z](?:\\.\\.-?\\d+)?$").matcher(body).find();
+		boolean isNumericSequence = numericSequence.matcher(body).find();
+		boolean isAlphaSequence = alphaSequence.matcher(body).find();
 		boolean isSequence = isNumericSequence || isAlphaSequence;
 		boolean isOptions = body.indexOf(',') >= 0;
 		if (!isSequence && !isOptions)
 		{
 			// {a},b}
-			if (Pattern.compile(",.*\\}").matcher(post).find())
+			if (post.indexOf(',') < post.indexOf('}'))
 			{
 				pattern = pre + "{" + body + escClose + post;
 				return expand(pattern, false);
@@ -201,7 +202,7 @@ public class Minimatch
 		String[] p = !post.isEmpty() ? expand(post, false) : new String[] {""};
 		if (isSequence)
 		{
-			n = body.split("\\.\\.", -1);
+			n = body.split("..", -1);
 		}
 		else
 		{
@@ -327,7 +328,7 @@ public class Minimatch
 		String[][] slashSplittedSet = new String[braceExpandedSet.length][];
 		for (int i = 0; i < slashSplittedSet.length; i++)
 		{
-			slashSplittedSet[i] = braceExpandedSet[i].split(slashSplit, -1);
+			slashSplittedSet[i] = slashSplit.split(braceExpandedSet[i], -1);
 		}
 		
 		debug(options, false, pattern, Arrays.deepToString(slashSplittedSet));
@@ -375,7 +376,7 @@ public class Minimatch
 	// a{b}c -> a{b}c
 	private static String[] braceExpand(int options, String pattern)
 	{
-		if (isOption(options, NO_BRACE) || !Pattern.compile("\\{.*\\}").matcher(pattern).find())
+		if (isOption(options, NO_BRACE) || !(pattern.indexOf('{') < pattern.indexOf('}')))
 		{
 			// shortcut. no need to expand.
 			return new String[]{pattern};
@@ -453,8 +454,8 @@ public class Minimatch
 		// windows support: need to use /, not \
 		if (!SEP.equals("/"))
 		{
-			path = path.replaceAll(Pattern.quote(SEP), "/");
-			pattern = pattern.replaceAll(Pattern.quote(SEP), "/");
+			path = StringUtils.replace(path, SEP, "/");
+			pattern = StringUtils.replace(pattern, SEP, "/");
 		}
 		
 		final StringBuilder pat = new StringBuilder(pattern);
@@ -465,7 +466,7 @@ public class Minimatch
 		
 		debug(options, false, "match", path, pattern);
 		
-		String[] f = path.split(slashSplit, -1);
+		String[] f = slashSplit.split(path, -1);
 		debug(options, false, pattern, "split", Arrays.toString(f));
 		
 		// just ONE of the pattern sets in this.set needs to match
@@ -950,24 +951,7 @@ public class Minimatch
 			PLTypePattern pl = patternListStack.pop();
 			String tail = re.substring(pl.reStart + 3);
 			// maybe some even number of \, then maybe 1 \, followed by a |
-			tail = replaceAll(tail, Pattern.compile("((?:\\\\{2}){0,64})(\\\\?)\\|"), m -> {
-				String g1 = m.group(0);
-				String g2 = m.group(1);
-				
-				if (g2.isEmpty())
-				{
-					// the | isn't already escaped, so escape it.
-					g2 = "\\";
-				}
-				
-				// need to escape all those slashes *again*, without escaping the
-				// one that we need for escaping the | character.  As it works out,
-				// escaping an even number of slashes can be done by simply repeating
-				// it exactly after itself.  That's why this trick works.
-				//
-				// I am sorry that you have to see this.
-				return g1 + g1 + g2 + "|";
-			});
+			tail = normalizeTail(tail);
 			
 			debug(options, "tail=%s\n   %s", tail, tail);
 			String t = pl.type == '*' ? star
@@ -1016,11 +1000,11 @@ public class Minimatch
 			// Handle nested stuff like *(*.js|!(*.json)), where open parens
 			// mean that we should *not* include the ) in the bit that is considered
 			// "after" the negated section.
-			int openParensBefore = nlBefore.split("(", -1).length - 1;
+			int openParensBefore = nlBefore.split("(").length - 1;
 			String cleanAfter = nlAfter;
 			for (int i = 0; i < openParensBefore; i++)
 			{
-				cleanAfter = cleanAfter.replace("\\)[+*?]?", "");
+				cleanAfter = nestedParensNormalizer.matcher(cleanAfter).replaceFirst("");
 			}
 			nlAfter = cleanAfter;
 			
@@ -1074,22 +1058,60 @@ public class Minimatch
 		}
 	}
 	
-	// replace stuff like \* with *
-	private static String globUnescape (String s)
+	private static String normalizeTail(String text)
 	{
-	  return s.replaceAll("\\\\(.)", "$1");
-	}
-	
-	private static String replaceAll(String text, Pattern pattern, Function<Matcher, String> replacer)
-	{
-		Matcher matcher = pattern.matcher(text);
+		Function<Matcher, String> replacer = m -> {
+			String g1 = m.group(0);
+			String g2 = m.group(1);
+			
+			if (g2.isEmpty())
+			{
+				// the | isn't already escaped, so escape it.
+				g2 = "\\";
+			}
+			
+			// need to escape all those slashes *again*, without escaping the
+			// one that we need for escaping the | character.  As it works out,
+			// escaping an even number of slashes can be done by simply repeating
+			// it exactly after itself.  That's why this trick works.
+			//
+			// I am sorry that you have to see this.
+			return g1 + g1 + g2 + "|";
+		};
+		
+		Matcher matcher = tailNormalizer.matcher(text);
 		StringBuffer result = new StringBuffer();
 		while (matcher.find())
-		{
-		    matcher.appendReplacement(result, replacer.apply(matcher));
-		}
+			matcher.appendReplacement(result, replacer.apply(matcher));
 		matcher.appendTail(result);
+		
 		return result.toString();
+	}
+	
+	// replace stuff like \* with *
+	private static String globUnescape(String s)
+	{
+		StringBuilder sb = new StringBuilder();
+		int start = 0;
+		for (int i = 0; i < s.length(); i++)
+		{
+			if (s.charAt(i) == '\\')
+			{
+				if (i != 0)
+					sb.append(s.substring(start, i));
+				i++;
+				if (i < s.length())
+					sb.append(s.charAt(i));
+				else
+					sb.append(s.charAt(i - 1));
+				start = i + 1;
+			}
+		}
+		
+		if (start < s.length())
+			sb.append(s.substring(start));
+		
+		return sb.toString();
 	}
 	
 	private static void debug(int options, boolean hasLogline, Object... vars)

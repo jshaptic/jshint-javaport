@@ -57,7 +57,7 @@ public class TestHelper extends Assert
 	
 	public void test(String source, LinterOptions options, LinterGlobals globals)
 	{	
-		// no needed to check for pollutions
+		// PORT INFO: no needed to check for pollutions
 		
 		jshint = new JSHint();
 		jshint.lint(source, options, globals);
@@ -390,7 +390,6 @@ public class TestHelper extends Assert
 			}
 		}
 		
-		//JSHINT_BUG: this is not needed since duplication of errors is checked in the addError function
 		duplicateErrors = errors.stream()
 			.filter(er -> errors.stream().filter(other -> er.getLine() == other.getLine() && er.getCharacter() == other.getCharacter()
 				&& er.getReason().equals(other.getReason())).count() > 1)

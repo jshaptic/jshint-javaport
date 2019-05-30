@@ -17,10 +17,6 @@ import org.jshint.utils.EventContext;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
-/**
- * Creates a scope manager that handles variables and labels, storing usages
- * and resolving when variables are used and undefined
- */
 public class ScopeManager
 {
 	// Used to denote membership in lookup tables (a primitive value such as `true`
@@ -44,6 +40,26 @@ public class ScopeManager
 	private Block block;
 	private Functor funct;
 	
+	/**
+	 * A factory function for creating scope managers. A scope manager tracks
+	 * variables and JSHint "labels", detecting when variables are referenced
+	 * (through "usages").
+	 *
+	 * Note that in this context, the term "label" describes an implementation
+	 * detail of JSHint and is not related to the ECMAScript language construct of
+	 * the same name. Where possible, the former is referred to as a "JSHint label"
+	 * to avoid confusion.
+	 *
+	 * @param predefined - a set of JSHint label names for built-in
+	 *                     bindings provided by the environment
+	 * @param exported - a hash for JSHint label names that are intended
+	 *                   to be referenced in contexts beyond the current
+	 *                   program code
+	 * @param declared - a hash for JSHint label names that were defined
+	 *                   as global bindings via linting configuration
+	 *
+	 * @return a scope manager
+	 */
 	public ScopeManager(Map<String, Boolean> predefined, Map<String, Boolean> exported, Map<String, Token> declared)
 	{
 		this.exported = exported;
@@ -162,11 +178,11 @@ public class ScopeManager
 	}
 	
 	/**
-	 * Checks the current scope for unused identifiers
+	 * Check the current scope for unused identifiers
 	 */
 	private void checkForUnused()
 	{
-		// function params are handled specially
+		// function parameters are validated by a dedicated function
 	    // assume that parameters are the only thing declared in the param scope
 		if (current.getType().equals("functionparams"))
 		{
@@ -185,8 +201,9 @@ public class ScopeManager
 	}
 	
 	/**
-	 * Checks the current scope for unused parameters
-	 * Must be called in a function parameter scope
+	 * Check the current scope for unused parameters and issue warnings as
+	 * necessary. This function may only be invoked when the current scope is a
+	 * "function parameter" scope.
 	 */
 	private void checkParams()
 	{
@@ -206,8 +223,12 @@ public class ScopeManager
 			
 			unused_opt = getUnusedOption(State.getFunct().getUnusedOption());
 			
-			// 'undefined' is a special case for (function(window, undefined) { ... })();
-		    // patterns.
+			// 'undefined' is a special case for the common pattern where `undefined`
+			// is used as a formal parameter name to defend against global
+			// re-assignment, e.g.
+			//
+			//     (function(window, undefined) {
+			//     })();
 			if (param.equals("undefined"))
 				return;
 			
@@ -225,8 +246,13 @@ public class ScopeManager
 	}
 	
 	/**
-	 * Finds the relevant label's scope, searching from nearest outwards
-	 * @returns {Object} the scope the label was found in
+	 * Find the relevant JSHint label's scope. The owning scope is located by
+	 * first inspecting the current scope and then moving "downward" through the
+	 * stack of scopes.
+	 *
+	 * @param labelName - the value of the identifier
+	 *
+	 * @return the scope in which the JSHint label was found
 	 */
 	private Map<String, Label> getLabel(String labelName)
 	{
@@ -242,9 +268,16 @@ public class ScopeManager
 		return null;
 	}
 	
+	/**
+	 * Determine if a given JSHint label name has been referenced within the
+	 * current function or any function defined within.
+	 *
+	 * @param labelName - the value of the identifier
+	 *
+	 * @return 
+	 */
 	private boolean usedSoFarInCurrentFunction(String labelName)
 	{
-		// used so far in this whole function and any sub functions
 		for (int i = scopeStack.size() - 1; i >= 0; i--)
 		{
 			Scope current = scopeStack.get(i);
@@ -295,7 +328,8 @@ public class ScopeManager
 	{
 		if (State.getOption().test("latedef"))
 		{
-			boolean isFunction = type.equals("function") || type.equals("generator function");
+			boolean isFunction = type.equals("function") || type.equals("generator function") ||
+				type.equals("async function");
 			
 			// if either latedef is strict and this is a function
 		    //    or this is not a function
@@ -308,7 +342,7 @@ public class ScopeManager
 	
 	public void on(String names, LexerEventListener listener)
 	{
-		for (String name : names.split(" "))
+		for (String name : names.split(" ", -1))
 		{
 			emitter.on(name, listener);
 		}
@@ -319,16 +353,25 @@ public class ScopeManager
 		return !has(labelName) && scopeStack.get(0).getPredefined().containsKey(labelName);
 	}
 	
+	/**
+	 * Create a new scope within the current scope. As the topmost value, the
+	 * new scope will be interpreted as the current scope until it is
+	 * exited--see the `unstack` method.
+	 */
 	public void stack()
 	{
 		stack(null);
 	}
 	
 	/**
-     * Tell the manager we are entering a new block of code.
-     * 
-     * @param type The type of the block. Valid values are "functionparams", "catchparams" and "functionouter".
-     */
+	 * Create a new scope within the current scope. As the topmost value, the
+	 * new scope will be interpreted as the current scope until it is
+	 * exited--see the `unstack` method.
+	 *
+	 * @param type - The type of the scope. Valid values are
+	 *               "functionparams", "catchparams" and
+	 *               "functionouter"
+	 */
 	public void stack(String type)
 	{
 		Scope previousScope = current;
@@ -341,6 +384,10 @@ public class ScopeManager
 		}
 	}
 	
+	/**
+	 * Valldate all binding references and declarations in the current scope
+	 * and set the next scope on the stack as the active scope.
+	 */
 	public void unstack()
 	{
 		Scope subScope = scopeStack.size() > 1 ? scopeStack.get(scopeStack.size() - 2) : null;
@@ -387,9 +434,12 @@ public class ScopeManager
 					}
 				}
 				
+				boolean isFunction = usedLabelType.equals("function") ||
+					usedLabelType.equals("generator function") ||
+					usedLabelType.equals("async fuction");
+				
 				// check for re-assigning a function declaration
-				if ((usedLabelType.equals("function") || usedLabelType.equals("generator function") ||
-					usedLabelType.equals("class")) && usage.getReassigned() != null)
+				if ((isFunction || usedLabelType.equals("class")) && usage.getReassigned() != null)
 				{
 					for (int j = 0; j < usage.getReassigned().size(); j++)
 					{
@@ -561,23 +611,23 @@ public class ScopeManager
 	}
 	
 	/**
-     * Add a param to the current scope.
-     * 
-     * @param labelName name of the label
-     * @param token current token
-     */
+	 * Add a function parameter to the current scope.
+	 * 
+	 * @param labelName - the value of the identifier
+	 * @param token
+	 */
 	public void addParam(String labelName, Token token)
 	{
 		addParam(labelName, token, null);
 	}
 	
 	/**
-     * Add a param to the current scope.
-     * 
-     * @param labelName name of the label
-     * @param token current token
-     * @param type type of the parameter token
-     */
+	 * Add a function parameter to the current scope.
+	 * 
+	 * @param labelName - the value of the identifier
+	 * @param token
+	 * @param type - JSHint label type; defaults to "param"
+	 */
 	public void addParam(String labelName, Token token, String type)
 	{
 		type = StringUtils.defaultIfBlank(type, "param");
@@ -643,6 +693,19 @@ public class ScopeManager
 		
 		boolean isStrict = State.isStrict();
 		Scope currentFunctParamScope = currentFunctBody.getParent();
+		// From ECMAScript 2017:
+		//
+		// > 14.1.2Static Semantics: Early Errors
+		// >
+		// > [...]
+		// > - It is a Syntax Error if IsSimpleParameterList of
+		// >   FormalParameterList is false and BoundNames of FormalParameterList
+		// >   contains any duplicate elements.
+		boolean isSimple = State.getFunct().hasSimpleParams();
+		// Method definitions are defined in terms of UniqueFormalParameters, so
+		// they cannot support duplicate parameter names regardless of strict
+		// mode.
+		boolean isMethod = State.getFunct().isMethod();
 		
 		if (currentFunctParamScope.getParams() == null)
 		{
@@ -655,7 +718,7 @@ public class ScopeManager
 			
 			if (label.isDuplicated())
 			{
-				if (isStrict || isArrow)
+				if (isStrict || isArrow || isMethod || !isSimple)
 				{
 					warning("E011", label.getToken(), labelName);
 				}
@@ -678,9 +741,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * Gets an array of implied globals.
+     * Get an array of implied globals
      * 
-     * @return list of globals.
+     * @return list of implied globals.
      */
 	public List<ImpliedGlobal> getImpliedGlobals()
 	{
@@ -688,20 +751,36 @@ public class ScopeManager
 	}
 	
 	/**
-     * Returns a list of unused variables.
+     * Get an array of objects describing unused bindings.
      * 
-     * @return list of unused variables.
+     * @return list of unused bindings.
      */
 	public List<Token> getUnuseds()
 	{
 		return Collections.unmodifiableList(unuseds);
 	}
 	
+	/**
+	 * Determine if a given name has been defined in the current scope or any
+	 * lower scope.
+	 *
+	 * @param labelName - the value of the identifier
+	 *
+	 * @return
+	 */
 	public boolean has(String labelName)
 	{
 		return getLabel(labelName) != null;
 	}
 	
+	/**
+	 * Retrieve  described by `labelName` or null
+	 *
+	 * @param labelName - the value of the identifier
+	 *
+	 * @return the type of the JSHint label or `null` if no
+	 *         such label exists
+	 */
 	public String labeltype(String labelName)
 	{
 		// returns a labels type or null if not present
@@ -714,9 +793,9 @@ public class ScopeManager
 	}
 	
 	/**
-     * For the exported options, indicating a variable is used outside the file.
+     * For the exported options, indicating a variable is used outside the file
      * 
-     * @param labelName name of the label.
+     * @param labelName - the value of the identifier
      */
 	public void addExported(String labelName)
 	{
@@ -755,16 +834,23 @@ public class ScopeManager
 	}
 	
 	/**
-     * Mark an indentifier as es6 module exported.
+     * Mark a JSHint label as "exported" by an ES2015 module
      * 
-     * @param labelName name of the label
-     * @param token current token
+     * @param labelName - the value of the identifier
+     * @param token
      */
 	public void setExported(String labelName, Token token)
 	{
 		block.use(labelName, token);
 	}
 	
+	/**
+	 * Mark a JSHint label as "initialized." This is necessary to enforce the
+	 * "temporal dead zone" (TDZ) of block-scoped bindings which are not
+	 * hoisted.
+	 *
+	 * @param labelName - the value of the identifier
+	 */
 	public void initialize(String labelName)
 	{
 		if (current.getLabels().containsKey(labelName))
@@ -774,31 +860,43 @@ public class ScopeManager
 	}
 	
 	/**
-     * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
-     * 
-     * @param labelName name of the label
-     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function", "generator function"
-     * @param token the token pointing at the declaration.
-     */
+	 * Create a new JSHint label and add it to the current scope. Delegates to
+	 * the internal `block.add` or `func.add` methods depending on the type.
+	 * Produces warnings and errors as necessary.
+	 *
+	 * @param labelName
+	 * @param type - the type of the label e.g. "param", "var",
+	 *               "let, "const", "import", "function",
+	 *               "generator function", "async function",
+	 *               "async generator function"
+	 * @param token - the token pointing at the declaration
+	 */
 	public void addlabel(String labelName, String type, Token token)
 	{
-		addlabel(labelName, type, false, token);
+		addlabel(labelName, type, token, false);
 	}
 	
 	/**
-     * Adds an indentifier to the relevant current scope and creates warnings/errors as necessary.
-     * 
-     * @param labelName name of the label
-     * @param type the type of the label e.g. "param", "var", "let, "const", "import", "function", "generator function"
-     * @param initialized whether the binding should be created in an "initialized" state.
-     * @param token the token pointing at the declaration.
-     */
-	public void addlabel(String labelName, String type, boolean initialized, Token token)
+	 * Create a new JSHint label and add it to the current scope. Delegates to
+	 * the internal `block.add` or `func.add` methods depending on the type.
+	 * Produces warnings and errors as necessary.
+	 *
+	 * @param labelName
+	 * @param type - the type of the label e.g. "param", "var",
+	 *               "let, "const", "import", "function",
+	 *               "generator function", "async function",
+	 *               "async generator function"
+	 * @param token - the token pointing at the declaration
+	 * @param initialized - whether the binding should be
+	 *                      created in an "initialized" state.
+	 */
+	public void addlabel(String labelName, String type, Token token, boolean initialized)
 	{
 		boolean isblockscoped = type.equals("let") || type.equals("const") ||
-			type.equals("class") || type.equals("import") || type.equals("generator function");
+			type.equals("class") || type.equals("import") || type.equals("generator function") ||
+			type.equals("async function") || type.equals("async generator function");
 		boolean ishoisted = type.equals("function") || type.equals("generator function") ||
-				type.equals("import");
+			type.equals("async function") || type.equals("import");
 		boolean isexported = (isblockscoped ? current.getType().equals("global") : currentFunctBody.getType().equals("global")) && 
 							 exported.containsKey(labelName);
 		
@@ -906,13 +1004,15 @@ public class ScopeManager
 	public class Functor
 	{
 		/**
-	     * Returns the label type given certain options.
-	     * 
-	     * @param labelName name of the label.
-	     * @param onlyBlockscoped only include block scoped labels.
-	     * @param excludeParams exclude the param scope.
-	     * @param excludeCurrent exclude the current scope.
-	     * @return label type string
+	     * Return the type of the provided JSHint label given certain options
+	     *
+	     * @param labelName
+	     * @param onlyBlockscoped - only include block scoped
+	     *                          labels
+	     * @param excludeParams - exclude the param scope
+	     * @param excludeCurrent - exclude the current scope
+	     *
+	     * @return
 	     */
 		public String labeltype(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -935,10 +1035,12 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Returns if a break label exists in the function scope.
-	     * 
-	     * @param labelName name of the label.
-	     * @return true if break label exists, false otherwise.
+	     * Determine whether a `break` statement label exists in the function
+	     * scope.
+	     *
+	     * @param labelName - the value of the identifier
+	     *
+	     * @return
 	     */
 		public boolean hasBreakLabel(String labelName)
 		{
@@ -959,15 +1061,14 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Returns if the label is in the current function scope.
-	     * 
-	     * @param labelName name of the label.
-	     * @param onlyBlockscoped only include block scoped labels.
-	     * @param excludeParams exclude the param scope.
-	     * @param excludeCurrent exclude the current scope.
-	     * @return true if label in the current scope, false otherwise.
-	     * 
-	     * @see #labeltype(String, boolean, boolean, boolean) for options
+	     * Determine if a given name has been defined in the current function
+	     * scope.
+	     *
+	     * @param labelName - the value of the identifier
+	     * @param options - options as supported by the
+	     *                  `funct.labeltype` method
+	     *
+	     * @return
 	     */
 		public boolean has(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent)
 		{
@@ -975,14 +1076,16 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Adds a new function scoped variable.
-	     * 
-	     * @param labelName name of the label.
-	     * @param type type of the label.
-	     * @param tok current token.
-	     * @param unused whether variable is unused or not.
-	     * 
-	     * @see Block#add(String, String, Token, boolean) for block scoped.
+	     * Create a new function-scoped JSHint label and add it to the current
+	     * scope. See the {@link Block#add} for coresponding logic to create
+	     * block-scoped JSHint labels
+	     *
+	     * @param labelName - the value of the identifier
+	     * @param type - the type of the JSHint label; either "function"
+	     *               or "var"
+	     * @param tok - the token that triggered the definition
+	     * @param unused - `true` if the JSHint label has not been
+	     *                 referenced
 	     */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{
@@ -998,7 +1101,7 @@ public class ScopeManager
 	public class Block
 	{
 		/**
-	     * Is the current block global?
+	     * Determine whether the current block scope is the global scope.
 	     * 
 	     * @return true if block is global, false otherwise.
 	     */
@@ -1007,12 +1110,24 @@ public class ScopeManager
 			return current.getType().equals("global");
 		}
 		
+		/**
+		 * Resolve a reference to a binding and mark the corresponding JSHint
+		 * label as "used."
+		 *
+		 * @param token - the token value that triggered the reference
+		 */
 		public void use(String labelName, Token token)
 		{
-			// if resolves to current function params, then do not store usage just resolve
-	        // this is because function(a) { var a; a = a; } will resolve to the param, not
-	        // to the unset var
-	        // first check the param is used
+			// If the name resolves to a parameter of the current function, then do
+			// not store usage. This is because in cases such as the following:
+			//
+			//	function(a) {
+			//		var a;
+			//		a = a;
+			//	}
+			//
+			// the usage of `a` will resolve to the parameter, not to the unset
+			// variable binding.
 			Scope paramScope = currentFunctBody.getParent();
 			if (paramScope != null && paramScope.getLabels().containsKey(labelName) &&
 				paramScope.getLabels().get(labelName).getType().equals("param"))
@@ -1039,7 +1154,8 @@ public class ScopeManager
 				current.getUsages().get(labelName).getTokens().add(token);
 			}
 			
-			// blockscoped vars can't be used within their initializer (TDZ)
+			// Block-scoped bindings can't be used within their initializer due to
+			// "temporal dead zone" (TDZ) restrictions.
 			Label label = current.getLabels().get(labelName);
 			if (label != null && label.isBlockscoped() && !label.isInitialized())
 			{
@@ -1066,27 +1182,38 @@ public class ScopeManager
 		}
 		
 		/**
-	     * Adds a new variable.
-	     * 
-	     * @param labelName name of the label.
-	     * @param type type of the label.
-	     * @param tok current token.
-	     * @param unused whether label is unused or not.
-	     */
+		 * Create a new block-scoped JSHint label and add it to the current
+		 * scope. See the {@link Functor#add} method for coresponding logic to create
+		 * function-scoped JSHint labels.
+		 *
+		 * @param labelName - the value of the identifier
+		 * @param type - the type of the JSHint label; one of "class",
+		 *               "const", "function", "import", or "let"
+		 * @param tok - the token that triggered the definition
+		 * @param unused - `true` if the JSHint label has not been
+		 *                 referenced
+		 */
 		public void add(String labelName, String type, Token tok, boolean unused)
 		{
 			add(labelName, type, tok, unused, false);
 		}
 		
 		/**
-	     * Adds a new variable.
-	     * 
-	     * @param labelName name of the label.
-	     * @param type type of the label.
-	     * @param tok current token.
-	     * @param unused whether label is unused or not.
-	     * @param initialized whether label is initialized or not.
-	     */
+		 * Create a new block-scoped JSHint label and add it to the current
+		 * scope. See the {@link Functor#add} method for coresponding logic to create
+		 * function-scoped JSHint labels.
+		 *
+		 * @param labelName - the value of the identifier
+		 * @param type - the type of the JSHint label; one of "class",
+		 *               "const", "function", "import", or "let"
+		 * @param tok - the token that triggered the definition
+		 * @param unused - `true` if the JSHint label has not been
+		 *                 referenced
+		 * @param initialized - `true` if the JSHint label has been
+		 *                      initialized (as is the case with JSHint
+		 *                      labels created via `import`
+		 *                      declarations)
+		 */
 		public void add(String labelName, String type, Token tok, boolean unused, boolean initialized)
 		{
 			current.getLabels().put(labelName, new Label(type, tok, true, null, unused, initialized));

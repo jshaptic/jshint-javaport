@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
@@ -35,6 +37,7 @@ import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.JsonParser;
 import com.github.jshaptic.js4j.UniversalContainer;
 import com.github.jshaptic.js4j.ValueCustomizer;
+import com.google.common.base.Splitter;
 
 public class Cli
 {
@@ -330,30 +333,21 @@ public class Cli
 	{
 		String file = StringUtils.defaultString(findFile(StringUtils.defaultIfEmpty(excludePath, ".jshintignore"), cwd));
 		
-		if (StringUtils.isEmpty(file) && StringUtils.isEmpty(exclude))
+		if (file.isEmpty() && StringUtils.isEmpty(exclude))
 		{
 			return new ArrayList<String>();
 		}
 		
-		String[] ls = StringUtils.isNotEmpty(file) ? shell.cat(file).split("\\n", -1) : new String[]{};
-		ls = ArrayUtils.addAll(StringUtils.defaultString(exclude).split(","), ls);
 		
-		List<String> lines = new ArrayList<String>();
+		List<String> lines = !file.isEmpty() ? new ArrayList<String>(Splitter.on("\n").splitToList(shell.cat(file))) : new ArrayList<String>();
+		lines.addAll(0, Splitter.on(",").splitToList(StringUtils.defaultString(exclude)));
 		
-		for (String line : ls)
-		{
-			if (line.trim().isEmpty()) continue;
-			
+		return lines.stream().filter(line -> !line.trim().isEmpty()).map(line -> {
 			if (line.startsWith("!"))
-			{
-				lines.add("!" + path.resolve(path.dirname(file), line.substring(1).trim()));
-				continue;
-			}
+				return "!" + path.resolve(path.dirname(file), line.substring(1).trim());
 			
-			lines.add(path.resolve(path.dirname(file), line.trim()));
-		}
-		
-		return lines;
+			return path.resolve(path.dirname(file), line.trim());
+		}).collect(Collectors.toList());
 	}
 	
 	/**
@@ -366,8 +360,7 @@ public class Cli
 	 */
 	private boolean isIgnored(String fp, List<String> patterns)
 	{
-		for (String ip : patterns)
-		{
+		return patterns.stream().anyMatch(ip -> {
 			if (Minimatch.match(path.resolve(fp), ip, Minimatch.NO_CASE | Minimatch.DOT))
 			{
 				return true;
@@ -378,14 +371,13 @@ public class Cli
 				return true;
 			}
 			
-			if (shell.isDirectory(fp) && Reg.test("^[^\\/\\\\]*[\\/\\\\]?$", ip) &&
-					Reg.test("^" + ip + ".*", fp))
+			if (shell.isDirectory(fp) && Reg.isEndsWithOneOrZeroSlash(ip) && // PORT INFO: match regexp was moved to Reg class
+				fp.startsWith(ip))
 			{
 				return true;
 			}
-			
-		}
-		return false;
+			return false;
+		});
 	}
 	
 	/**
@@ -405,7 +397,7 @@ public class Cli
 	{
 		// A JS file won't start with a less-than character, whereas a HTML file
 		// should always start with that.
-		if (!when.equals("always") && (!when.equals("auto") || !Reg.test("^\\s*<", code)))
+		if (!when.equals("always") && (!when.equals("auto") || !code.trim().startsWith("<")))
 			return null;
 		
 		Map<Integer, Integer> offsets = new HashMap<Integer, Integer>();
@@ -419,19 +411,19 @@ public class Cli
 			
 			int lineCounter = s.getContent().getRowColumnVector().getRow();
 			
-			String[] lines = s.getContent().toString().split("\\r\\n|\\n|\\r", -1);
+			String[] lines = Reg.splitByEOL(s.getContent().toString()); // PORT INFO: split regexp was moved to Reg class
 			
 			String startOffset = null;
 			for (String line : lines)
 			{
 				if (line.trim().isEmpty()) continue;
-				startOffset = Reg.exec("^([\\s\\t]*)", line)[1];
+				startOffset = Reg.getLeftWhitespace(line);
 				break;
 			}
 			
 			for (int i = 0; i < lines.length; i++)
 			{
-				if (startOffset != null)
+				if (StringUtils.isNotEmpty(startOffset))
 				{
 					offsets.put(lineCounter, startOffset.length());
 				}
@@ -455,7 +447,7 @@ public class Cli
 	 * @param ignores a list of patterns for files to ignore
 	 * @param ext     a list of non-dot-js extensions to lint
 	 */
-	private void collect(String fp, List<String> files, List<String> ignores, String ext)
+	private void collect(String fp, List<String> files, List<String> ignores, Pattern ext)
 	{
 		if (ignores != null && isIgnored(fp, ignores))
 		{
@@ -546,7 +538,7 @@ public class Cli
 		
 		buffer.add(code);
 		code = StringUtils.join(buffer, "\n");
-		code = code.replace("^\uFEFF", ""); // Remove potential Unicode BOM.
+		code = StringUtils.removeStart(code, "\uFEFF"); // Remove potential Unicode BOM.
 		
 		JSHint jshint = new JSHint();
 		
@@ -583,7 +575,7 @@ public class Cli
 	{
 		// A JS file won't start with a less-than character, whereas a HTML file
 		// should always start with that.
-		if (!when.equals("always") && (!when.equals("auto") || !Reg.test("^\\s*<", code)))
+		if (!when.equals("always") && (!when.equals("auto") || !code.trim().startsWith("<")))
 			return code;
 		
 		int startIndex = 1;
@@ -605,21 +597,21 @@ public class Cli
 				js.add("\n");
 			}
 			
-			String[] lines = data.split("\\r\\n|\\n|\\r", -1);
+			String[] lines = Reg.splitByEOL(data); // PORT INFO: split regexp was moved to Reg class
 			
 			String startOffset = null;
 			for (String line : lines)
 			{
 				if (line.trim().isEmpty()) continue;
-				startOffset = Reg.exec("^([\\s\\t]*)", line)[1];
+				startOffset = Reg.getLeftWhitespace(line); // PORT INFO: exec regexp was moved to Reg class
 				break;
 			}
 			
-			if (startOffset != null)
+			if (StringUtils.isNotEmpty(startOffset))
 			{
 				for (int i = 0; i < lines.length; i++)
 				{
-					lines[i] = lines[i].replaceFirst(startOffset, "");
+					lines[i] = StringUtils.removeStart(lines[i], startOffset);
 				}
 				data = StringUtils.join(lines, "\n");
 			}
@@ -721,9 +713,9 @@ public class Cli
 	public List<String> gather(RunOptions opts) throws IOException
 	{
 		List<String> files = new ArrayList<String>();
-		String reg = "\\.(js" +
-				(opts.extensions == null || opts.extensions.isEmpty() ? "" : "|" +
-						opts.extensions.replaceAll(",", "|").replaceAll("[\\. ]", "")) + ")$";
+		Pattern reg = Pattern.compile("\\.(js" +
+			(opts.extensions == null || opts.extensions.isEmpty() ? "" : "|" +
+				StringUtils.replace(StringUtils.replace(opts.extensions, ",", "|"), "[\\. ]", "")) + ")$");
 		
 		List<String> ignores = new ArrayList<String>();
 		if (opts.ignores == null)
@@ -750,7 +742,8 @@ public class Cli
 	{
 		if (StringUtils.isNotEmpty(opts.prereq))
 		{
-			config.set("prereq", ContainerFactory.createArrayIfFalse(config.get("prereq")).concat(new UniversalContainer(opts.prereq.split("\\s*,\\s*"))));
+			// PORT INFO: split regexp was moved to Reg class
+			config.set("prereq", ContainerFactory.createArrayIfFalse(config.get("prereq")).concat(new UniversalContainer(Reg.splitByComma(opts.prereq))));
 		}
 	}
 	

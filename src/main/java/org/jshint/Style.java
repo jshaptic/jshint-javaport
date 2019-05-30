@@ -62,8 +62,8 @@ public class Style implements JSHintModule
 					return;
 				}
 				
-				// PORT INFO: replaced regexp /^[A-Z0-9_]*$/ with StringUtils.containsOnly method
-				if (data.getName().replaceAll("^_+|_+$", "").indexOf("_") > -1 && !StringUtils.containsOnly(data.getName(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))
+				// PORT INFO: replace and match regexps were moved to Reg class
+				if (Reg.trimUnderscores(data.getName()).indexOf("_") > -1 && !Reg.isUppercaseIdentifier(data.getName()))
 				{
 					linter.warn("W106", data.getLine(), data.getCharacter(), new String[]{data.getName()});
 				}
@@ -135,8 +135,7 @@ public class Style implements JSHintModule
 					linter.warn("W047", data.getLine(), data.getCharacter(), new String[]{data.getValue()});
 				}
 				
-				// PORT INFO: replaced regexp /^00+/ with startsWith method
-				if (data.getValue().startsWith("00"))
+				if (data.getValue().startsWith("00")) // PORT INFO: test regexp /^00+/ was replaced with startsWith method
 				{
 					// Multiple leading zeroes.
 					linter.warn("W046", data.getLine(), data.getCharacter(), new String[]{data.getValue()});
@@ -145,6 +144,7 @@ public class Style implements JSHintModule
 		});
 		
 		// Warn about script URLs.
+		
 		linter.on("String", new LexerEventListener()
 		{
 			@Override
@@ -155,9 +155,7 @@ public class Style implements JSHintModule
 					return;
 				}
 				
-				// PORT INFO: replaced regexp /^(?:javascript|jscript|ecmascript|vbscript|livescript)\s*:/i with several functions
-				int colon = data.getValue().indexOf(':');
-				if (colon != -1 && StringUtils.equalsAny(data.getValue().substring(0, colon).trim().toLowerCase(), "javascript", "jscript", "ecmascript", "vbscript", "livescript"))
+				if (Reg.isJavascriptUrl(data.getValue())) // JSHINT_BUG: javascriptURL pattern can be used here
 				{
 					linter.warn("W107", data.getLine(), data.getCharacter(), new String[]{});
 				}

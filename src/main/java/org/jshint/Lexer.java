@@ -7,7 +7,13 @@ package org.jshint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -81,40 +87,16 @@ public class Lexer
 		TEMPLATE
 	}
 	
-	// PORT INFO: replaced regexp /^[0-9a-fA-F]+$/ with straight check
+	// PORT INFO: test regexp /^[0-9a-fA-F]+$/ was replaced with straight check
 	private boolean isHex(String str)
 	{
 		if (str == null || str.length() == 0) return false;
 		
 		for (int i = 0; i < str.length(); i++)
 		{
-			switch (str.charAt(i))
-			{
-	        case '0':
-	        case '1':
-	        case '2':
-	        case '3':
-	        case '4':
-	        case '5':
-	        case '6':
-	        case '7':
-	        case '8':
-	        case '9':
-	        case 'a':
-	        case 'b':
-	        case 'c':
-	        case 'd':
-	        case 'e':
-	        case 'f':
-	        case 'A':
-	        case 'B':
-	        case 'C':
-	        case 'D':
-	        case 'E':
-	        case 'F':
-	        	continue;
-			}
-			return false;
+			char c = str.charAt(i);
+			if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+				return false;
 		}
 		
 		return true;
@@ -164,7 +146,7 @@ public class Lexer
 	
 	public Lexer(String source)
 	{
-		this(StringUtils.replaceEach(source, new String[]{"\r\n", "\r"}, new String[]{"\n", "\n"}).split("\n", -1));
+		this(Reg.splitByEOL(source)); // PORT INFO: split regexp was moved to Reg class
 	}
 	
 	public Lexer(String[] lines)
@@ -385,7 +367,7 @@ public class Lexer
 	 */
 	public void on(String names, LexerEventListener listener)
 	{
-		for (String name : names.split(" "))
+		for (String name : names.split(" ", -1))
 		{
 			emitter.on(name, listener);
 		}
@@ -432,8 +414,7 @@ public class Lexer
 		{
 		// Most common single-character punctuators
 		case ".":
-			// PORT INFO: replaced regexp /^[0-9]$/ with isDecimalDigit method to improve performance
-			if (isDecimalDigit(peek(1)))
+			if (isDecimalDigit(peek(1))) // PORT INFO: test regexp /^[0-9]$/ was replaced with isDecimalDigit method
 			{
 				return null;
 			}
@@ -520,14 +501,18 @@ public class Lexer
 			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2);
 		}
 		
-		// 2-character punctuators: <= >= == != ++ -- << >> && ||
-	    // += -= *= %= &= |= ^= /=
-		
-		if (ch1.equals(ch2) && ("+-<>&|".indexOf(ch1) >= 0))
+		// 2-character punctuators: ++ -- << >> && || **
+		if (ch1.equals(ch2) && ("+-<>&|*".indexOf(ch1) >= 0))
 		{
+			if (ch1.equals("*") && ch3.equals("="))
+			{
+				return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2 + ch3);
+			}
+			
 			return new LexerToken(LexerTokenType.PUNCTUATOR, ch1 + ch2);
 		}
 		
+		// <= >= != += -= *= %= &= |= ^= /=
 		if ("<>=!+-*%&|^/".indexOf(ch1) >= 0)
 		{
 			if (ch2.equals("="))
@@ -546,10 +531,13 @@ public class Lexer
     // comments.
 	private LexerToken commentToken(String label, String body, boolean isMultiline, boolean isMalformed)
 	{
-		String[] special = {"jshint", "jslint", "members", "member", "globals", "global", "exported"};
+		String[] special = {
+			"jshint", "jshint.unstable", "jslint", "members", "member", "globals",
+			"global", "exported"
+		};
 		boolean isSpecial = false;
 		String value = label + body;
-		TokenType commentType = TokenType.PLAIN;
+		Token.Type commentType = Token.Type.PLAIN;
 		
 		if (isMultiline)
 		{
@@ -558,10 +546,10 @@ public class Lexer
 		
 		body = StringUtils.replace(body, "\n", " ");
 		
-		if (label.equals("/*") && Reg.test(Reg.FALLS_THROUGH, body))
+		if (label.equals("/*") && Reg.isFallsThrough(body))
 		{
 			isSpecial = true;
-			commentType = TokenType.FALLS_THROUGH;
+			commentType = Token.Type.FALLS_THROUGH;
 		}
 		
 		for (String str : special)
@@ -573,20 +561,20 @@ public class Lexer
 			
 			// Don't recognize any special comments other than jshint for single-line
 	        // comments. This introduced many problems with legit comments.
-			if (label.equals("//") && !str.equals(TokenType.JSHINT.toString()))
+			if (label.equals("//") && !str.equals("jshint") && !str.equals("jshint.unstable"))
 			{
 				continue;
 			}
 			
-			if (body.length() > str.length() && body.substring(0, str.length()).equals(str) && body.charAt(str.length()) == ' ')
+			if (body.length() > str.length() && body.charAt(str.length()) == ' ' && body.substring(0, str.length()).equals(str))
 			{
 				isSpecial = true;
 				label = label + str;
 				body = body.substring(str.length()+1);
 			}
 			
-			if (!isSpecial && body.length() > str.length()+1 && body.charAt(0) == ' ' && body.charAt(str.length()+1) == ' ' &&
-				body.substring(1, str.length()+1).equals(str))
+			if (!isSpecial && body.length() > 0 && body.charAt(0) == ' ' && body.length() > str.length() + 1 && body.charAt(str.length() + 1) == ' ' &&
+				body.substring(1, str.length() + 1).equals(str))
 			{
 				isSpecial = true;
 				label = label + " " + str;
@@ -596,7 +584,7 @@ public class Lexer
 			// To handle rarer case when special word is separated from label by
 			// multiple spaces or tabs
 			int strIndex = body.indexOf(str);
-			if (!isSpecial && strIndex >= 0 && body.charAt(strIndex + str.length()) == ' ')
+			if (!isSpecial && strIndex >= 0 && body.length() > strIndex + str.length() && body.charAt(strIndex + str.length()) == ' ')
 			{
 				boolean isAllWhitespace = body.substring(0, strIndex).trim().length() == 0;
 				if (isAllWhitespace)
@@ -614,10 +602,10 @@ public class Lexer
 			switch (str)
 			{
 			case "member":
-				commentType = TokenType.MEMBERS;
+				commentType = Token.Type.MEMBERS;
 				break;
 			case "global":
-				commentType = TokenType.GLOBALS;
+				commentType = Token.Type.GLOBALS;
 				break;
 			default:
 				String[] options = body.split(":", -1);
@@ -645,24 +633,7 @@ public class Lexer
 					}
 				}
 				
-				switch (str)
-				{
-					case "jshint":
-						commentType = TokenType.JSHINT;
-						break;
-					case "jslint":
-						commentType = TokenType.JSLINT;
-						break;
-					case "members":
-						commentType = TokenType.MEMBERS;
-						break;
-					case "globals":
-						commentType = TokenType.GLOBALS;
-						break;
-					case "exported":
-						commentType = TokenType.EXPORTED;
-						break;
-				}
+				commentType = Token.Type.fromString(str);
 			}
 		}
 		
@@ -773,8 +744,7 @@ public class Lexer
 	 */
 	public LexerToken scanKeyword()
 	{
-		// PORT INFO: replaced regexp /^[a-zA-Z_$][a-zA-Z0-9_$]*/ with custom function Reg.getIdentifier
-		String result = Reg.getIdentifier(input);
+		String result = Reg.getIdentifier(input); // PORT INFO: exec regexp was moved to Reg class
 		String[] keywords = {
 			"if", "in", "do", "var", "for", "new",
 			"try", "let", "this", "else", "case",
@@ -783,7 +753,7 @@ public class Lexer
 			"super", "return", "typeof", "delete",
 			"switch", "export", "import", "default",
 			"finally", "extends", "function", "continue",
-			"debugger", "instanceof", "true", "false", "null"
+			"debugger", "instanceof", "true", "false", "null", "async", "await"
 		};
 		
 		if (!result.isEmpty() && ArrayUtils.indexOf(keywords, result) >= 0)
@@ -794,83 +764,36 @@ public class Lexer
 		return null;
 	}
 	
-	// PORT INFO: replaced regexp /^[0-9]$/ with straight check
+	// PORT INFO: test regexp /^[0-9]$/ was replaced with straight check
 	private boolean isDecimalDigit(String str)
 	{
 		if (str.length() != 1) return false;
-		switch (str.charAt(0))
-		{
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            return true;
-        default:
-            return false;
-		}
+		char c = str.charAt(0);
+		return c >= '0' && c <= '9';
 	}
 	
-	// PORT INFO: replaced regexp /^[0-7]$/ with straight check
+	// PORT INFO: test regexp /^[0-7]$/ was replaced with straight check
 	private boolean isOctalDigit(String str)
 	{
 		if (str.length() != 1) return false;
-		switch (str.charAt(0))
-		{
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-            return true;
-        default:
-            return false;
-		}
+		char c = str.charAt(0);
+		return c >= '0' && c <= '7';
 	}
 	
-	// PORT INFO: replaced regexp /^[01]$/ with straight check
+	// PORT INFO: test regexp /^[01]$/ was replaced with straight check
 	private boolean isBinaryDigit(String str)
 	{
 		if (str.length() != 1) return false;
-		switch (str.charAt(0))
-		{
-        case '0':
-        case '1':
-            return true;
-        default:
-            return false;
-		}
-	}
-	
-	private boolean isAllowedDigit(int base, String str)
-	{
-		switch (base)
-		{
-		case 16:
-			return isHexDigit(str);
-		case 10:
-			return isDecimalDigit(str);
-		case 8:
-			return isOctalDigit(str);
-		case 2:
-			return isBinaryDigit(str);
-		default:
-			return false;
-		}
+		char c = str.charAt(0);
+		return c == '0' || c == '1';
 	}
 	
 	private boolean isIdentifierStart(String ch)
 	{
-		return (ch.equals("&")) || (ch.equals("_")) || (ch.equals("\\")) ||
-			   (ch.length() > 0 && ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z') || (ch.length() > 0 && ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z');
+		if (ch.length() != 1) return false;
+		char c = ch.charAt(0);
+		return (c == '&') || (c == '_') || (c == '\\') ||
+			(c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 	}
 	
 	/*
@@ -1026,7 +949,7 @@ public class Lexer
 		return null;
 	}
 	
-	// PORT INFO: replaced regexp /\\u([0-9a-fA-F]{4})/g with straight logic
+	// PORT INFO: replace regexp /\\u([0-9a-fA-F]{4})/g was replaced with straight logic
 	private String removeEscapeSequences(String id)
 	{
 		StringBuilder result = new StringBuilder(id);
@@ -1038,32 +961,9 @@ public class Lexer
 			boolean replace = true;
 			for (int i = 0; i < 4; i++)
 			{
-				switch (result.charAt(cIndex + i))
-				{
-		        case '0':
-		        case '1':
-		        case '2':
-		        case '3':
-		        case '4':
-		        case '5':
-		        case '6':
-		        case '7':
-		        case '8':
-		        case '9':
-		        case 'a':
-		        case 'b':
-		        case 'c':
-		        case 'd':
-		        case 'e':
-		        case 'f':
-		        case 'A':
-		        case 'B':
-		        case 'C':
-		        case 'D':
-		        case 'E':
-		        case 'F':
-		            continue;
-				}
+				char c = result.charAt(cIndex + i);
+				if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+					continue;
 				replace = false;
 				break;
 			}
@@ -1094,10 +994,12 @@ public class Lexer
 		String value = "";
 		int length = input.length();
 		String chr = peek(index);
+		Predicate<String> isAllowedDigit = this::isDecimalDigit;
 		int base = 10;
 		boolean isLegacy = false;
 		
 		// Numbers must start either with a decimal digit or a point.
+		
 		if (!chr.equals(".") && !isDecimalDigit(chr))
 		{
 			return null;
@@ -1114,6 +1016,7 @@ public class Lexer
 				// Base-16 numbers.
 				if (chr.equals("x") || chr.equals("X"))
 				{
+					isAllowedDigit = this::isHexDigit;
 					base = 16;
 					
 					index += 1;
@@ -1123,6 +1026,7 @@ public class Lexer
 				// Base-8 numbers.
 				if (chr.equals("o") || chr.equals("O"))
 				{
+					isAllowedDigit = this::isOctalDigit;
 					base = 8;
 					
 					if (!State.inES6(true))
@@ -1142,6 +1046,7 @@ public class Lexer
 				// Base-2 numbers.
 				if (chr.equals("b") || chr.equals("B"))
 				{
+					isAllowedDigit = this::isBinaryDigit;
 					base = 2;
 					
 					if (!State.inES6(true))
@@ -1161,6 +1066,7 @@ public class Lexer
 				// Legacy base-8 numbers.
 				if (isOctalDigit(chr))
 				{
+					isAllowedDigit = this::isOctalDigit;
 					base = 8;
 					isLegacy = true;
 					
@@ -1183,7 +1089,7 @@ public class Lexer
 				
 				// Numbers like '019' (note the 9) are not valid octals
 				// but we still parse them and mark as malformed.
-				if (!(isLegacy && isDecimalDigit(chr)) && !isAllowedDigit(base, chr))
+				if (!(isLegacy && isDecimalDigit(chr)) && !isAllowedDigit.test(chr))
 				{
 					break;
 				}
@@ -1669,142 +1575,316 @@ public class Lexer
 	 */
 	public LexerToken scanRegExp(AsyncTrigger checks) throws JSHintException
 	{
-		EventContext context;
-		int index = 0;
+		AtomicInteger index = new AtomicInteger(0);
 		int length = input.length();
-		String chr = peek();
-		String value = chr;
-		String body = "";
-		List<String> flags = new ArrayList<String>();
-		boolean malformed = false;
+		AtomicReference<String> chr = new AtomicReference<String>(peek());
+		StringBuilder value = new StringBuilder(chr.get());
+		StringBuilder body = new StringBuilder();
+		List<Integer> groupReferences = new ArrayList<Integer>();
+		StringBuilder allFlags = new StringBuilder();
+		StringBuilder es5Flags = new StringBuilder();
+		AtomicBoolean malformed = new AtomicBoolean();
 		boolean isCharSet = false;
+		boolean isCharSetRange = false;
+		//JSHINT_BUG: isGroup variable isn't used anywhere
+		boolean isQuantifiable = false;
+		boolean hasInvalidQuantifier = false;
+		BooleanSupplier hasUFlag = () -> allFlags.indexOf("u") > -1;
+		StringBuilder escapedChars = new StringBuilder();
+		AtomicInteger groupCount = new AtomicInteger(0);
 		boolean terminated = false;
 		String malformedDesc = "";
 		
+		Supplier<String> scanRegexpEscapeSequence = () -> {
+			index.addAndGet(1);
+			chr.set(peek(index.get()));
+			
+			if (Reg.isNonzeroDigit(chr.get()))
+			{
+				StringBuilder sequence = new StringBuilder(chr.get());
+				String next = peek(index.get() + 1);
+				while (Reg.isNonzeroDigit(next) || next.equals("0"))
+				{
+					index.addAndGet(1);
+					chr.set(next);
+					sequence.append(chr.get());
+					body.append(chr.get());
+					value.append(chr.get());
+					next = peek(index.get() + 1);
+				}
+				groupReferences.add(Ints.tryParse(sequence.toString()));
+				return sequence.toString();
+			}
+			
+			escapedChars.append(chr.get());
+			
+			if (chr.get().equals("u") && peek(index.get() + 1).equals("{"))
+			{
+				int x = index.get() + 2;
+				StringBuilder sequence = new StringBuilder("u{");
+				String next = peek(x);
+				while (isHex(next))
+				{
+					sequence.append(next);
+					x += 1;
+					next = peek(x);
+				}
+				
+				if (!next.equals("}"))
+				{
+					EventContext context = new EventContext();
+					context.setCode("E016");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("Invalid Unicode escape sequence");
+					triggerAsync("error", context, checks, hasUFlag);
+				}
+				else if (sequence.length() > 2)
+				{
+					sequence.append("}");
+					body.append(sequence);
+					value.append(sequence);
+					index.set(x + 1);
+					return sequence.toString();
+				}
+			}
+			
+			// Unexpected control character
+			if (chr.get().length() > 0 && chr.get().charAt(0) < ' ')
+			{
+				malformed.set(true);
+				EventContext context = new EventContext();
+				context.setCode("W048");
+				context.setLine(line);
+				context.setCharacter(character);
+				triggerAsync("warning", context, checks, () -> true);
+			}
+			
+			// Unexpected escaped character
+			if (chr.get().equals("<"))
+			{
+				malformed.set(true);
+				EventContext context = new EventContext();
+				context.setCode("W049");
+				context.setLine(line);
+				context.setCharacter(character);
+				context.setData(chr.get());
+				triggerAsync("warning", context, checks, () -> true);
+			}
+			
+			index.addAndGet(1);
+			body.append(chr.get());
+			value.append(chr.get());
+			
+			return chr.get();
+		};
+		
+		BooleanSupplier checkQuantifier = () -> {
+			int lookahead = index.get();
+			StringBuilder lowerBound = new StringBuilder();
+			StringBuilder upperBound = new StringBuilder();
+			
+			String next = peek(lookahead + 1);
+			
+			while (Reg.isDecimalDigit(next))
+			{
+				lookahead += 1;
+				lowerBound.append(next);
+				next = peek(lookahead + 1);
+			}
+			
+			if (lowerBound.length() == 0)
+			{
+				return false;
+			}
+			
+			if (next.equals("}"))
+			{
+				return true;
+			}
+			
+			if (!next.equals(","))
+			{
+				return false;
+			}
+			
+			lookahead += 1;
+			next = peek(lookahead + 1);
+			
+			while (Reg.isDecimalDigit(next))
+			{
+				lookahead += 1;
+				upperBound.append(next);
+				next = peek(lookahead + 1);
+			}
+			
+			if (!next.equals("}"))
+			{
+				return false;
+			}
+			
+			if (upperBound.length() != 0)
+			{
+				return Ints.tryParse(lowerBound.toString()) <= Ints.tryParse(upperBound.toString());
+			}
+			
+			return true;
+		};
+		
+		Function<String, String> translateUFlag = b -> {
+			// The BMP character to use as a replacement for astral symbols when
+			// translating an ES6 "u"-flagged pattern to an ES5-compatible
+			// approximation.
+			// Note: replacing with '\uFFFF' enables false positives in unlikely
+			// scenarios. For example, `[\\u{1044f}-\\u{10440}]` is an invalid pattern
+			// that would not be detected by this substitution.
+			String astralSubstitute = "\uFFFF";
+			
+			return Reg.replaceAllPairedSurrogate(Reg.replaceAllUnicodeEscapeSequence(b,
+				// Replace every Unicode escape sequence with the equivalent BMP
+				// character or a constant ASCII code point in the case of astral
+				// symbols. (See the above note on `astralSubstitute` for more
+				// information.)
+				(g0, g1) -> {
+					Integer codePoint = Ints.tryParse(g1, 16);
+					
+					if (codePoint == null || codePoint > 0x10FFFF)
+					{
+						malformed.set(true);
+						EventContext context = new EventContext();
+						context.setCode("E016");
+						context.setLine(line);
+						context.setCharacter(character);
+						context.setData(String.valueOf(character));
+						trigger("error", context);
+						
+						return "";
+					}
+					String literal = new String(Character.toChars(codePoint));
+					
+					if (Reg.isSyntaxChars(literal))
+					{
+						return g0;
+					}
+					
+					if (codePoint <= 0xFFFF)
+					{
+						return new String(Character.toChars(codePoint)); //JSHINT_BUG: there is already literal variable it can be used here
+					}					
+					return astralSubstitute;
+				}),
+				// Replace each paired surrogate with a single ASCII symbol to avoid
+				// throwing on regular expressions that are only valid in combination
+				// with the "u" flag.
+				astralSubstitute);
+		};
+		
 		// Regular expressions must start with '/'
-		if (!prereg || !chr.equals("/"))
+		if (!prereg || !chr.get().equals("/"))
 		{
 			return null;
 		}
 		
-		index += 1;
+		index.addAndGet(1);
 		terminated = false;
 		
 		// Try to get everything in between slashes. A couple of
-	    // cases aside (see scanUnexpectedChars) we don't really
+	    // cases aside (see scanRegexpEscapeSequence) we don't really
 	    // care whether the resulting expression is valid or not.
 	    // We will check that later using the RegExp object.
 		
-		while (index < length)
+		while (index.get() < length)
 		{
-			chr = peek(index);
-			value += chr;
-			body += chr;
+			// Because an iteration of this loop may terminate in a number of
+			// distinct locations, `isCharSetRange` is re-set at the onset of
+			// iteration.
+			isCharSetRange &= chr.get().equals("-");
+			chr.set(peek(index.get()));
+			value.append(chr.get());
+			body.append(chr.get());
 			
 			if (isCharSet)
 			{
-				if (chr.equals("]"))
+				if (chr.get().equals("]"))
 				{
-					if (!peek(index - 1).equals("\\") || peek(index - 2).equals("\\"))
+					if (!peek(index.get() - 1).equals("\\") || peek(index.get() - 2).equals("\\"))
 					{
 						isCharSet = false;
 					}
 				}
-				
-				if (chr.equals("\\"))
+				else if (chr.get().equals("-"))
 				{
-					index += 1;
-					chr = peek(index);
-					body += chr;
-					value += chr;
-					
-					// Unexpected control character
-					if (chr.length() > 0 && chr.charAt(0) < ' ')
-					{
-						malformed = true;
-						context = new EventContext();
-						context.setCode("W048");
-						context.setLine(line);
-						context.setCharacter(character);
-						triggerAsync("warning", context, checks, () -> true);
-					}
-					
-					// Unexpected escaped character
-					if (chr.equals("<"))
-					{
-						malformed = true;
-						context = new EventContext();
-						context.setCode("W049");
-						context.setLine(line);
-						context.setCharacter(character);
-						context.setData(chr);
-						triggerAsync("warning", context, checks, () -> true);
-					}
+					isCharSetRange = true;
+				}
+			}
+				
+			if (chr.get().equals("\\"))
+			{
+				String escapeSequence = scanRegexpEscapeSequence.get();
+				
+				if (isCharSet && (peek(index.get()).equals("-") || isCharSetRange) &&
+					Reg.isCharClasses(escapeSequence))
+				{
+					EventContext context = new EventContext();
+					context.setCode("E016");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("Character class used in range");
+					triggerAsync("error", context, checks, hasUFlag);
 				}
 				
-				index += 1;
 				continue;
 			}
 				
-			if (chr.equals("\\"))
+			if (chr.get().equals("{") && !hasInvalidQuantifier)
 			{
-				index += 1;
-				chr = peek(index);
-				body += chr;
-				value += chr;
-				
-				// Unexpected control character
-				if (chr.length() > 0 && chr.charAt(0) < ' ')
-				{
-					malformed = true;
-					context = new EventContext();
-					context.setCode("W048");
-					context.setLine(line);
-					context.setCharacter(character);
-					triggerAsync("warning", context, checks, () -> true);
-				}
-				
-				// Unexpected escaped character
-				if (chr.equals("<"))
-				{
-					malformed = true;
-					context = new EventContext();
-					context.setCode("W049");
-					context.setLine(line);
-					context.setCharacter(character);
-					context.setData(chr);
-					triggerAsync("warning", context, checks, () -> true);
-				}
-				
-				if (chr.equals("/"))
-				{
-					index += 1;
-					continue;
-				}
-				
-				if (chr.equals("["))
-				{
-					index += 1;
-					continue;
-				}
+				hasInvalidQuantifier = !checkQuantifier.getAsBoolean();
 			}
 			
-			if (chr.equals("["))
+			if (chr.get().equals("["))
 			{
 				isCharSet = true;
-				index += 1;
+				index.addAndGet(1);
 				continue;
 			}
-			
-			if (chr.equals("/"))
+			else if (chr.get().equals("("))
 			{
-				body = body.substring(0, body.length()-1);
+				if (peek(index.get() + 1).equals("?") &&
+					(peek(index.get() + 2).equals("=") || peek(index.get() + 2).equals("!")))
+				{
+					isQuantifiable = true;
+				}
+			}
+			else if (chr.get().equals(")"))
+			{
+				if (isQuantifiable)
+				{
+					isQuantifiable = false;
+					
+					if (Reg.isQuantifiers(peek(index.get() + 1)))
+					{
+						EventContext context = new EventContext();
+						context.setCode("E016");
+						context.setLine(line);
+						context.setCharacter(character);
+						context.setData("Quantified quantifiable");
+						triggerAsync("error", context, checks, hasUFlag);
+					}
+				}
+				else
+				{
+					groupCount.addAndGet(1);
+				}
+			}
+			else if (chr.get().equals("/"))
+			{
+				body.deleteCharAt(body.length() - 1);
 				terminated = true;
-				index += 1;
+				index.addAndGet(1);
 				break;
 			}
 			
-			index += 1;
+			index.addAndGet(1);
 		}
 		
 		// A regular expression that was never closed is an
@@ -1812,7 +1892,7 @@ public class Lexer
 		
 		if (!terminated)
 		{
-			context = new EventContext();
+			EventContext context = new EventContext();
 			context.setCode("E015");
 			context.setLine(line);
 			context.setCharacter(from);
@@ -1827,36 +1907,113 @@ public class Lexer
 		
 		// Parse flags (if any).
 		
-		while (index < length)
+		while (index.get() < length)
 		{
-			chr = peek(index);
-			// PORT INFO: replaced regexp /[gimy]/ with StringUtils.containsAny function
-			if (!StringUtils.containsAny(chr, "gimy"))
+			chr.set(peek(index.get()));
+			
+			if (!Reg.isRegexpFlag(chr.get()))
 			{
 				break;
 			}
-			if (chr.equals("y"))
+			if (chr.get().equals("y"))
 			{
 				if (!State.inES6(true))
 				{
-					context = new EventContext();
+					EventContext context = new EventContext();
 					context.setCode("W119");
 					context.setLine(line);
 					context.setCharacter(character);
 					context.setData("Sticky RegExp flag", "6");
 					triggerAsync("warning", context, checks, () -> true);
 				}
-				if (value.indexOf("y") > -1)
+			}
+			else if (chr.get().equals("u"))
+			{
+				if (!State.inES6(true))
+				{
+					EventContext context = new EventContext();
+					context.setCode("W119");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("Unicode RegExp flag", "6");
+					triggerAsync("warning", context, checks, () -> true);
+				}
+				
+				boolean hasInvalidEscape = false;
+				
+				boolean hasInvalidGroup = groupReferences.stream().anyMatch(groupReference -> {
+					if (groupReference > groupCount.get())
+					{
+						return true;
+					}
+					return false;
+				});
+				
+				if (hasInvalidGroup)
+				{
+					hasInvalidEscape = true;
+				}
+				else
+				{
+					hasInvalidEscape = !escapedChars.chars().allMatch(c -> {
+						char escapedChar = (char)c;
+						return escapedChar == 'u' ||
+							escapedChar == '/' ||
+							Reg.isCharClasses(String.valueOf(escapedChar)) ||
+							Reg.isSyntaxChars(String.valueOf(escapedChar));
+					});
+				}
+				
+				if (hasInvalidEscape)
+				{
+					malformedDesc = "Invalid escape";
+				}
+				else if (hasInvalidQuantifier)
+				{
+					malformedDesc = "Invalid quantifier";
+				}
+				
+				body.replace(0, body.length(), translateUFlag.apply(body.toString()));
+			}
+			else if (chr.get().equals("s"))
+			{
+				if (!State.inES9())
+				{
+					EventContext context = new EventContext();
+					context.setCode("W119");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("DotAll RegExp flag", "9");
+					triggerAsync("warning", context, checks, () -> true);
+				}
+				if (value.indexOf("s") > -1)
 				{
 					malformedDesc = "Duplicate RegExp flag";
 				}
 			}
 			else
 			{
-				flags.add(chr);
+				es5Flags.append(chr.get());
 			}
-			value += chr;
-			index += 1;
+			
+			if (allFlags.indexOf(chr.get()) > -1)
+			{
+				malformedDesc = "Duplicate RegExp flag";
+			}
+			allFlags.append(chr.get());
+			
+			value.append(chr.get());
+			allFlags.append(chr.get());
+			index.addAndGet(1);
+		}
+		
+		if (allFlags.indexOf("u") == -1)
+		{
+			EventContext context = new EventContext();
+			context.setCode("W147");
+			context.setLine(line);
+			context.setCharacter(character);
+			triggerAsync("warning", context, checks, () -> State.getOption().test("regexpu"));
 		}
 		
 		// Check regular expression for correctness.
@@ -1875,19 +2032,7 @@ public class Lexer
 		// and it doesn't require external dependency so it's used as a validator of javascript regular expressions
 		try
 		{
-			// PORT INFO: separate check for flags is needed since nashorn engine doesn't throw
-			// error on duplicated flags
-			String flagsString = value.substring(value.lastIndexOf("/") + 1);
-			if (StringUtils.countMatches(flagsString, 'g') > 1
-				|| StringUtils.countMatches(flagsString, 'i') > 1
-				|| StringUtils.countMatches(flagsString, 'm') > 1
-				|| StringUtils.countMatches(flagsString, 'u') > 1
-				|| StringUtils.countMatches(flagsString, 'y') > 1
-				)
-				throw new Exception("Invalid regular expression flags");
-			
-			// PORT INFO: regular expression is checked without flags, since flags are checked separatelly
-			jsEngine.eval(value.substring(0, value.lastIndexOf("/") + 1));
+			jsEngine.eval("/" + body.toString() + "/" + es5Flags);
 		}
 		catch (Exception err)
 		{
@@ -1901,17 +2046,25 @@ public class Lexer
 		
 		if (StringUtils.isNotEmpty(malformedDesc))
 		{
-			malformed = true;
-			context = new EventContext();
+			malformed.set(true);
+			EventContext context = new EventContext();
 			context.setCode("E016");
 			context.setLine(line);
 			context.setCharacter(character);
 			context.setData(malformedDesc);
 			trigger("error", context);
 		}
+		else if (allFlags.indexOf("s") > -1 && !Reg.isDot(body.toString()))
+		{
+			EventContext context = new EventContext();
+			context.setCode("W148");
+			context.setLine(line);
+			context.setCharacter(character);
+			trigger("warning", context);
+		}
 		
-		LexerToken token = new LexerToken(LexerTokenType.REGEXP, value);
-		token.setMalformed(malformed);
+		LexerToken token = new LexerToken(LexerTokenType.REGEXP, value.toString());
+		token.setMalformed(malformed.get());
 		return token;
 	}
 	
@@ -1934,7 +2087,6 @@ public class Lexer
 		from = character;
 		
 		// Move to the next non-space character.
-		// PORT INFO: replaced whitespace regexp with StringUtils.isWhitespace and StringUtils.isNotEmpty functions
 		while (Reg.isWhitespace(peek()))
 		{
 			from += 1;
@@ -2022,7 +2174,7 @@ public class Lexer
 	    			inputTrimmed.startsWith("//") ||
 	    			inputTrimmed.startsWith("/*");
 	    	
-	    	boolean shouldTriggerError = !inComment || !Reg.test(Reg.MAXLEN_EXCEPTION, inputTrimmed);
+	    	boolean shouldTriggerError = !inComment || !Reg.isMaxlenException(inputTrimmed);
 	    	
 	    	if (shouldTriggerError)
 	    	{
@@ -2037,60 +2189,22 @@ public class Lexer
 	    return true;
 	}
 	
-	private boolean isReserved(Token token, boolean isProperty)
-	{
-		// At present all current identifiers have reserved set.
-		// Preserving check anyway, for future-proofing.
-		if (!token.isReserved())
-		{
-			return false;
-		}
-		
-		Token.Meta meta = token.getMeta();
-		
-		if (meta != null && meta.isFutureReservedWord() && State.inES5())
-		{
-			// ES3 FutureReservedWord in an ES5 environment.
-			if (!meta.isES5())
-			{
-				return false;
-			}
-			
-			// Some ES5 FutureReservedWord identifiers are active only
-	        // within a strict mode environment.
-			if (meta.isStrictOnly())
-			{
-				if (!State.getOption().get("strict").test() && !State.isStrict())
-				{
-					return false;
-				}
-			}
-			
-			if (isProperty)
-			{
-				return false;
-			}
-		}
-		
-		return true;
-	}
-	
 	// Produce a token object.
-	private Token create(TokenType type, String value, AsyncTrigger checks)
+	private Token create(Token.Type type, String value, AsyncTrigger checks)
 	{
 		return create(type, value, false, null, checks);
 	}
 	
-	private Token create(TokenType type, String value, boolean isProperty, LexerToken token, AsyncTrigger checks)
+	private Token create(Token.Type type, String value, boolean isProperty, LexerToken token, AsyncTrigger checks)
 	{
 		Token obj = null;
 		
-		if (type != TokenType.ENDLINE && type != TokenType.END)
+		if (type != Token.Type.ENDLINE && type != Token.Type.END)
 		{
 			prereg = false;
 		}
 		
-		if (type == TokenType.PUNCTUATOR)
+		if (type == Token.Type.PUNCTUATOR)
 		{
 			switch (value)
 			{
@@ -2108,54 +2222,35 @@ public class Lexer
 	        	prereg = true;
 			}
 			
-			obj = State.getSyntax().get(value);
-			if (obj == null)
-				obj = State.getSyntax().get("(error)");
-			if (obj != null)
-				obj = new Token(obj);
-			else
-				obj = new Token();
+			obj = ObjectUtils.defaultIfNull(ObjectUtils.clone(ObjectUtils.defaultIfNull(State.getSyntax().get(value), State.getSyntax().get("(error)"))), new Token());
 		}
 		
-		if (type == TokenType.IDENTIFIER)
+		if (type == Token.Type.IDENTIFIER)
 		{
 			if (value.equals("return") || value.equals("case") || value.equals("yield") ||
-				value.equals("typeof") || value.equals("instanceof") || value.equals("void"))
+				value.equals("typeof") || value.equals("instanceof") || value.equals("void") ||
+				value.equals("await"))
 			{
 				prereg = true;
 			}
 			
 			if (State.getSyntax().containsKey(value))
 			{
-				obj = State.getSyntax().get(value);
-				if (obj != null)
-					obj = new Token(obj);
-				else
-					obj = new Token();
-				
-				// If this can't be a reserved keyword, reset the object.
-				if (!isReserved(obj, isProperty && type == TokenType.IDENTIFIER))
-				{
-					obj = null;
-				}
+				obj = ObjectUtils.defaultIfNull(ObjectUtils.clone(ObjectUtils.defaultIfNull(State.getSyntax().get(value), State.getSyntax().get("(error)"))), new Token());
 			}
 		}
 		
-		if (type == TokenType.TEMPLATE || type == TokenType.TEMPLATEMIDDLE)
+		if (type == Token.Type.TEMPLATE || type == Token.Type.TEMPLATEMIDDLE)
 		{
 			prereg = true;
 		}
 		
 		if (obj == null)
 		{
-			obj = State.getSyntax().get(type.toString());
-			if (obj != null)
-				obj = new Token(obj);
-			else
-				obj = new Token();
+			obj = ObjectUtils.defaultIfNull(ObjectUtils.clone(State.getSyntax().get(type.toString())), new Token());
 		}
 		
-		obj.setIdentifier(type == TokenType.IDENTIFIER);
+		obj.setIdentifier(type == Token.Type.IDENTIFIER);
 		obj.setType(ObjectUtils.defaultIfNull(obj.getType(), type));
 		obj.setValue(value);
 		obj.setLine(line);
@@ -2208,7 +2303,7 @@ public class Lexer
 			{
 				if (nextLine(checks))
 				{
-					return create(TokenType.ENDLINE, "", checks);
+					return create(Token.Type.ENDLINE, "", checks);
 				}
 				
 				if (exhausted)
@@ -2217,7 +2312,7 @@ public class Lexer
 				}
 				
 				exhausted = true;
-				return create(TokenType.END, "", checks);
+				return create(Token.Type.END, "", checks);
 			}
 			
 			final LexerToken token = next(checks);
@@ -2251,7 +2346,7 @@ public class Lexer
 				context.setValue(token.getValue());
 				context.setQuote(token.getQuote());
 				triggerAsync("String", context, checks, () -> true);
-				return create(TokenType.STRING, token.getValue(), false, token, checks);
+				return create(Token.Type.STRING, token.getValue(), false, token, checks);
 			case TEMPLATEHEAD:
 				context = new EventContext();
 				context.setLine(line);
@@ -2261,7 +2356,7 @@ public class Lexer
 				context.setStartChar(token.getStartChar());
 				context.setValue(token.getValue());
 				trigger("TemplateHead", context);
-				return create(TokenType.TEMPLATE, token.getValue(), false, token, checks);
+				return create(Token.Type.TEMPLATE, token.getValue(), false, token, checks);
 			case TEMPLATEMIDDLE:
 				context = new EventContext();
 				context.setLine(line);
@@ -2271,7 +2366,7 @@ public class Lexer
 				context.setStartChar(token.getStartChar());
 				context.setValue(token.getValue());
 				trigger("TemplateMiddle", context);
-				return create(TokenType.TEMPLATEMIDDLE, token.getValue(), false, token, checks);
+				return create(Token.Type.TEMPLATEMIDDLE, token.getValue(), false, token, checks);
 			case TEMPLATETAIL:
 				context = new EventContext();
 				context.setLine(line);
@@ -2281,7 +2376,7 @@ public class Lexer
 				context.setStartChar(token.getStartChar());
 				context.setValue(token.getValue());
 				trigger("TemplateTail", context);
-				return create(TokenType.TEMPLATETAIL, token.getValue(), false, token, checks);
+				return create(Token.Type.TEMPLATETAIL, token.getValue(), false, token, checks);
 			case NOSUBSTTEMPLATE:
 				context = new EventContext();
 				context.setLine(line);
@@ -2291,7 +2386,7 @@ public class Lexer
 				context.setStartChar(token.getStartChar());
 				context.setValue(token.getValue());
 				trigger("NoSubstTemplate", context);
-				return create(TokenType.NOSUBSTTEMPLATE, token.getValue(), false, token, checks);
+				return create(Token.Type.NOSUBSTTEMPLATE, token.getValue(), false, token, checks);
 			case IDENTIFIER:
 				context = new EventContext();
 				context.setLine(line);
@@ -2302,7 +2397,7 @@ public class Lexer
 				context.setProperty(State.currToken().getId().equals("."));
 				triggerAsync("Identifier", context, checks, () -> true);
 			case KEYWORD:
-				return create(TokenType.IDENTIFIER, token.getValue(), State.currToken().getId().equals("."), token, checks);
+				return create(Token.Type.IDENTIFIER, token.getValue(), State.currToken().getId().equals("."), token, checks);
 			case NUMERICLITERAL:
 				if (token.isMalformed())
 				{
@@ -2338,9 +2433,9 @@ public class Lexer
 				context.setMalformed(token.isMalformed());
 				trigger("Number", context);
 				
-				return create(TokenType.NUMBER, token.getValue(), checks);
+				return create(Token.Type.NUMBER, token.getValue(), checks);
 			case REGEXP:
-				return create(TokenType.REGEXP, token.getValue(), checks);
+				return create(Token.Type.REGEXP, token.getValue(), checks);
 			case COMMENT:
 				if (token.isSpecial())
 				{
@@ -2357,7 +2452,7 @@ public class Lexer
 				}
 				break;
 			default:
-				return create(TokenType.PUNCTUATOR, token.getValue(), checks);
+				return create(Token.Type.PUNCTUATOR, token.getValue(), checks);
 			}
 		}
 	}
@@ -2366,7 +2461,7 @@ public class Lexer
 	{	
 		private LexerTokenType type = LexerTokenType.NONE;
 		private String value = null;
-		private TokenType commentType = null;
+		private Token.Type commentType = null;
 		private String body = null;
 		private boolean isSpecial = false;
 		private boolean isMalformed = false;
@@ -2407,12 +2502,12 @@ public class Lexer
 			this.value = StringUtils.defaultString(value);
 		}
 
-		public TokenType getCommentType()
+		public Token.Type getCommentType()
 		{
 			return commentType;
 		}
 
-		private void setCommentType(TokenType commentType)
+		private void setCommentType(Token.Type commentType)
 		{
 			this.commentType = commentType;
 		}

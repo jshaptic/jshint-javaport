@@ -46,7 +46,7 @@ public class CheckstyleReporter implements JSHintReporter
 		{
 			if (StringUtils.isNotEmpty(s))
 			{
-				s = s.replaceAll(r, pairs.get(r));
+				s = StringUtils.replace(s, r, pairs.get(r));
 			}
 		}
 		return s != null ? s : "";
@@ -61,7 +61,7 @@ public class CheckstyleReporter implements JSHintReporter
 		for (ReporterResult result : results)
 		{
 			// Register the file
-			String file = result.getFile().replace("^\\./", "");
+			String file = StringUtils.removeStart(result.getFile(), "./");
 			if (!files.containsKey(file))
 			{
 				files.put(file, new ArrayList<Issue>());
