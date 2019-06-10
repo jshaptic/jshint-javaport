@@ -4,9 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +22,6 @@ public class ES5IdentifierNames
 		)
 		{
 			String str = reader.readLine();
-			//String str = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemClassLoader().getResource("es5-identifier-names.txt").toURI())));
 			pattern = Pattern.compile(str);
 		}
 		catch (IOException e)
