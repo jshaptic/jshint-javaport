@@ -1,3 +1,7 @@
+## 2.10.1.1
+##### Released: 10 June 2019
+  * Fixed packaging issue with resources (GH-1)
+
 ## 2.10.1
 ##### Released: 30 May 2019
   * New version of JSHint v2.10.1 is ported
