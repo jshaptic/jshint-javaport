@@ -17,7 +17,7 @@ public class ES5IdentifierNames
 	static
 	{
 		try (
-			InputStream in = ClassLoader.getSystemResourceAsStream("es5-identifier-names.txt");
+			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("es5-identifier-names.txt");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		)
 		{
