@@ -17,7 +17,7 @@ public class NonAsciiIdentifierStartTable
 	static
 	{
 		try (
-			InputStream in = ClassLoader.getSystemResourceAsStream("non-ascii-identifier-start.txt");
+			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("non-ascii-identifier-start.txt");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		)
 		{
