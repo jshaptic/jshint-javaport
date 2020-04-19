@@ -17,7 +17,7 @@ public class NonAsciiIdentifierPartTable
 	static
 	{
 		try (
-			InputStream in = ClassLoader.getSystemResourceAsStream("non-ascii-identifier-part-only.txt");
+			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("non-ascii-identifier-part-only.txt");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		)
 		{
