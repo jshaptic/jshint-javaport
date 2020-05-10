@@ -1,3 +1,11 @@
+## 2.10.1.3
+##### Released: 10 May 2020
+  * Avoided using default Binding for ScriptEngine (GH-4)
+  
+## 2.10.1.2
+##### Released: 19 April 2020
+  * Used context ClassLoader to load resources (GH-2)
+  
 ## 2.10.1.1
 ##### Released: 10 June 2019
   * Fixed packaging issue with resources (GH-1)
