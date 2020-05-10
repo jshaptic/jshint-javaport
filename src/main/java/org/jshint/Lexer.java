@@ -2032,7 +2032,7 @@ public class Lexer
 		// and it doesn't require external dependency so it's used as a validator of javascript regular expressions
 		try
 		{
-			jsEngine.eval("/" + body.toString() + "/" + es5Flags);
+			jsEngine.eval("/" + body.toString() + "/" + es5Flags, jsEngine.createBindings());
 		}
 		catch (Exception err)
 		{
