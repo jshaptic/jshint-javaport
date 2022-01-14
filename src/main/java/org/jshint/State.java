@@ -6,208 +6,281 @@ import java.util.Map;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
+
+
 public final class State
 {
-	private static Map<String, Token> syntax = new HashMap<String, Token>();
-	
-	private static UniversalContainer option = ContainerFactory.undefinedContainer();
-	private static int esVersion = 0;
-	private static JSHint.Functor funct = null;
-	private static UniversalContainer ignored = ContainerFactory.undefinedContainer();
-	private static Map<String, Boolean> directive = null;
-	private static boolean jsonMode = false;
-	private static String[] lines = null;
-	private static String tab = null;
-	private static Map<String, String> cache = null;
-	private static Map<Integer, Boolean> ignoredLines = null;
-	private static boolean forinifcheckneeded = false;
-	private static NameStack nameStack = null;
-	private static boolean inClassBody = false;
-	
-	// JSHINT_BUG: this variable isn't used anywhere, can be removed
-	private static boolean condition = false;
-	private static List<Token> forinifchecks = null;
-	
-	private static Token prev = null;
-	private static Token next = null;
-	private static Token curr = null;
-	
-	private State () {}
-	
-	static Map<String, Token> getSyntax()
+
+	private Map<String, Token>		syntax				= new HashMap<String, Token>();
+
+	private UniversalContainer		option				= ContainerFactory.undefinedContainer();
+	private int						esVersion			= 0;
+	private JSHint.Functor			funct				= null;
+	private UniversalContainer		ignored				= ContainerFactory.undefinedContainer();
+	private Map<String, Boolean>	directive			= null;
+	private boolean					jsonMode			= false;
+	private String[]				lines				= null;
+	private String					tab					= null;
+	private Map<String, String>		cache				= null;
+	private Map<Integer, Boolean>	ignoredLines		= null;
+	private boolean					forinifcheckneeded	= false;
+	private NameStack				nameStack			= null;
+	private boolean					inClassBody			= false;
+
+	private boolean					condition			= false;
+	private List<Token>				forinifchecks		= null;
+
+	private Token					prev				= null;
+	private Token					next				= null;
+	private Token					curr				= null;
+
+	public State()
+	{
+	}
+
+
+
+	Map<String, Token> getSyntax()
 	{
 		return syntax;
 	}
 
-	static UniversalContainer getOption()
+
+
+	UniversalContainer getOption()
 	{
 		return option;
 	}
 
-	static void setOption(UniversalContainer option)
+
+
+	void setOption( UniversalContainer option )
 	{
-		State.option = option;
+		this.option = option;
 	}
 
-	static JSHint.Functor getFunct()
+
+
+	JSHint.Functor getFunct()
 	{
 		return funct;
 	}
 
-	static void setFunct(JSHint.Functor funct)
+
+
+	void setFunct( JSHint.Functor funct )
 	{
-		State.funct = funct;
+		this.funct = funct;
 	}
 
-	static UniversalContainer getIgnored()
+
+
+	UniversalContainer getIgnored()
 	{
 		return ignored;
 	}
 
-	static void setIgnored(UniversalContainer ignored)
+
+
+	void setIgnored( UniversalContainer ignored )
 	{
-		State.ignored = ignored;
+		this.ignored = ignored;
 	}
 
-	static Map<String, Boolean> getDirective()
+
+
+	Map<String, Boolean> getDirective()
 	{
 		return directive;
 	}
 
-	static void setDirective(Map<String, Boolean> directive)
+
+
+	void setDirective( Map<String, Boolean> directive )
 	{
-		State.directive = directive;
+		this.directive = directive;
 	}
 
-	static boolean isJsonMode()
+
+
+	boolean isJsonMode()
 	{
 		return jsonMode;
 	}
 
-	static void setJsonMode(boolean jsonMode)
+
+
+	void setJsonMode( boolean jsonMode )
 	{
-		State.jsonMode = jsonMode;
+		this.jsonMode = jsonMode;
 	}
 
-	static String[] getLines()
+
+
+	String[] getLines()
 	{
 		return lines;
 	}
 
-	static void setLines(String[] lines)
+
+
+	void setLines( String[] lines )
 	{
-		State.lines = lines;
+		this.lines = lines;
 	}
 
-	static String getTab()
+
+
+	String getTab()
 	{
 		return tab;
 	}
 
-	static void setTab(String tab)
+
+
+	void setTab( String tab )
 	{
-		State.tab = StringUtils.defaultString(tab);
+		this.tab = StringUtils.defaultString( tab );
 	}
 
-	static Map<String, String> getCache()
+
+
+	Map<String, String> getCache()
 	{
 		return cache;
 	}
 
-	static Map<Integer, Boolean> getIgnoredLines()
+
+
+	Map<Integer, Boolean> getIgnoredLines()
 	{
 		return ignoredLines;
 	}
 
-	static boolean isForinifcheckneeded()
+
+
+	boolean isForinifcheckneeded()
 	{
 		return forinifcheckneeded;
 	}
 
-	static void setForinifcheckneeded(boolean forinifcheckneeded)
+
+
+	void setForinifcheckneeded( boolean forinifcheckneeded )
 	{
-		State.forinifcheckneeded = forinifcheckneeded;
+		this.forinifcheckneeded = forinifcheckneeded;
 	}
 
-	static NameStack getNameStack()
+
+
+	NameStack getNameStack()
 	{
 		return nameStack;
 	}
 
-	static boolean isInClassBody()
+
+
+	boolean isInClassBody()
 	{
 		return inClassBody;
 	}
 
-	static void setInClassBody(boolean inClassBody)
+
+
+	void setInClassBody( boolean inClassBody )
 	{
-		State.inClassBody = inClassBody;
+		this.inClassBody = inClassBody;
 	}
 
-	static boolean isCondition()
+
+
+	boolean isCondition()
 	{
 		return condition;
 	}
 
-	static void setCondition(boolean condition)
+
+
+	void setCondition( boolean condition )
 	{
-		State.condition = condition;
+		this.condition = condition;
 	}
 
-	static List<Token> getForinifchecks()
+
+
+	List<Token> getForinifchecks()
 	{
 		return forinifchecks;
 	}
 
-	static void setForinifchecks(List<Token> forinifchecks)
+
+
+	void setForinifchecks( List<Token> forinifchecks )
 	{
-		State.forinifchecks = forinifchecks;
+		this.forinifchecks = forinifchecks;
 	}
-	
-	public static Token prevToken()
+
+
+
+	public Token prevToken()
 	{
 		return prev;
 	}
-	
-	static void setPrevToken(Token prev)
+
+
+
+	void setPrevToken( Token prev )
 	{
-		State.prev = prev;
+		this.prev = prev;
 	}
-	
-	public static Token nextToken()
+
+
+
+	public Token nextToken()
 	{
 		return next;
 	}
-	
-	static void setNextToken(Token next)
+
+
+
+	void setNextToken( Token next )
 	{
-		State.next = next;
+		this.next = next;
 	}
-	
-	public static Token currToken()
+
+
+
+	public Token currToken()
 	{
 		return curr;
 	}
-	
-	static void setCurrToken(Token curr)
+
+
+
+	void setCurrToken( Token curr )
 	{
-		State.curr = curr;
+		this.curr = curr;
 	}
+
+
 
 	/**
 	 * Determine if the code currently being linted is strict mode code.
 	 * 
 	 * @return true if code is in strict mod, false otherwise.
 	 */
-	public static boolean isStrict()
+	public boolean isStrict()
 	{
-		return BooleanUtils.isTrue(getDirective().get("use strict")) || isInClassBody() ||
-			getOption().test("module") || getOption().get("strict").equals("implied");
+		return BooleanUtils.isTrue( getDirective().get( "use strict" ) ) || isInClassBody() ||
+				getOption().test( "module" ) || getOption().get( "strict" ).equals( "implied" );
 	}
-	
+
+
+
 	/**
 	 * Determine if the current state warrants a warning for statements outside
 	 * of strict mode code.
@@ -224,89 +297,105 @@ public final class State
 	 * 
 	 * @return true if code misses use strict directive, false otherwise.
 	 */
-	public static boolean stmtMissingStrict()
+	public boolean stmtMissingStrict()
 	{
-		if (getOption().get("strict").equals("global"))
+		if( getOption().get( "strict" ).equals( "global" ) )
 		{
 			return true;
 		}
-		
-		if (getOption().get("strict").equals(false))
+
+		if( getOption().get( "strict" ).equals( false ) )
 		{
 			return false;
 		}
-		
-		if (getOption().test("globalstrict"))
+
+		if( getOption().test( "globalstrict" ) )
 		{
 			return true;
 		}
-		
+
 		return false;
 	}
-	
-	public static boolean allowsGlobalUsd()
+
+
+
+	public boolean allowsGlobalUsd()
 	{
-		return getOption().get("strict").equals("global") || getOption().test("globalstrict") ||
-			getOption().test("module") || impliedClosure();
+		return getOption().get( "strict" ).equals( "global" ) || getOption().test( "globalstrict" ) ||
+				getOption().test( "module" ) || impliedClosure();
 	}
-	
+
+
+
 	/**
 	 * Determine if the current configuration describes an environment that is
 	 * wrapped in an immediately-invoked function expression prior to evaluation.
 	 *
 	 * @return true if environment is wrapped in an immediately-invoked function expression, false otherwise.
 	 */
-	public static boolean impliedClosure()
+	public boolean impliedClosure()
 	{
-		return getOption().test("node") || getOption().test("phantom") || getOption().test("browserify");
+		return getOption().test( "node" ) || getOption().test( "phantom" ) || getOption().test( "browserify" );
 	}
-	
+
+
+
 	// Assumption: chronologically ES3 < ES5 < ES6/ESNext < Moz
-	public static boolean inMoz()
+	public boolean inMoz()
 	{
-		return getOption().test("moz");
+		return getOption().test( "moz" );
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
 	 * 
 	 * @return true if constructs introduced in ECMAScript 8 should be accepted, false otherwise
 	 */
-	public static boolean inES9()
+	public boolean inES9()
 	{
 		return esVersion >= 9;
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
 	 *
 	 * @return true if constructs introduced in ECMAScript 8 should be accepted, false otherwise
 	 */
-	public static boolean inES8()
+	public boolean inES8()
 	{
 		return esVersion >= 8;
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 7 should be accepted.
 	 *
 	 * @return true if constructs introduced in ECMAScript 7 should be accepted, false otherwise
 	 */
-	public static boolean inES7()
+	public boolean inES7()
 	{
 		return esVersion >= 7;
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 6 should be accepted.
 	 * 
 	 * @return true if constructs introduced in ECMAScript 6 should be accepted, false otherwise
 	 */
-	public static boolean inES6()
+	public boolean inES6()
 	{
-		return inES6(false);
+		return inES6( false );
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 6 should be accepted.
 	 * 
@@ -315,26 +404,30 @@ public final class State
 	 * 
 	 * @return true if constructs introduced in ECMAScript 6 should be accepted, false otherwise
 	 */
-	public static boolean inES6(boolean strict)
+	public boolean inES6( boolean strict )
 	{
-		if (!strict && getOption().test("moz"))
+		if( ! strict && getOption().test( "moz" ) )
 		{
 			return true;
 		}
-		
+
 		return esVersion >= 6;
 	}
-	
+
+
+
 	/**
 	 * Determine if constructs introduced in ECMAScript 5 should be accepted.
 	 * 
 	 * @return true if constructs introduced in ECMAScript 5 should be accepted, false otherwise
 	 */
-	public static boolean inES5()
+	public boolean inES5()
 	{
-		return esVersion == 0 || esVersion >= 5 || getOption().test("moz");
+		return esVersion == 0 || esVersion >= 5 || getOption().test( "moz" );
 	}
-	
+
+
+
 	/**
 	 * Determine the current version of the input language by inspecting the
 	 * value of all ECMAScript-version-related options. This logic is necessary
@@ -344,63 +437,65 @@ public final class State
 	 *
 	 * @return the name of any incompatible option detected, null otherwise
 	 */
-	public static String inferEsVersion()
+	public String inferEsVersion()
 	{
 		String badOpt = null;
-		
-		if (getOption().test("esversion"))
+
+		if( getOption().test( "esversion" ) )
 		{
-			if (getOption().test("es3"))
+			if( getOption().test( "es3" ) )
 			{
 				badOpt = "es3";
 			}
-			else if (getOption().test("es5"))
+			else if( getOption().test( "es5" ) )
 			{
 				badOpt = "es5";
 			}
-			else if (getOption().test("esnext"))
+			else if( getOption().test( "esnext" ) )
 			{
 				badOpt = "esnext";
 			}
-			
-			if (StringUtils.isNotEmpty(badOpt))
+
+			if( StringUtils.isNotEmpty( badOpt ) )
 			{
 				return badOpt;
 			}
-			
-			if (getOption().get("esversion").equals(2015))
+
+			if( getOption().get( "esversion" ).equals( 2015 ) )
 			{
 				esVersion = 6;
 			}
 			else
 			{
-				esVersion = getOption().asInt("esversion");
+				esVersion = getOption().asInt( "esversion" );
 			}
 		}
-		else if (getOption().test("es3"))
+		else if( getOption().test( "es3" ) )
 		{
 			esVersion = 3;
 		}
-		else if (getOption().test("esnext"))
+		else if( getOption().test( "esnext" ) )
 		{
 			esVersion = 6;
 		}
-		
+
 		return null;
 	}
-	
-	public static void reset()
-	{	
+
+
+
+	public void reset()
+	{
 		prev = null;
 		next = null;
 		curr = null;
-		option = ContainerFactory.createObject("unstable", ContainerFactory.createObject());
+		option = ContainerFactory.createObject( "unstable", ContainerFactory.createObject() );
 		esVersion = 5;
 		funct = null;
 		ignored = ContainerFactory.createObject();
 		directive = new HashMap<String, Boolean>();
 		jsonMode = false;
-		lines = new String[]{};
+		lines = new String[] {};
 		tab = "";
 		cache = new HashMap<String, String>();
 		ignoredLines = new HashMap<Integer, Boolean>();
