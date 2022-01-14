@@ -1,39 +1,73 @@
-## 2.10.1.3
-##### Released: 10 May 2020
-  * Avoided using default Binding for ScriptEngine (GH-4)
-  
-## 2.10.1.2
-##### Released: 19 April 2020
-  * Used context ClassLoader to load resources (GH-2)
-  
-## 2.10.1.1
-##### Released: 10 June 2019
-  * Fixed packaging issue with resources (GH-1)
+# Changelog
 
-## 2.10.1
-##### Released: 30 May 2019
-  * New version of JSHint v2.10.1 is ported
-  
-## 2.9.7
-##### Released: 17 December 2018
-  * New version of JSHint v2.9.7 is ported
-  
-## 2.9.6
-##### Released: 13 Novemeber 2018
-  * New version of JSHint v2.9.6 is ported
-  
-## 2.9.5.3
-##### Released: 20 August 2018
-  * Upgraded dependency libraries and gradle
-  
-## 2.9.5.2
-##### Released: 01 August 2017
-  * Modified versioning logic, updated TODOs and other markers
-  
-## 2.9.5
-##### Released: 31 July 2017
-  * Ported changes of JSHint v2.9.5
-  
-## 2.9.3
-##### Released: 24 July 2017
-  * Initial creation
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.10.1-4] - 2022-01-14
+
+### Changed
+
+- GH-3: Refactored State object to be non-static (and thus thread safe), thanks to Jarrah Watson (abonstu)
+- Moved project from Travis to Github Actions
+
+## [2.10.1-3] - 2020-05-10
+
+### Fixed
+
+- GH-4: Avoided using default Binding for ScriptEngine, thanks to Jarrah Watson (abonstu)
+
+## [2.10.1-2] - 2020-04-19
+
+### Fixed
+
+- GH-2: Used context ClassLoader to load resources, thanks to Jarrah Watson (abonstu)
+
+## [2.10.1-1] - 2019-06-10
+
+### Fixed
+
+- GH-1: Fixed packaging issue with resources
+
+## [2.10.1-0] - 2019-05-30
+
+### Added
+
+- New version of JSHint v2.10.1 is ported
+
+## [2.9.7-0] - 2018-12-17
+
+### Added
+
+- New version of JSHint v2.9.7 is ported
+
+## [2.9.6-0] - 2018-11-13
+
+### Added
+
+- New version of JSHint v2.9.6 is ported
+
+## [2.9.5-3] - 2018-08-20
+
+### Changed
+
+- Upgraded dependency libraries and gradle
+
+## [2.9.5-2] - 2017-08-01
+
+### Changed
+
+- Modified versioning logic, updated TODOs and other markers
+
+## [2.9.5-0] - 2017-07-31
+
+### Added
+
+- Ported changes of JSHint v2.9.5
+
+## [2.9.3-0] - 2017-07-24
+
+### Added
+
+- Frist implementation

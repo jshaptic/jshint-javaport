@@ -1,8 +1,8 @@
 # JSHint Java Port
 
-[![Bintray](https://img.shields.io/bintray/v/jshaptic/maven/jshint-javaport.svg?style=flat-square)](https://bintray.com/jshaptic/maven/jshint-javaport/_latestVersion)
-[![Travis](https://img.shields.io/travis/jshaptic/jshint-javaport.svg?style=flat-square)](https://travis-ci.org/jshaptic/jshint-javaport)
-[![Coveralls](https://img.shields.io/coveralls/jshaptic/jshint-javaport.svg?style=flat-square)](https://coveralls.io/github/jshaptic/jshint-javaport)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.jshaptic/jshint-javaport?style=flat-square)](https://mvnrepository.com/artifact/com.github.jshaptic/jshint-javaport)
+![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jshaptic/jshint-javaport?style=flat-square)
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/jshaptic/jshint-javaport)
 [![License](https://img.shields.io/github/license/jshaptic/jshint-javaport.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 Just a straight port of a javascript linter JSHint. Almost everything is ported to a native Java code, except regexps validation - it is done using Java internal Nashorn engine.
@@ -10,6 +10,7 @@ Just a straight port of a javascript linter JSHint. Almost everything is ported 
 ## Usage
 
 Code linting with default options:
+
 ```java
 JSHint jshint = new JSHint();
 jshint.lint("var a = 123");
@@ -17,6 +18,7 @@ System.out.println(jshint.generateSummary());
 ```
 
 Code linting with custom options (for list of all options check JSHint [website](http://jshint.com/docs/options/)):
+
 ```java
 JSHint jshint = new JSHint();
 jshint.lint("var a = 123", new LinterOptions().set("esversion", 6).set("asi", true));
@@ -24,6 +26,7 @@ System.out.println(jshint.generateSummary());
 ```
 
 Code linting with custom globals:
+
 ```java
 JSHint jshint = new JSHint();
 jshint.lint("var a = test(source)", new LinterOptions(), new LinterGlobals(true, "test", "source"));
@@ -31,6 +34,7 @@ System.out.println(jshint.generateSummary());
 ```
 
 Reading linting summary:
+
 ```java
 JSHint jshint = new JSHint();
 jshint.lint("var a = test(source)");
