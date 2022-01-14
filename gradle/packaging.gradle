@@ -1,0 +1,42 @@
+// Setup manifest file with build information
+ext.packageManifest = manifest {
+	attributes(
+		"Built-By": System.properties["user.name"],
+		"Created-By": "Gradle ${gradle.gradleVersion}",
+		"Build-Timestamp": new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+		"Build-Revision" : versioning.info.commit,
+		"Build-Jdk": "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+		"Build-OS": "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+	)
+}
+
+// Setup main artifact
+jar {
+	manifest = project.manifest {
+		from packageManifest
+	}
+	
+	from "LICENSE"
+}
+
+// Setup sources artifact task
+task sourcesJar(type: Jar) {
+	archiveClassifier = "sources"
+	manifest = project.manifest {
+		from packageManifest
+	}
+	
+	from sourceSets.main.allJava
+	from "LICENSE"
+}
+
+// Setup javadoc artifact task
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	archiveClassifier = "javadoc"
+	manifest = project.manifest {
+		from packageManifest
+	}
+	
+	from javadoc.destinationDir
+	from "LICENSE"
+}

@@ -1,2 +1,1 @@
 rootProject.name = 'jshint-javaport'
-enableFeaturePreview('STABLE_PUBLISHING')

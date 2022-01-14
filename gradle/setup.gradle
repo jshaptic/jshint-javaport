@@ -1,0 +1,26 @@
+ext {	
+	// Initialize developers property
+	developers = []
+	properties.findAll{ it.key.startsWith("developer") && it.value instanceof String }.each { k, v ->
+		def devData = v.split(",")
+		if (devData.size() > 3) {
+			for (d in devData)
+				if (!d)
+					throw new GradleException("One of the developer properties '${k}' is missing required data!")
+			developers.add([name: devData[0], email: devData[1], organization: devData[2], organizationUrl: devData[3]])
+		} else
+			throw new GradleException("One of the developer properties '${k}' is missing required data!")
+	}
+	
+	// Initialize helper property method
+	setExtValue = { String property, String systemenv ->
+		project.ext."$property" = project.hasProperty(property) ? project.getProperty(property) : System.getenv(systemenv)
+	}
+}
+
+// Print Java runtime version
+gradle.taskGraph.whenReady {
+	if (!gradle.taskGraph.hasTask(":printVersion") && !gradle.taskGraph.hasTask(":printVersionTag")) {
+		println "${System.properties['java.runtime.version']} (${System.properties['java.runtime.name']})"
+	}
+}

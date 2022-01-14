@@ -1,25 +1,21 @@
 plugins {
-    id "java"
-    id "eclipse"
+    id "java-library"
     id "jacoco"
     id "maven-publish"
-	id "com.jfrog.artifactory" version "4.7.5"
-    id "com.jfrog.bintray" version "1.8.4"
-    id "com.github.kt3k.coveralls" version "2.8.2"
+    id "signing"
+    id "net.nemerosa.versioning" version "2.15.1"
+    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
 }
 
-apply from: "gradle/init.gradle"			// intialize helper methods and runtime properties
-apply from: "gradle/ide.gradle"				// setup IDE
+apply from: "gradle/setup.gradle"			// setup runtime properties
+apply from: "gradle/ide.gradle"			    // setup IDE
 apply from: "gradle/dependencies.gradle"	// setup dependecies
-apply from: "gradle/credentials.gradle"		// setup sensitive properties
 apply from: "gradle/compile.gradle"			// setup compile settings and tasks
-apply from: "gradle/javadoc.gradle"			// setup javadoc settings and tasks
 apply from: "gradle/testing.gradle"			// setup testing settings and tasks
-apply from: "gradle/publishing.gradle"		// setup maven publishing settings and tasks
-apply from: "gradle/artifactory.gradle"		// setup jfrog artifactory settings and tasks 
-apply from: "gradle/bintray.gradle"			// setup jfrog bintray settings and tasks
-apply from: "gradle/deployment.gradle"		// setup deployment settings and tasks
+apply from: "gradle/javadoc.gradle"			// setup javadoc settings and tasks
+apply from: "gradle/packaging.gradle"		// setup packaging settings and tasks
+apply from: "gradle/publishing.gradle"		// setup publishing settings and tasks
 
 wrapper {
-    gradleVersion = "4.9"					// setup gradle version
+    gradleVersion = "7.3.3"
 }

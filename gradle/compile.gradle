@@ -1,24 +1,18 @@
-// Setup compile settings
 sourceCompatibility = project.javaVersion
 targetCompatibility = project.javaVersion
-compileJava.options.encoding = project.defaultEncoding
-compileJava.options.compilerArgs += ["-Xlint:-options"]
-compileTestJava.options.encoding = project.defaultEncoding
-compileTestJava.options.compilerArgs += ["-Xlint:-options"]
+
+compileJava {
+	options.encoding = project.defaultEncoding
+	options.compilerArgs += ["-Xlint:-options"]
+}
+
+compileTestJava {
+	options.encoding = project.defaultEncoding
+	options.compilerArgs += ["-Xlint:-options"]
+	classpath = files(jar.archiveFile) + configurations.testRuntimeClasspath
+}
 
 // Exclude test resources because there is huge number files and none of it is needed to be copied
 processTestResources {
 	exclude "**/*"
-}
-
-// Custom task for creating source jar
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
-
-// Custom task for creating javadoc jar
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = "javadoc"
-    from javadoc.destinationDir
 }

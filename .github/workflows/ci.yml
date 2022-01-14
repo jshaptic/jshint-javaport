@@ -1,0 +1,119 @@
+name: ci-pipeline
+
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          cache: "gradle"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Assemble jars
+        run: ./gradlew jar javadocJar sourcesJar
+      - name: Cache jars
+        uses: actions/cache@v2
+        with:
+          path: build/libs
+          key: jars-${{ github.sha }}
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          cache: "gradle"
+      - name: Get jars
+        uses: actions/cache@v2
+        with:
+          path: build/libs
+          key: jars-${{ github.sha }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Test
+        run: ./gradlew test -x jar -x javadocJar -x sourcesJar
+
+  test-with-java-8:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: "8"
+          distribution: "adopt"
+          cache: "gradle"
+      - name: Get jars
+        uses: actions/cache@v2
+        with:
+          path: build/libs
+          key: jars-${{ github.sha }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Test
+        run: ./gradlew test -x jar -x javadocJar -x sourcesJar
+
+  test-262:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          cache: "gradle"
+      - name: Get jars
+        uses: actions/cache@v2
+        with:
+          path: build/libs
+          key: jars-${{ github.sha }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Test
+        run: ./gradlew test262 -x jar -x javadocJar -x sourcesJar
+
+  code-climate:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "adopt"
+          cache: "gradle"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Generate jacoco report
+        run: ./gradlew jacocoTestReport
+      - name: Publish coverage report
+        uses: paambaati/codeclimate-action@v3.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+          JACOCO_SOURCE_PATH: ${{github.workspace}}/src/main/java
+        with:
+          coverageCommand: ./gradlew jacocoTestReport
+          coverageLocations: ${{github.workspace}}/build/reports/jacoco/test/jacocoTestReport.xml:jacoco

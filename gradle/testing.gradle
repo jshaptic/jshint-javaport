@@ -1,12 +1,15 @@
 // Use TestNG framework instead of default JUnit
 test {
+	// Rearrange test classpath, add compiled JAR instead of main classes directory
+	classpath = files(jar.archiveFile) + sourceSets.test.output + configurations.testRuntimeClasspath
+	
 	useTestNG() {
 		suites "src/test/resources/unit-test.xml"
 	}
 	
 	testLogging {
 		exceptionFormat "full"
-		events "skipped", "failed"
+		events "passed", "skipped", "failed"
 	}
 }
 
@@ -14,6 +17,10 @@ test {
 task test262(type: Test, dependsOn: testClasses, group: "verification") {
 	description "Runs official ECMAScript conformance test."
 	mustRunAfter test
+	
+	// Rearrange test classpath, add compiled JAR instead of main classes directory
+	classpath = files(jar.archiveFile) + sourceSets.test.output + configurations.testRuntimeClasspath
+	
 	useTestNG() {
 		suites "src/test/resources/test262.xml"
 	}
@@ -25,7 +32,8 @@ task test262(type: Test, dependsOn: testClasses, group: "verification") {
 
 // For coveralls check jacoco xml report should be turned on
 jacocoTestReport {
+	dependsOn test
 	reports {
-        xml.enabled = true
+        xml.required = true
     }
 }
