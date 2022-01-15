@@ -1,8 +1,8 @@
 # JSHint Java Port
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.jshaptic/jshint-javaport?style=flat-square)](https://mvnrepository.com/artifact/com.github.jshaptic/jshint-javaport)
-![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jshaptic/jshint-javaport?style=flat-square)
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/jshaptic/jshint-javaport)
+[![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jshaptic/jshint-javaport?style=flat-square)](https://codeclimate.com/github/jshaptic/jshint-javaport)
+[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/jshaptic/jshint-javaport?style=flat-square)](https://codeclimate.com/github/jshaptic/jshint-javaport)
 [![License](https://img.shields.io/github/license/jshaptic/jshint-javaport.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 Just a straight port of a javascript linter JSHint. Almost everything is ported to a native Java code, except regexps validation - it is done using Java internal Nashorn engine.
