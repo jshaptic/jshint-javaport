@@ -6,11 +6,6 @@ test {
 	useTestNG() {
 		suites "src/test/resources/unit-test.xml"
 	}
-	
-	testLogging {
-		exceptionFormat "full"
-		events "passed", "skipped", "failed"
-	}
 }
 
 // Dedicated task to run test262
@@ -24,10 +19,6 @@ task test262(type: Test, dependsOn: testClasses, group: "verification") {
 	useTestNG() {
 		suites "src/test/resources/test262.xml"
 	}
-	
-	testLogging {
-		showStandardStreams = true
-	}
 }
 
 // For coveralls check jacoco xml report should be turned on
@@ -36,4 +27,9 @@ jacocoTestReport {
 	reports {
         xml.required = true
     }
+}
+
+testlogger {
+	theme 'mocha'
+	showStandardStreams true
 }

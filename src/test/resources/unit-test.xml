@@ -1,37 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Unit Test">
-  <test name="Core">
+<suite name="Tests">
+  <test name="Unit">
     <classes>
       <class name="org.jshint.test.unit.TestCore"/>
-    </classes>
-  </test>
-  <test name="RestSpread">
-    <classes>
       <class name="org.jshint.test.unit.TestObjRestSpread"/>
-    </classes>
-  </test>
-  <test name="Parser">
-    <classes>
       <class name="org.jshint.test.unit.TestParser"/>
-    </classes>
-  </test>
-  <test name="Environments">
-    <classes>
       <class name="org.jshint.test.unit.TestEnvs"/>
-    </classes>
-  </test>
-  <test name="Options">
-    <classes>
       <class name="org.jshint.test.unit.TestOptions"/>
-    </classes>
-  </test>
-  <test name="Module API">
-    <classes>
       <class name="org.jshint.test.unit.TestModuleApi"/>
     </classes>
   </test>
-  <test name="Thirdparty">
+  <test name="Regression">
     <classes>
       <class name="org.jshint.test.regression.TestThirdparty"/>
     </classes>

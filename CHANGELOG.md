@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - GH-3: Refactored State object to be non-static (and thus thread safe), thanks to Jarrah Watson (abonstu)
 - Moved project from Travis to Github Actions
+- Replaced inhouse minimatch implementation with external library minimatch-javaport
+- Upgraded dependency libraries and gradle to the latest versions
 
 ## [2.10.1-3] - 2020-05-10
 
