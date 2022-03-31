@@ -4,21 +4,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
+import org.apache.commons.lang3.StringUtils;
+
 public final class State {
 
-	private Map<String, Token> syntax = new HashMap<String, Token>();
+	private Map<String, Token> syntax = new HashMap<>();
 
 	private UniversalContainer option = ContainerFactory.undefinedContainer();
 	private int esVersion = 0;
 	private JSHint.Functor funct = null;
 	private UniversalContainer ignored = ContainerFactory.undefinedContainer();
-	private Map<String, Boolean> directive = null;
+	private Map<String, Token> directive = null;
 	private boolean jsonMode = false;
 	private String[] lines = null;
 	private String tab = null;
@@ -27,8 +26,6 @@ public final class State {
 	private boolean forinifcheckneeded = false;
 	private NameStack nameStack = null;
 	private boolean inClassBody = false;
-	// JSHINT_BUG: this variable isn't used anywhere, can be removed
-	private boolean condition = false;
 	private List<Token> forinifchecks = null;
 
 	private Token prev = null;
@@ -66,11 +63,15 @@ public final class State {
 		this.ignored = ignored;
 	}
 
-	Map<String, Boolean> getDirective() {
+	/**
+	 * A lookup table for active directives whose keys are the value of the
+	 * directives and whose values are the tokens which enabled the directives.
+	 */
+	Map<String, Token> getDirective() {
 		return directive;
 	}
 
-	void setDirective(Map<String, Boolean> directive) {
+	void setDirective(Map<String, Token> directive) {
 		this.directive = directive;
 	}
 
@@ -126,14 +127,6 @@ public final class State {
 		this.inClassBody = inClassBody;
 	}
 
-	boolean isCondition() {
-		return condition;
-	}
-
-	void setCondition(boolean condition) {
-		this.condition = condition;
-	}
-
 	List<Token> getForinifchecks() {
 		return forinifchecks;
 	}
@@ -172,7 +165,7 @@ public final class State {
 	 * @return true if code is in strict mod, false otherwise.
 	 */
 	public boolean isStrict() {
-		return BooleanUtils.isTrue(getDirective().get("use strict")) || isInClassBody() ||
+		return getDirective().get("use strict") != null || isInClassBody() ||
 				getOption().test("module") || getOption().get("strict").equals("implied");
 	}
 
@@ -230,9 +223,29 @@ public final class State {
 	}
 
 	/**
-	 * Determine if constructs introduced in ECMAScript 8 should be accepted.
+	 * Determine if constructs introduced in ECMAScript 11 should be accepted.
 	 * 
-	 * @return true if constructs introduced in ECMAScript 8 should be accepted,
+	 * @return true if constructs introduced in ECMAScript 11 should be accepted,
+	 *         false otherwise
+	 */
+	public boolean inES11() {
+		return esVersion >= 11;
+	}
+
+	/**
+	 * Determine if constructs introduced in ECMAScript 10 should be accepted.
+	 * 
+	 * @return true if constructs introduced in ECMAScript 10 should be accepted,
+	 *         false otherwise
+	 */
+	public boolean inES10() {
+		return esVersion >= 10;
+	}
+
+	/**
+	 * Determine if constructs introduced in ECMAScript 9 should be accepted.
+	 * 
+	 * @return true if constructs introduced in ECMAScript 9 should be accepted,
 	 *         false otherwise
 	 */
 	public boolean inES9() {
@@ -343,12 +356,12 @@ public final class State {
 		esVersion = 5;
 		funct = null;
 		ignored = ContainerFactory.createObject();
-		directive = new HashMap<String, Boolean>();
+		directive = new HashMap<>();
 		jsonMode = false;
 		lines = new String[] {};
 		tab = "";
-		cache = new HashMap<String, String>();
-		ignoredLines = new HashMap<Integer, Boolean>();
+		cache = new HashMap<>();
+		ignoredLines = new HashMap<>();
 		forinifcheckneeded = false;
 		nameStack = new NameStack();
 		inClassBody = false;

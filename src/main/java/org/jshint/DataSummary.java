@@ -12,149 +12,113 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.UniversalContainer;
 
-public class DataSummary
-{
+public class DataSummary {
 	private List<Function> functions;
 	private UniversalContainer options;
 	private List<LinterWarning> errors;
 	private boolean json = false;
 	private List<ImpliedGlobal> implieds;
-	private List<String> urls;
 	private Set<String> globals;
 	private List<Token> unused;
 	private Map<String, Integer> member;
 	private String file = "";
-	
-	DataSummary(UniversalContainer options)
-	{
-		this.functions = new ArrayList<Function>();
+
+	DataSummary(UniversalContainer options) {
+		this.functions = new ArrayList<>();
 		this.options = ContainerFactory.undefinedContainerIfNull(options);
 	}
-	
-	public List<Function> getFunctions()
-	{
+
+	public List<Function> getFunctions() {
 		return Collections.unmodifiableList(functions);
 	}
-	
-	protected void addFunction(Function function)
-	{
+
+	protected void addFunction(Function function) {
 		functions.add(function);
 	}
 
-	public UniversalContainer getOptions()
-	{
+	public UniversalContainer getOptions() {
 		return options;
 	}
-	
-	public List<LinterWarning> getErrors()
-	{
+
+	public List<LinterWarning> getErrors() {
 		return errors != null ? Collections.unmodifiableList(errors) : Collections.<LinterWarning>emptyList();
 	}
-	
-	protected void setErrors(List<LinterWarning> errors)
-	{
+
+	protected void setErrors(List<LinterWarning> errors) {
 		this.errors = errors;
 	}
 
-	public boolean isJson()
-	{
+	public boolean isJson() {
 		return json;
 	}
-	
-	protected void setJson(boolean json)
-	{
+
+	protected void setJson(boolean json) {
 		this.json = json;
 	}
-	
-	public List<ImpliedGlobal> getImplieds()
-	{
+
+	public List<ImpliedGlobal> getImplieds() {
 		return implieds != null ? Collections.unmodifiableList(implieds) : Collections.<ImpliedGlobal>emptyList();
 	}
-	
-	protected void setImplieds(List<ImpliedGlobal> implieds)
-	{
+
+	protected void setImplieds(List<ImpliedGlobal> implieds) {
 		this.implieds = implieds;
 	}
 
-	public List<String> getUrls()
-	{
-		return urls != null ? Collections.unmodifiableList(urls) : Collections.<String>emptyList();
-	}
-	
-	protected void setUrls(List<String> urls)
-	{
-		this.urls = urls;
-	}
-
-	public Set<String> getGlobals()
-	{
+	public Set<String> getGlobals() {
 		return globals != null ? Collections.unmodifiableSet(globals) : Collections.<String>emptySet();
 	}
-	
-	protected void setGlobals(Set<String> globals)
-	{
+
+	protected void setGlobals(Set<String> globals) {
 		this.globals = globals;
 	}
 
-	public List<Token> getUnused()
-	{
+	public List<Token> getUnused() {
 		return unused != null ? Collections.unmodifiableList(unused) : Collections.<Token>emptyList();
 	}
-	
-	protected void setUnused(List<Token> unused)
-	{
+
+	protected void setUnused(List<Token> unused) {
 		this.unused = unused;
 	}
 
-	public Map<String, Integer> getMember()
-	{
+	public Map<String, Integer> getMember() {
 		return member != null ? Collections.unmodifiableMap(member) : Collections.<String, Integer>emptyMap();
 	}
-	
-	protected void setMember(Map<String, Integer> member)
-	{
+
+	protected void setMember(Map<String, Integer> member) {
 		this.member = member;
 	}
 
-	public String getFile()
-	{
+	public String getFile() {
 		return file;
 	}
 
-	protected void setFile(String file)
-	{
+	protected void setFile(String file) {
 		this.file = StringUtils.defaultString(file);
 	}
-	
+
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuilder summary = new StringBuilder();
 		if (errors != null) {
 			summary.append("Warnings:\n");
-			errors.forEach(error ->
-				summary.append(" line " + error.getLine() + ", col " + error.getCharacter()+ ": " + error.getReason() + " (" + error.getCode() + ")\n")
-			);
+			errors.forEach(error -> summary.append(" line " + error.getLine() + ", col " + error.getCharacter() + ": "
+					+ error.getReason() + " (" + error.getCode() + ")\n"));
 			summary.append("\n");
 		}
 		if (implieds != null) {
 			summary.append("Undefined variables:\n");
-			implieds.forEach(implied ->
-				summary.append(" " + implied.getName() + "\n")
-			);
+			implieds.forEach(implied -> summary.append(" " + implied.getName() + "\n"));
 			summary.append("\n");
 		}
 		if (unused != null) {
 			summary.append("Unused variables:\n");
-			unused.forEach(unused ->
-				summary.append(" line " + unused.getLine() + ", col " + unused.getCharacter()+ ": '" + unused.getName() + "'\n")
-			);
+			unused.forEach(unused -> summary.append(
+					" line " + unused.getLine() + ", col " + unused.getCharacter() + ": '" + unused.getName() + "'\n"));
 		}
 		return summary.toString();
 	}
-	
-	public static class Function
-	{
+
+	public static class Function {
 		private String name;
 		private List<String> param;
 		private int line;
@@ -162,148 +126,125 @@ public class DataSummary
 		private int last;
 		private int lastCharacter;
 		private Metrics metrics;
-		
-		protected Function()
-		{
-			
+
+		protected Function() {
+
 		}
 
-		public String getName()
-		{
+		public String getName() {
 			return name;
 		}
 
-		protected void setName(String name)
-		{
+		protected void setName(String name) {
 			this.name = StringUtils.defaultString(name);
 		}
 
-		public List<String> getParam()
-		{
+		public List<String> getParam() {
 			return param != null ? Collections.unmodifiableList(param) : Collections.<String>emptyList();
 		}
 
-		protected void setParam(List<String> param)
-		{
+		protected void setParam(List<String> param) {
 			this.param = param;
 		}
 
-		public int getLine()
-		{
+		public int getLine() {
 			return line;
 		}
 
-		protected void setLine(int line)
-		{
+		protected void setLine(int line) {
 			this.line = line;
 		}
 
-		public int getCharacter()
-		{
+		public int getCharacter() {
 			return character;
 		}
 
-		protected void setCharacter(int character)
-		{
+		protected void setCharacter(int character) {
 			this.character = character;
 		}
 
-		public int getLast()
-		{
+		public int getLast() {
 			return last;
 		}
 
-		protected void setLast(int last)
-		{
+		protected void setLast(int last) {
 			this.last = last;
 		}
 
-		public int getLastCharacter()
-		{
+		public int getLastCharacter() {
 			return lastCharacter;
 		}
 
-		protected void setLastCharacter(int lastCharacter)
-		{
+		protected void setLastCharacter(int lastCharacter) {
 			this.lastCharacter = lastCharacter;
 		}
 
-		public Metrics getMetrics()
-		{
+		public Metrics getMetrics() {
 			return metrics;
 		}
 
-		protected void setMetrics(Metrics metrics)
-		{
+		protected void setMetrics(Metrics metrics) {
 			this.metrics = metrics;
 		}
 	}
-	
-	public static class Metrics
-	{
+
+	public static class Metrics {
 		private int complexity;
 		private int parameters;
 		private int statements;
-		
-		public Metrics(int complexity, int parameters, int statements)
-		{
+
+		public Metrics(int complexity, int parameters, int statements) {
 			setComplexity(complexity);
 			setParameters(parameters);
 			setStatements(statements);
 		}
-		
-		public int getComplexity()
-		{
+
+		public int getComplexity() {
 			return complexity;
 		}
 
-		void setComplexity(int complexity)
-		{
+		void setComplexity(int complexity) {
 			this.complexity = complexity;
 		}
 
-		public int getParameters()
-		{
+		public int getParameters() {
 			return parameters;
 		}
 
-		void setParameters(int parameters)
-		{
+		void setParameters(int parameters) {
 			this.parameters = parameters;
 		}
 
-		public int getStatements()
-		{
+		public int getStatements() {
 			return statements;
 		}
 
-		void setStatements(int statements)
-		{
+		void setStatements(int statements) {
 			this.statements = statements;
 		}
-		
+
 		@Override
-	    public int hashCode()
-		{
-	        return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
-	            .append(complexity)
-	            .append(parameters)
-	            .append(statements)
-	            .toHashCode();
+		public int hashCode() {
+			return new HashCodeBuilder(17, 31) // two randomly chosen prime numbers
+					.append(complexity)
+					.append(parameters)
+					.append(statements)
+					.toHashCode();
 		}
-		
+
 		@Override
-		public boolean equals(Object obj)
-		{
-			if (!(obj instanceof Metrics)) return false;
-			if (obj == this) return true;
-			
+		public boolean equals(Object obj) {
+			if (!(obj instanceof Metrics))
+				return false;
+			if (obj == this)
+				return true;
+
 			Metrics other = (Metrics) obj;
 			return new EqualsBuilder()
-				.append(this.complexity, other.complexity)
-				.append(this.parameters, other.parameters)
-				.append(this.statements, other.statements)
-				.isEquals();
+					.append(this.complexity, other.complexity)
+					.append(this.parameters, other.parameters)
+					.append(this.statements, other.statements)
+					.isEquals();
 		}
 	}
 }

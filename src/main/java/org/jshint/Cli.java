@@ -1,5 +1,7 @@
 package org.jshint;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -11,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.github.jshaptic.js4j.ContainerFactory;
 import com.github.jshaptic.js4j.JsonParser;
@@ -156,7 +157,7 @@ public class Cli {
 	// Storage for memoized results from find file
 	// Should prevent lots of directory traversal &
 	// lookups when liniting an entire project
-	private Map<String, String> findFileResults = new HashMap<String, String>();
+	private Map<String, String> findFileResults = new HashMap<>();
 
 	public Cli() {
 		setShellUtils(IOUtils.getShellUtils());
@@ -307,11 +308,11 @@ public class Cli {
 				.defaultString(findFile(StringUtils.defaultIfEmpty(excludePath, ".jshintignore"), cwd));
 
 		if (file.isEmpty() && StringUtils.isEmpty(exclude)) {
-			return new ArrayList<String>();
+			return new ArrayList<>();
 		}
 
-		List<String> lines = !file.isEmpty() ? new ArrayList<String>(Splitter.on("\n").splitToList(shell.cat(file)))
-				: new ArrayList<String>();
+		List<String> lines = !file.isEmpty() ? new ArrayList<>(Splitter.on("\n").splitToList(shell.cat(file)))
+				: new ArrayList<>();
 		lines.addAll(0, Splitter.on(",").splitToList(StringUtils.defaultString(exclude)));
 
 		return lines.stream().filter(line -> !line.trim().isEmpty()).map(line -> {
@@ -319,7 +320,7 @@ public class Cli {
 				return "!" + path.resolve(path.dirname(file), line.substring(1).trim());
 
 			return path.resolve(path.dirname(file), line.trim());
-		}).collect(Collectors.toList());
+		}).collect(toList());
 	}
 
 	/**
@@ -369,7 +370,7 @@ public class Cli {
 		if (!when.equals("always") && (!when.equals("auto") || !code.trim().startsWith("<")))
 			return null;
 
-		Map<Integer, Integer> offsets = new HashMap<Integer, Integer>();
+		Map<Integer, Integer> offsets = new HashMap<>();
 
 		Source parser = new Source(code);
 
@@ -451,7 +452,7 @@ public class Cli {
 	private void lint(String code, List<ReporterResult> results, UniversalContainer config, List<DataSummary> data,
 			String file) throws IOException, JSHintException {
 		LinterGlobals globals = new LinterGlobals();
-		List<String> buffer = new ArrayList<String>();
+		List<String> buffer = new ArrayList<>();
 
 		config = JsonParser.parse(JsonParser.stringify(config));
 
@@ -529,7 +530,7 @@ public class Cli {
 
 		int startIndex = 1;
 		int endIndex = 1;
-		List<String> js = new ArrayList<String>();
+		List<String> js = new ArrayList<>();
 
 		Source parser = new Source(code);
 
@@ -646,14 +647,14 @@ public class Cli {
 	 * @throws IOException if files cannot be read from filesystem.
 	 */
 	public List<String> gather(RunOptions opts) throws IOException {
-		List<String> files = new ArrayList<String>();
+		List<String> files = new ArrayList<>();
 		Pattern reg = Pattern.compile("\\.(js" +
 				(opts.extensions == null || opts.extensions.isEmpty() ? ""
 						: "|" +
 								StringUtils.replace(StringUtils.replace(opts.extensions, ",", "|"), "[\\. ]", ""))
 				+ ")$");
 
-		List<String> ignores = new ArrayList<String>();
+		List<String> ignores = new ArrayList<>();
 		if (opts.ignores == null) {
 			ignores = loadIgnores(null, null, opts.cwd);
 		} else {
@@ -689,19 +690,25 @@ public class Cli {
 	 */
 	public boolean run(RunOptions opts) throws ExitException, JSHintException, IOException {
 		List<String> files = gather(opts);
-		List<ReporterResult> results = new ArrayList<ReporterResult>();
-		List<DataSummary> data = new ArrayList<DataSummary>();
+		List<ReporterResult> results = new ArrayList<>();
+		List<DataSummary> data = new ArrayList<>();
 
 		String filename = "";
+		boolean lintStdinFile;
 
 		// There is an if(filename) check in the lint() function called below.
 		// passing a filename of undefined is the same as calling the function
 		// without a filename. If there is no opts.filename, filename remains
 		// undefined and lint() is effectively called with 4 parameters.
 		if (StringUtils.isNotEmpty(opts.filename)) {
-			filename = path.resolve(opts.filename);
+			filename = opts.filename;
+			List<String> ignores = opts.ignores == null ? loadIgnores(null, null, opts.cwd)
+					: opts.ignores.stream().map(target -> path.resolve(target)).collect(toList());
+			lintStdinFile = (opts.isUseStdin() && !isIgnored(filename, ignores));
+		} else {
+			lintStdinFile = opts.isUseStdin();
 		}
-		if (opts.useStdin && opts.ignores.indexOf(filename) == -1) {
+		if (lintStdinFile) {
 			String code = cli.readFromStdin();
 
 			UniversalContainer config = ContainerFactory.undefinedContainerIfFalse(opts.config);
@@ -719,7 +726,7 @@ public class Cli {
 			for (String file : files) {
 				UniversalContainer config = ContainerFactory.undefinedContainerIfFalse(opts.config);
 				String code = "";
-				List<ReporterResult> errors = new ArrayList<ReporterResult>();
+				List<ReporterResult> errors = new ArrayList<>();
 
 				config = config.test() ? config : getConfig(file);
 
@@ -909,7 +916,7 @@ public class Cli {
 		}
 
 		public void setIgnores(List<String> ignores) {
-			this.ignores = ignores != null ? ignores : new ArrayList<String>();
+			this.ignores = ignores != null ? ignores : new ArrayList<>();
 		}
 
 		public void setExtensions(String extensions) {

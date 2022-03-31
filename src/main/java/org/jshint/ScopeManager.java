@@ -8,16 +8,21 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+
+import com.github.jshaptic.js4j.ContainerFactory;
+import com.github.jshaptic.js4j.UniversalContainer;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jshint.utils.EventContext;
 import org.jshint.utils.EventEmitter;
 
-import com.github.jshaptic.js4j.ContainerFactory;
-import com.github.jshaptic.js4j.UniversalContainer;
-
+/**
+ * A scope manager tracks bindings, detecting when variables are referenced
+ * (through "usages").
+ */
 public class ScopeManager {
 
 	// Used to denote membership in lookup tables (a primitive value such as `true`
@@ -38,29 +43,23 @@ public class ScopeManager {
 	private UniversalContainer usedPredefinedAndGlobals;
 	private Map<String, ImpliedGlobal> impliedGlobals;
 	private List<Token> unuseds;
+	private List<String> esModuleExports;
 	private EventEmitter emitter;
 
 	private Block block;
 	private Functor funct;
 
 	/**
-	 * A factory function for creating scope managers. A scope manager tracks
-	 * variables and JSHint "labels", detecting when variables are referenced
-	 * (through "usages").
+	 * Scope manager constructor.
 	 *
-	 * Note that in this context, the term "label" describes an implementation
-	 * detail of JSHint and is not related to the ECMAScript language construct of
-	 * the same name. Where possible, the former is referred to as a "JSHint label"
-	 * to avoid confusion.
-	 *
-	 * @param predefined - a set of JSHint label names for built-in
-	 *                   bindings provided by the environment
-	 * @param exported   - a hash for JSHint label names that are intended
-	 *                   to be referenced in contexts beyond the current
-	 *                   program code
-	 * @param declared   - a hash for JSHint label names that were defined
-	 *                   as global bindings via linting configuration
-	 *
+	 * @param state      the global state object (see `state.js`)
+	 * @param predefined a set of binding names for built-in bindings
+	 *                   provided by the environment
+	 * @param exported   a hash for binding names that are intended to be
+	 *                   referenced in contexts beyond the current program
+	 *                   code
+	 * @param declared   a hash for binding names that were defined as
+	 *                   global bindings via linting configuration
 	 */
 	public ScopeManager(State state, Map<String, Boolean> predefined, Map<String, Boolean> exported,
 			Map<String, Token> declared) {
@@ -68,16 +67,17 @@ public class ScopeManager {
 		this.exported = exported;
 		this.declared = declared;
 
-		this.scopeStack = new ArrayList<Scope>();
+		this.scopeStack = new ArrayList<>();
 
 		this.newScope("global");
-		this.current.setPredefined(predefined);
+		this.current.predefined = predefined;
 
 		this.currentFunctBody = this.current; // this is the block after the params = function
 
 		this.usedPredefinedAndGlobals = ContainerFactory.nullContainer().create();
-		this.impliedGlobals = new HashMap<String, ImpliedGlobal>();
-		this.unuseds = new ArrayList<Token>();
+		this.impliedGlobals = new HashMap<>();
+		this.unuseds = new ArrayList<>();
+		this.esModuleExports = new ArrayList<>();
 		this.emitter = new EventEmitter();
 
 		this.funct = new Functor();
@@ -88,13 +88,12 @@ public class ScopeManager {
 		type = StringUtils.defaultString(type);
 
 		Scope newScope = new Scope();
-		newScope.setLabels(new LinkedHashMap<String, Label>());
-		newScope.setUsages(new HashMap<String, Usage>());
-		newScope.setBreakLabels(new HashMap<String, Token>());
-		newScope.setParent(current);
-		newScope.setType(type);
-		newScope.setParams(
-				type.equals("functionparams") || type.equals("catchparams") ? new ArrayList<String>() : null);
+		newScope.bindings = new LinkedHashMap<>();
+		newScope.usages = new HashMap<>();
+		newScope.labels = new HashMap<>();
+		newScope.parent = current;
+		newScope.type = type;
+		newScope.params = type.equals("functionparams") || type.equals("catchparams") ? new ArrayList<>() : null;
 		current = newScope;
 		scopeStack.add(current);
 	}
@@ -115,9 +114,9 @@ public class ScopeManager {
 		emitter.emit("warning", context);
 	}
 
-	private void setupUsages(String labelName) {
-		if (!current.getUsages().containsKey(labelName)) {
-			current.getUsages().put(labelName, new Usage());
+	private void setupUsages(String bindingName) {
+		if (!current.usages.containsKey(bindingName)) {
+			current.usages.put(bindingName, new Usage());
 		}
 	}
 
@@ -173,38 +172,26 @@ public class ScopeManager {
 	 * Check the current scope for unused identifiers
 	 */
 	private void checkForUnused() {
-		// function parameters are validated by a dedicated function
-		// assume that parameters are the only thing declared in the param scope
-		if (current.getType().equals("functionparams")) {
-			checkParams();
-			return;
-		}
-		Map<String, Label> curentLabels = current.getLabels();
-		for (String labelName : curentLabels.keySet()) {
-			if (!curentLabels.get(labelName).getType().equals("exception") &&
-					curentLabels.get(labelName).isUnused()) {
-				warnUnused(labelName, curentLabels.get(labelName).getToken(), "var");
+		if (!current.type.equals("functionparams")) {
+			Map<String, Binding> currentBindings = current.bindings;
+			for (String bindingName : currentBindings.keySet()) {
+				if (!currentBindings.get(bindingName).type.equals("exception") &&
+						currentBindings.get(bindingName).unused) {
+					warnUnused(bindingName, currentBindings.get(bindingName).token, "var");
+				}
 			}
-		}
-	}
-
-	/**
-	 * Check the current scope for unused parameters and issue warnings as
-	 * necessary. This function may only be invoked when the current scope is a
-	 * "function parameter" scope.
-	 */
-	private void checkParams() {
-		List<String> params = current.getParams();
-
-		if (params == null) {
 			return;
 		}
+
+		// Check the current scope for unused parameters and issue warnings as
+		// necessary.
+		List<String> params = current.params;
 
 		String param = params.size() > 0 ? params.remove(params.size() - 1) : null;
 		UniversalContainer unused_opt = ContainerFactory.undefinedContainer();
 
 		while (param != null) {
-			Label label = current.getLabels().get(param);
+			Binding binding = current.bindings.get(param);
 
 			unused_opt = getUnusedOption(state.getFunct().getUnusedOption());
 
@@ -217,8 +204,8 @@ public class ScopeManager {
 			if (param.equals("undefined"))
 				return;
 
-			if (label.isUnused()) {
-				warnUnused(param, label.getToken(), "param", state.getFunct().getUnusedOption());
+			if (binding.unused) {
+				warnUnused(param, binding.token, "param", state.getFunct().getUnusedOption());
 			} else if (unused_opt.equals("last-param")) {
 				return;
 			}
@@ -228,19 +215,19 @@ public class ScopeManager {
 	}
 
 	/**
-	 * Find the relevant JSHint label's scope. The owning scope is located by
-	 * first inspecting the current scope and then moving "downward" through the
-	 * stack of scopes.
+	 * Find the relevant binding's scope. The owning scope is located by first
+	 * inspecting the current scope and then moving "downward" through the stack
+	 * of scopes.
 	 *
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 *
-	 * @return the scope in which the JSHint label was found
+	 * @return the scope in which the binding was found
 	 */
-	private Map<String, Label> getLabel(String labelName) {
+	private Map<String, Binding> getBinding(String bindingName) {
 		for (int i = scopeStack.size() - 1; i >= 0; --i) {
-			Map<String, Label> scopeLabels = scopeStack.get(i).getLabels();
-			if (scopeLabels.containsKey(labelName)) {
-				return scopeLabels;
+			Map<String, Binding> scopeBindings = scopeStack.get(i).bindings;
+			if (scopeBindings.containsKey(bindingName)) {
+				return scopeBindings;
 			}
 		}
 
@@ -248,17 +235,17 @@ public class ScopeManager {
 	}
 
 	/**
-	 * Determine if a given JSHint label name has been referenced within the
-	 * current function or any function defined within.
+	 * Determine if a given binding name has been referenced within the current
+	 * function or any function defined within.
 	 *
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 *
 	 * @return
 	 */
-	private boolean usedSoFarInCurrentFunction(String labelName) {
+	private boolean usedSoFarInCurrentFunction(String bindingName) {
 		for (int i = scopeStack.size() - 1; i >= 0; i--) {
 			Scope current = scopeStack.get(i);
-			if (current.getUsages().containsKey(labelName)) {
+			if (current.usages.containsKey(bindingName)) {
 				return true;
 			}
 			if (current == currentFunctBody) {
@@ -268,14 +255,14 @@ public class ScopeManager {
 		return false;
 	}
 
-	private void checkOuterShadow(String labelName, Token token) {
+	private void checkOuterShadow(String bindingName, Token token) {
 		// only check if shadow is outer
 		if (!state.getOption().get("shadow").equals("outer")) {
 			return;
 		}
 
-		boolean isGlobal = currentFunctBody.getType().equals("global");
-		boolean isNewFunction = current.getType().equals("functionparams");
+		boolean isGlobal = currentFunctBody.type.equals("global");
+		boolean isNewFunction = current.type.equals("functionparams");
 
 		boolean outsideCurrentFunction = !isGlobal;
 		for (int i = 0; i < scopeStack.size(); i++) {
@@ -284,16 +271,16 @@ public class ScopeManager {
 			if (!isNewFunction && scopeStack.size() > i + 1 && scopeStack.get(i + 1) == currentFunctBody) {
 				outsideCurrentFunction = false;
 			}
-			if (outsideCurrentFunction && stackItem.getLabels().containsKey(labelName)) {
-				warning("W123", token, labelName);
+			if (outsideCurrentFunction && stackItem.bindings.containsKey(bindingName)) {
+				warning("W123", token, bindingName);
 			}
-			if (stackItem.getBreakLabels().containsKey(labelName)) {
-				warning("W123", token, labelName);
+			if (stackItem.labels.containsKey(bindingName)) {
+				warning("W123", token, bindingName);
 			}
 		}
 	}
 
-	private void latedefWarning(String type, String labelName, Token token) {
+	private void latedefWarning(String type, String bindingName, Token token) {
 		if (state.getOption().test("latedef")) {
 			boolean isFunction = type.equals("function") || type.equals("generator function") ||
 					type.equals("async function");
@@ -301,7 +288,7 @@ public class ScopeManager {
 			// if either latedef is strict and this is a function
 			// or this is not a function
 			if ((state.getOption().get("latedef").equals(true) && isFunction) || !isFunction) {
-				warning("W003", token, labelName);
+				warning("W003", token, bindingName);
 			}
 		}
 	}
@@ -312,8 +299,8 @@ public class ScopeManager {
 		}
 	}
 
-	public boolean isPredefined(String labelName) {
-		return !has(labelName) && scopeStack.get(0).getPredefined().containsKey(labelName);
+	public boolean isPredefined(String bindingName) {
+		return !has(bindingName) && scopeStack.get(0).predefined.containsKey(bindingName);
 	}
 
 	/**
@@ -338,8 +325,8 @@ public class ScopeManager {
 		Scope previousScope = current;
 		newScope(type);
 
-		if (StringUtils.isEmpty(type) && previousScope.getType().equals("functionparams")) {
-			current.setFuncBody(true);
+		if (StringUtils.isEmpty(type) && previousScope.type.equals("functionparams")) {
+			current.funcBody = true;
 			currentFunctBody = current;
 		}
 	}
@@ -351,50 +338,52 @@ public class ScopeManager {
 	public void unstack() {
 		Scope subScope = scopeStack.size() > 1 ? scopeStack.get(scopeStack.size() - 2) : null;
 		boolean isUnstackingFunctionBody = current == currentFunctBody;
-		boolean isUnstackingFunctionParams = current.getType().equals("functionparams");
-		boolean isUnstackingFunctionOuter = current.getType().equals("functionouter");
+		boolean isUnstackingFunctionParams = current.type.equals("functionparams");
+		boolean isUnstackingFunctionOuter = current.type.equals("functionouter");
 
 		boolean isImmutable = false;
-		Map<String, Usage> currentUsages = current.getUsages();
-		Map<String, Label> currentLabels = current.getLabels();
-		Set<String> usedLabelNameList = currentUsages.keySet();
+		Map<String, Usage> currentUsages = current.usages;
+		Map<String, Binding> currentBindings = current.bindings;
+		Set<String> usedBindingNameList = currentUsages.keySet();
 
-		for (String usedLabelName : usedLabelNameList) {
-			Usage usage = currentUsages.get(usedLabelName);
-			Label usedLabel = currentLabels.get(usedLabelName);
-			if (usedLabel != null) {
-				String usedLabelType = usedLabel.getType();
-				isImmutable = usedLabelType.equals("const") || usedLabelType.equals("import");
+		// PORT INFO: checking for __proto__ is not needed in Java implementation
 
-				if (usedLabel.isUseOutsideOfScope() && !state.getOption().test("funcscope")) {
-					List<Token> usedTokens = usage.getTokens();
+		for (String usedBindingName : usedBindingNameList) {
+			Usage usage = currentUsages.get(usedBindingName);
+			Binding usedBinding = currentBindings.get(usedBindingName);
+			if (usedBinding != null) {
+				String usedBindingType = usedBinding.type;
+				isImmutable = usedBindingType.equals("const") || usedBindingType.equals("import");
+
+				if (usedBinding.useOutsideOfScope && !state.getOption().test("funcscope")) {
+					List<Token> usedTokens = usage.tokens;
 					for (int j = 0; j < usedTokens.size(); j++) {
 						// Keep the consistency of https://github.com/jshint/jshint/issues/2409
-						if (usedLabel.getFunction() == usedTokens.get(j).getFunction()) {
-							error("W038", usedTokens.get(j), usedLabelName);
+						if (usedBinding.function == usedTokens.get(j).getFunction()) {
+							error("W038", usedTokens.get(j), usedBindingName);
 						}
 					}
 				}
 
-				// mark the label used
-				current.getLabels().get(usedLabelName).setUnused(false);
+				// mark the binding used
+				current.bindings.get(usedBindingName).unused = false;
 
 				// check for modifying a const
-				if (isImmutable && usage.getModified() != null) {
-					for (int j = 0; j < usage.getModified().size(); j++) {
-						error("E013", usage.getModified().get(j), usedLabelName);
+				if (isImmutable && usage.modified != null) {
+					for (int j = 0; j < usage.modified.size(); j++) {
+						error("E013", usage.modified.get(j), usedBindingName);
 					}
 				}
 
-				boolean isFunction = usedLabelType.equals("function") ||
-						usedLabelType.equals("generator function") ||
-						usedLabelType.equals("async fuction");
+				boolean isFunction = usedBindingType.equals("function") ||
+						usedBindingType.equals("generator function") ||
+						usedBindingType.equals("async function");
 
 				// check for re-assigning a function declaration
-				if ((isFunction || usedLabelType.equals("class")) && usage.getReassigned() != null) {
-					for (int j = 0; j < usage.getReassigned().size(); j++) {
-						if (!usage.getReassigned().get(j).isIgnoreW021()) {
-							warning("W021", usage.getReassigned().get(j), usedLabelName, usedLabelType);
+				if ((isFunction || usedBindingType.equals("class")) && usage.reassigned != null) {
+					for (int j = 0; j < usage.reassigned.size(); j++) {
+						if (!usage.reassigned.get(j).isIgnoreW021()) {
+							warning("W021", usage.reassigned.get(j), usedBindingName, usedBindingType);
 						}
 					}
 				}
@@ -402,64 +391,64 @@ public class ScopeManager {
 			}
 
 			if (subScope != null) {
-				String labelType = labeltype(usedLabelName);
-				isImmutable = StringUtils.defaultString(labelType).equals("const") ||
-						(labelType == null
-								&& BooleanUtils.isFalse(scopeStack.get(0).getPredefined().get(usedLabelName)));
+				String bindingType = bindingtype(usedBindingName);
+				isImmutable = Objects.equals(bindingType, "const") ||
+						(bindingType == null
+								&& BooleanUtils.isFalse(scopeStack.get(0).predefined.get(usedBindingName)));
 				if (isUnstackingFunctionOuter && !isImmutable) {
 					if (state.getFunct().getOuterMutables() == null) {
-						state.getFunct().setOuterMutables(new ArrayList<String>());
+						state.getFunct().setOuterMutables(new ArrayList<>());
 					}
-					state.getFunct().addOuterMutables(usedLabelName);
+					state.getFunct().addOuterMutables(usedBindingName);
 				}
 
 				// not exiting the global scope, so copy the usage down in case its an out of
 				// scope usage
-				if (!subScope.getUsages().containsKey(usedLabelName)) {
-					subScope.getUsages().put(usedLabelName, usage);
+				if (!subScope.usages.containsKey(usedBindingName)) {
+					subScope.usages.put(usedBindingName, usage);
 					if (isUnstackingFunctionBody) {
-						subScope.getUsages().get(usedLabelName).setOnlyUsedSubFunction(true);
+						subScope.usages.get(usedBindingName).onlyUsedSubFunction = true;
 					}
 				} else {
-					Usage subScopeUsage = subScope.getUsages().get(usedLabelName);
-					subScopeUsage.getModified().addAll(usage.getModified());
-					subScopeUsage.getTokens().addAll(usage.getTokens());
-					subScopeUsage.getReassigned().addAll(usage.getReassigned());
+					Usage subScopeUsage = subScope.usages.get(usedBindingName);
+					subScopeUsage.modified.addAll(usage.modified);
+					subScopeUsage.tokens.addAll(usage.tokens);
+					subScopeUsage.reassigned.addAll(usage.reassigned);
 				}
 			} else {
 				// this is exiting global scope, so we finalise everything here - we are at the
 				// end of the file
-				if (current.getPredefined().containsKey(usedLabelName)) {
+				if (current.predefined.containsKey(usedBindingName)) {
 					// remove the declared token, so we know it is used
-					declared.remove(usedLabelName);
+					declared.remove(usedBindingName);
 
 					// note it as used so it can be reported
-					usedPredefinedAndGlobals.set(usedLabelName, marker);
+					usedPredefinedAndGlobals.set(usedBindingName, marker);
 
 					// check for re-assigning a read-only (set to false) predefined
-					if (current.getPredefined().get(usedLabelName).equals(false) && usage.getReassigned() != null) {
-						for (int j = 0; j < usage.getReassigned().size(); j++) {
-							if (!usage.getReassigned().get(j).isIgnoreW020()) {
-								warning("W020", usage.getReassigned().get(j));
+					if (current.predefined.get(usedBindingName).equals(false) && usage.reassigned != null) {
+						for (int j = 0; j < usage.reassigned.size(); j++) {
+							if (!usage.reassigned.get(j).isIgnoreW020()) {
+								warning("W020", usage.reassigned.get(j));
 							}
 						}
 					}
 				} else {
-					// label usage is not predefined and we have not found a declaration
+					// binding usage is not predefined and we have not found a declaration
 					// so report as undeclared
-					for (int j = 0; j < usage.getTokens().size(); j++) {
-						Token undefinedToken = usage.getTokens().get(j);
+					for (int j = 0; j < usage.tokens.size(); j++) {
+						Token undefinedToken = usage.tokens.get(j);
 						// if its not a forgiven undefined (e.g. typof x)
 						if (!undefinedToken.isForgiveUndef()) {
 							// if undef is on and undef was on when the token was defined
 							if (state.getOption().test("undef") && !undefinedToken.isIgnoreUndef()) {
-								warning("W117", undefinedToken, usedLabelName);
+								warning("W117", undefinedToken, usedBindingName);
 							}
-							if (impliedGlobals.containsKey(usedLabelName)) {
-								impliedGlobals.get(usedLabelName).addLine(undefinedToken.getLine());
+							if (impliedGlobals.containsKey(usedBindingName)) {
+								impliedGlobals.get(usedBindingName).addLine(undefinedToken.getLine());
 							} else {
-								impliedGlobals.put(usedLabelName,
-										new ImpliedGlobal(usedLabelName, undefinedToken.getLine()));
+								impliedGlobals.put(usedBindingName,
+										new ImpliedGlobal(usedBindingName, undefinedToken.getLine()));
 							}
 						}
 					}
@@ -470,46 +459,46 @@ public class ScopeManager {
 		// if exiting the global scope, we can warn about declared globals that haven't
 		// been used yet
 		if (subScope == null) {
-			for (String labelNotUsed : declared.keySet()) {
-				warnUnused(labelNotUsed, declared.get(labelNotUsed), "var");
+			for (String bindingNotUsed : declared.keySet()) {
+				warnUnused(bindingNotUsed, declared.get(bindingNotUsed), "var");
 			}
 		}
 
-		// If this is not a function boundary, transfer function-scoped labels to
+		// If this is not a function boundary, transfer function-scoped bindings to
 		// the parent block (a rough simulation of variable hoisting). Previously
-		// existing labels in the parent block should take precedence so that things and
-		// stuff.
+		// existing bindings in the parent block should take precedence so that
+		// prior usages are not discarded.
 		if (subScope != null && !isUnstackingFunctionBody &&
 				!isUnstackingFunctionParams && !isUnstackingFunctionOuter) {
-			for (Iterator<Map.Entry<String, Label>> it = currentLabels.entrySet().iterator(); it.hasNext();) {
-				Map.Entry<String, Label> entry = it.next();
-				String defLabelName = entry.getKey();
-				Label defLabel = entry.getValue();
+			for (Iterator<Map.Entry<String, Binding>> it = currentBindings.entrySet().iterator(); it.hasNext();) {
+				Map.Entry<String, Binding> entry = it.next();
+				String defBindingName = entry.getKey();
+				Binding defBinding = entry.getValue();
 
-				if (!defLabel.isBlockscoped() && !defLabel.getType().equals("exception")) {
-					Label shadowed = subScope.getLabels().get(defLabelName);
+				if (!defBinding.blockscoped && !defBinding.type.equals("exception")) {
+					Binding shadowed = subScope.bindings.get(defBindingName);
 
-					// Do not overwrite a label if it exists in the parent scope
+					// Do not overwrite a binding if it exists in the parent scope
 					// because it is shared by adjacent blocks. Copy the `unused`
 					// property so that any references found within the current block
 					// are counted toward that higher-level declaration.
 					if (shadowed != null) {
-						shadowed.setUnused(shadowed.isUnused() && defLabel.isUnused());
+						shadowed.unused = shadowed.unused && defBinding.unused;
 					}
-					// "Hoist" the variable to the parent block, decorating the label
+					// "Hoist" the variable to the parent block, decorating the binding
 					// so that future references, though technically valid, can be
 					// reported as "out-of-scope" in the absence of the `funcscope`
 					// option.
 					else {
-						defLabel.setUseOutsideOfScope(
+						defBinding.useOutsideOfScope =
 								// Do not warn about out-of-scope usages in the global scope
-								!currentFunctBody.getType().equals("global") &&
-								// When a higher scope contains a binding for the label, the
-								// label is a re-declaration and should not prompt "used
+								!currentFunctBody.type.equals("global") &&
+								// When a higher scope contains a binding for the binding, the
+								// binding is a re-declaration and should not prompt "used
 								// out-of-scope" warnings.
-										!funct.has(defLabelName, false, false, true));
+										!funct.has(defBindingName, false, false, true);
 
-						subScope.getLabels().put(defLabelName, defLabel);
+						subScope.bindings.put(defBindingName, defBinding);
 					}
 
 					it.remove();
@@ -526,7 +515,7 @@ public class ScopeManager {
 				Scope scope = scopeStack.get(i);
 				// if function or if global (which is at the bottom so it will only return true
 				// if we call back)
-				if (scope.isFuncBody() || scope.getType().equals("global")) {
+				if (scope.funcBody || scope.type.equals("global")) {
 					currentFunctBody = scope;
 					break;
 				}
@@ -539,72 +528,74 @@ public class ScopeManager {
 	/**
 	 * Add a function parameter to the current scope.
 	 * 
-	 * @param labelName - the value of the identifier
-	 * @param token     - indetifier token
+	 * @param bindingName the value of the identifier
+	 * @param token       indetifier token
 	 */
-	public void addParam(String labelName, Token token) {
-		addParam(labelName, token, null);
+	public void addParam(String bindingName, Token token) {
+		addParam(bindingName, token, null);
 	}
 
 	/**
 	 * Add a function parameter to the current scope.
 	 * 
-	 * @param labelName - the value of the identifier
-	 * @param token     - indetifier token
-	 * @param type      - JSHint label type; defaults to "param"
+	 * @param bindingName the value of the identifier
+	 * @param token       indetifier token
+	 * @param type        binding type; defaults to "param"
 	 */
-	public void addParam(String labelName, Token token, String type) {
+	public void addParam(String bindingName, Token token, String type) {
 		type = StringUtils.defaultIfBlank(type, "param");
 
 		if (type.equals("exception")) {
 			// if defined in the current function
-			String previouslyDefinedLabelType = funct.labeltype(labelName, false, false, false);
-			if (StringUtils.isNotEmpty(previouslyDefinedLabelType) && !previouslyDefinedLabelType.equals("exception")) {
+			String previouslyDefinedBindingType = funct.bindingtype(bindingName, false, false, false);
+			if (StringUtils.isNotEmpty(previouslyDefinedBindingType)
+					&& !previouslyDefinedBindingType.equals("exception")) {
 				// and has not been used yet in the current function scope
 				if (!state.getOption().test("node")) {
-					warning("W002", state.nextToken(), labelName);
+					warning("W002", state.nextToken(), bindingName);
 				}
 			}
 
-			if (state.isStrict() && (labelName.equals("arguments") || labelName.equals("eval"))) {
+			if (state.isStrict() && (bindingName.equals("arguments") || bindingName.equals("eval"))) {
 				warning("E008", token);
 			}
 		}
 
 		// The variable was declared in the current scope
-		if (current.getLabels().containsKey(labelName)) {
-			current.getLabels().get(labelName).setDuplicated(true);
+		if (current.bindings.containsKey(bindingName)) {
+			current.bindings.get(bindingName).duplicated = true;
 		}
 		// The variable was declared in an outer scope
 		else {
 			// if this scope has the variable defined, it's a re-definition error
-			checkOuterShadow(labelName, token);
+			checkOuterShadow(bindingName, token);
 
-			current.getLabels().put(labelName, new Label(type, token, false, null, true, false));
+			current.bindings.put(bindingName, new Binding(type, token, false, null, true, false));
 
-			current.getParams().add(labelName);
+			current.params.add(bindingName);
 		}
 
-		if (current.getUsages().containsKey(labelName)) {
-			Usage usage = current.getUsages().get(labelName);
+		if (current.usages.containsKey(bindingName)) {
+			Usage usage = current.usages.get(bindingName);
 			// if its in a sub function it is not necessarily an error, just latedef
-			if (usage.isOnlyUsedSubFunction()) {
-				latedefWarning(type, labelName, token);
+			if (usage.onlyUsedSubFunction) {
+				latedefWarning(type, bindingName, token);
 			} else {
-				// this is a clear illegal usage for block scoped variables
-				warning("E056", token, labelName, type);
+				// this is a clear illegal usage, but not a syntax error, so emit a
+				// warning and not an error
+				warning("W003", token, bindingName);
 			}
 		}
 	}
 
 	public void validateParams(boolean isArrow) {
 		// This method only concerns errors for function parameters
-		if (currentFunctBody.getType().equals("global")) {
+		if (currentFunctBody.type.equals("global")) {
 			return;
 		}
 
 		boolean isStrict = state.isStrict();
-		Scope currentFunctParamScope = currentFunctBody.getParent();
+		Scope currentFunctParamScope = currentFunctBody.parent;
 		// From ECMAScript 2017:
 		//
 		// > 14.1.2Static Semantics: Early Errors
@@ -619,28 +610,29 @@ public class ScopeManager {
 		// mode.
 		boolean isMethod = state.getFunct().isMethod();
 
-		if (currentFunctParamScope.getParams() == null) {
+		if (currentFunctParamScope.params == null) {
 			return;
 		}
 
-		for (String labelName : currentFunctParamScope.getParams()) {
-			Label label = currentFunctParamScope.getLabels().get(labelName);
+		for (String bindingName : currentFunctParamScope.params) {
+			Binding binding = currentFunctParamScope.bindings.get(bindingName);
 
-			if (label.isDuplicated()) {
+			if (binding.duplicated) {
 				if (isStrict || isArrow || isMethod || !isSimple) {
-					warning("E011", label.getToken(), labelName);
+					warning("E011", binding.token, bindingName);
 				} else if (!state.getOption().get("shadow").equals(true)) {
-					warning("W004", label.getToken(), labelName);
+					warning("W004", binding.token, bindingName);
 				}
 			}
 
-			if (state.isStrict() && (labelName.equals("arguments") || labelName.equals("eval"))) {
-				warning("E008", label.getToken());
+			if (state.isStrict() && (bindingName.equals("arguments") || bindingName.equals("eval"))) {
+				warning("E008", binding.token);
 			}
 		}
 	}
 
 	public Set<String> getUsedOrDefinedGlobals() {
+		// PORT INFO: no need to check for __proto__ in Java implementation
 		return usedPredefinedAndGlobals.keys();
 	}
 
@@ -650,7 +642,8 @@ public class ScopeManager {
 	 * @return list of implied globals.
 	 */
 	public List<ImpliedGlobal> getImpliedGlobals() {
-		return Collections.unmodifiableList(new ArrayList<ImpliedGlobal>(impliedGlobals.values()));
+		// PORT INFO: no need to check for __proto__ in Java implementation
+		return Collections.unmodifiableList(new ArrayList<>(impliedGlobals.values()));
 	}
 
 	/**
@@ -666,27 +659,26 @@ public class ScopeManager {
 	 * Determine if a given name has been defined in the current scope or any
 	 * lower scope.
 	 *
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 *
 	 * @return true if given name is defined, false otherwise
 	 */
-	public boolean has(String labelName) {
-		return getLabel(labelName) != null;
+	public boolean has(String bindingName) {
+		return getBinding(bindingName) != null;
 	}
 
 	/**
-	 * Retrieve described by `labelName` or null
+	 * Retrieve binding described by `bindingName` or null
 	 *
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 *
-	 * @return the type of the JSHint label or `null` if no
-	 *         such label exists
+	 * @return the type of the binding or `null` if no such
+	 *         binding exists
 	 */
-	public String labeltype(String labelName) {
-		// returns a labels type or null if not present
-		Map<String, Label> scopeLabels = getLabel(labelName);
-		if (scopeLabels != null) {
-			return scopeLabels.get(labelName).getType();
+	public String bindingtype(String bindingName) {
+		Map<String, Binding> scopeBindings = getBinding(bindingName);
+		if (scopeBindings != null) {
+			return scopeBindings.get(bindingName).type;
 		}
 		return null;
 	}
@@ -694,122 +686,132 @@ public class ScopeManager {
 	/**
 	 * For the exported options, indicating a variable is used outside the file
 	 * 
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 */
-	public void addExported(String labelName) {
-		Map<String, Label> globalLabels = scopeStack.get(0).getLabels();
-		if (declared.containsKey(labelName)) {
+	public void addExported(String bindingName) {
+		Map<String, Binding> globalBindings = scopeStack.get(0).bindings;
+		if (declared.containsKey(bindingName)) {
 			// remove the declared token, so we know it is used
-			declared.remove(labelName);
-		} else if (globalLabels.containsKey(labelName)) {
-			globalLabels.get(labelName).setUnused(false);
+			declared.remove(bindingName);
+		} else if (globalBindings.containsKey(bindingName)) {
+			globalBindings.get(bindingName).unused = false;
 		} else {
 			for (int i = 1; i < scopeStack.size(); i++) {
 				Scope scope = scopeStack.get(i);
 				// if `scope.(type)` is not defined, it is a block scope
-				if (StringUtils.isEmpty(scope.getType())) {
-					if (scope.getLabels().containsKey(labelName) &&
-							!scope.getLabels().get(labelName).isBlockscoped()) {
-						scope.getLabels().get(labelName).setUnused(false);
+				if (StringUtils.isEmpty(scope.type)) {
+					if (scope.bindings.containsKey(bindingName) &&
+							!scope.bindings.get(bindingName).blockscoped) {
+						scope.bindings.get(bindingName).unused = false;
 						return;
 					}
 				} else {
 					break;
 				}
 			}
-			exported.put(labelName, true);
+			exported.put(bindingName, true);
 		}
 	}
 
 	/**
-	 * Mark a JSHint label as "exported" by an ES2015 module
+	 * Mark a binding as "exported" by an ES2015 module
 	 * 
-	 * @param labelName - the value of the identifier
-	 * @param token     - identifier token
+	 * @param localName  the value of the identifier
+	 * @param exportName identifier token
 	 */
-	public void setExported(String labelName, Token token) {
-		block.use(labelName, token);
+	public void setExported(Token localName, Token exportName) {
+		if (exportName != null) {
+			if (esModuleExports.indexOf(exportName.getValue()) > -1) {
+				error("E069", exportName, exportName.getValue());
+			}
+
+			esModuleExports.add(exportName.getValue());
+		}
+
+		if (localName != null) {
+			block.use(localName.getValue(), localName);
+		}
 	}
 
 	/**
-	 * Mark a JSHint label as "initialized." This is necessary to enforce the
+	 * Mark a binding as "initialized." This is necessary to enforce the
 	 * "temporal dead zone" (TDZ) of block-scoped bindings which are not
 	 * hoisted.
 	 *
-	 * @param labelName - the value of the identifier
+	 * @param bindingName the value of the identifier
 	 */
-	public void initialize(String labelName) {
-		if (current.getLabels().containsKey(labelName)) {
-			current.getLabels().get(labelName).setInitialized(true);
+	public void initialize(String bindingName) {
+		if (current.bindings.containsKey(bindingName)) {
+			current.bindings.get(bindingName).initialized = true;
 		}
 	}
 
 	/**
-	 * Create a new JSHint label and add it to the current scope. Delegates to
-	 * the internal `block.add` or `func.add` methods depending on the type.
+	 * Create a new binding and add it to the current scope. Delegates to the
+	 * internal `block.add` or `func.add` methods depending on the type.
 	 * Produces warnings and errors as necessary.
 	 *
-	 * @param labelName - the value of the identifier
-	 * @param type      - the type of the label e.g. "param", "var",
-	 *                  "let, "const", "import", "function",
-	 *                  "generator function", "async function",
-	 *                  "async generator function"
-	 * @param token     - the token pointing at the declaration
-	 */
-	public void addlabel(String labelName, String type, Token token) {
-		addlabel(labelName, type, token, false);
-	}
-
-	/**
-	 * Create a new JSHint label and add it to the current scope. Delegates to
-	 * the internal `block.add` or `func.add` methods depending on the type.
-	 * Produces warnings and errors as necessary.
-	 *
-	 * @param labelName   - the value of the identifier
-	 * @param type        - the type of the label e.g. "param", "var",
+	 * @param bindingName the value of the identifier
+	 * @param type        the type of the binding e.g. "param", "var",
 	 *                    "let, "const", "import", "function",
 	 *                    "generator function", "async function",
 	 *                    "async generator function"
-	 * @param token       - the token pointing at the declaration
-	 * @param initialized - whether the binding should be
+	 * @param token       the token pointing at the declaration
+	 */
+	public void addbinding(String bindingName, String type, Token token) {
+		addbinding(bindingName, type, token, false);
+	}
+
+	/**
+	 * Create a new binding and add it to the current scope. Delegates to the
+	 * internal `block.add` or `func.add` methods depending on the type.
+	 * Produces warnings and errors as necessary.
+	 *
+	 * @param bindingName the value of the identifier
+	 * @param type        the type of the binding e.g. "param", "var",
+	 *                    "let, "const", "import", "function",
+	 *                    "generator function", "async function",
+	 *                    "async generator function"
+	 * @param token       the token pointing at the declaration
+	 * @param initialized whether the binding should be
 	 *                    created in an "initialized" state.
 	 */
-	public void addlabel(String labelName, String type, Token token, boolean initialized) {
+	public void addbinding(String bindingName, String type, Token token, boolean initialized) {
 		boolean isblockscoped = type.equals("let") || type.equals("const") ||
 				type.equals("class") || type.equals("import") || type.equals("generator function") ||
 				type.equals("async function") || type.equals("async generator function");
 		boolean ishoisted = type.equals("function") || type.equals("generator function") ||
 				type.equals("async function") || type.equals("import");
-		boolean isexported = (isblockscoped ? current.getType().equals("global")
-				: currentFunctBody.getType().equals("global")) &&
-				exported.containsKey(labelName);
+		boolean isexported = (isblockscoped ? current.type.equals("global")
+				: currentFunctBody.type.equals("global")) &&
+				exported.containsKey(bindingName);
 
 		// outer shadow check (inner is only on non-block scoped)
-		checkOuterShadow(labelName, token);
+		checkOuterShadow(bindingName, token);
 
-		if (state.isStrict() && (labelName.equals("arguments") || labelName.equals("eval"))) {
+		if (state.isStrict() && (bindingName.equals("arguments") || bindingName.equals("eval"))) {
 			warning("E008", token);
 		}
 
 		if (isblockscoped) {
-			Label declaredInCurrentScope = current.getLabels().get(labelName);
+			Binding declaredInCurrentScope = current.bindings.get(bindingName);
 			// for block scoped variables, params are seen in the current scope as the root
 			// function
 			// scope, so check these too.
 			if (declaredInCurrentScope == null && current == currentFunctBody &&
-					!current.getType().equals("global")) {
-				declaredInCurrentScope = currentFunctBody.getParent().getLabels().get(labelName);
+					!current.type.equals("global")) {
+				declaredInCurrentScope = currentFunctBody.parent.bindings.get(bindingName);
 			}
 
 			// if its not already defined (which is an error, so ignore) and is used in TDZ
-			if (declaredInCurrentScope == null && current.getUsages().containsKey(labelName)) {
-				Usage usage = current.getUsages().get(labelName);
+			if (declaredInCurrentScope == null && current.usages.containsKey(bindingName)) {
+				Usage usage = current.usages.get(bindingName);
 				// if its in a sub function it is not necessarily an error, just latedef
-				if (usage.isOnlyUsedSubFunction() || ishoisted) {
-					latedefWarning(type, labelName, token);
+				if (usage.onlyUsedSubFunction || ishoisted) {
+					latedefWarning(type, bindingName, token);
 				} else if (!ishoisted) {
 					// this is a clear illegal usage for block scoped variables
-					warning("E056", token, labelName, type);
+					warning("E056", token, bindingName, type);
 				}
 			}
 
@@ -821,45 +823,45 @@ public class ScopeManager {
 			// scope but not within block statements
 			// 2. this is not a "hoisted" block-scoped binding
 			if (declaredInCurrentScope != null
-					&& (!ishoisted || (!current.getType().equals("global") || type.equals("import")))) {
-				warning("E011", token, labelName);
+					&& (!ishoisted || (!current.type.equals("global") || type.equals("import")))) {
+				warning("E011", token, bindingName);
 			} else if (state.getOption().get("shadow").equals("outer")) {
 				// if shadow is outer, for block scope we want to detect any shadowing within
 				// this function
-				if (funct.has(labelName, false, false, false)) {
-					warning("W004", token, labelName);
+				if (funct.has(bindingName, false, false, false)) {
+					warning("W004", token, bindingName);
 				}
 			}
 
-			block.add(labelName, type, token, !isexported, initialized);
+			block.add(bindingName, type, token, !isexported, initialized);
 		} else {
-			boolean declaredInCurrentFunctionScope = funct.has(labelName, false, false, false);
+			boolean declaredInCurrentFunctionScope = funct.has(bindingName, false, false, false);
 
 			// check for late definition, ignore if already declared
-			if (!declaredInCurrentFunctionScope && usedSoFarInCurrentFunction(labelName)) {
-				latedefWarning(type, labelName, token);
+			if (!declaredInCurrentFunctionScope && usedSoFarInCurrentFunction(bindingName)) {
+				latedefWarning(type, bindingName, token);
 			}
 
 			// defining with a var or a function when a block scope variable of the same
 			// name
 			// is in scope is an error
-			if (funct.has(labelName, true, false, false)) {
-				warning("E011", token, labelName);
+			if (funct.has(bindingName, true, false, false)) {
+				warning("E011", token, bindingName);
 			} else if (!state.getOption().get("shadow").equals(true)) {
 				// now since we didn't get any block scope variables, test for var/function
 				// shadowing
-				if (declaredInCurrentFunctionScope && !labelName.equals("__proto__")) {
+				if (declaredInCurrentFunctionScope && !bindingName.equals("__proto__")) {
 					// see https://github.com/jshint/jshint/issues/2400
-					if (!currentFunctBody.getType().equals("global")) {
-						warning("W004", token, labelName);
+					if (!currentFunctBody.type.equals("global")) {
+						warning("W004", token, bindingName);
 					}
 				}
 			}
 
-			funct.add(labelName, type, token, !isexported);
+			funct.add(bindingName, type, token, !isexported);
 
-			if (currentFunctBody.getType().equals("global") && !state.impliedClosure()) {
-				usedPredefinedAndGlobals.set(labelName, marker);
+			if (currentFunctBody.type.equals("global") && !state.impliedClosure()) {
+				usedPredefinedAndGlobals.set(bindingName, marker);
 			}
 		}
 	}
@@ -871,27 +873,27 @@ public class ScopeManager {
 	public class Functor {
 
 		/**
-		 * Return the type of the provided JSHint label given certain options
+		 * Return the type of the provided binding given certain options
 		 *
-		 * @param labelName       - the value of the identifier
-		 * @param onlyBlockscoped - only include block scoped
-		 *                        labels
-		 * @param excludeParams   - exclude the param scope
-		 * @param excludeCurrent  - exclude the current scope
+		 * @param bindingName     the value of the identifier
+		 * @param onlyBlockscoped only include block scoped
+		 *                        bindings
+		 * @param excludeParams   exclude the param scope
+		 * @param excludeCurrent  exclude the current scope
 		 *
-		 * @return type of the label
+		 * @return type of the binding
 		 */
-		public String labeltype(String labelName, boolean onlyBlockscoped, boolean excludeParams,
+		public String bindingtype(String bindingName, boolean onlyBlockscoped, boolean excludeParams,
 				boolean excludeCurrent) {
 			int currentScopeIndex = scopeStack.size() - (excludeCurrent ? 2 : 1);
 			for (int i = currentScopeIndex; i >= 0; i--) {
 				Scope current = scopeStack.get(i);
-				if (current.getLabels().containsKey(labelName) &&
-						(!onlyBlockscoped || current.getLabels().get(labelName).isBlockscoped())) {
-					return current.getLabels().get(labelName).getType();
+				if (current.bindings.containsKey(bindingName) &&
+						(!onlyBlockscoped || current.bindings.get(bindingName).blockscoped)) {
+					return current.bindings.get(bindingName).type;
 				}
 				Scope scopeCheck = excludeParams ? (scopeStack.size() > i - 1 ? scopeStack.get(i - 1) : null) : current;
-				if (scopeCheck != null && scopeCheck.getType().equals("functionparams")) {
+				if (scopeCheck != null && scopeCheck.type.equals("functionparams")) {
 					return null;
 				}
 			}
@@ -902,18 +904,18 @@ public class ScopeManager {
 		 * Determine whether a `break` statement label exists in the function
 		 * scope.
 		 *
-		 * @param labelName - the value of the identifier
+		 * @param labelName the value of the identifier
 		 *
 		 * @return true if `break` statement exists, false otherwise
 		 */
-		public boolean hasBreakLabel(String labelName) {
+		public boolean hasLabel(String labelName) {
 			for (int i = scopeStack.size() - 1; i >= 0; i--) {
 				Scope current = scopeStack.get(i);
 
-				if (current.getBreakLabels().containsKey(labelName)) {
+				if (current.labels.containsKey(labelName)) {
 					return true;
 				}
-				if (current.getType().equals("functionparams")) {
+				if (current.type.equals("functionparams")) {
 					return false;
 				}
 			}
@@ -924,33 +926,33 @@ public class ScopeManager {
 		 * Determine if a given name has been defined in the current function
 		 * scope.
 		 *
-		 * @param labelName       - the value of the identifier
-		 * @param onlyBlockscoped - only include block scoped
-		 *                        labels
-		 * @param excludeParams   - exclude the param scope
-		 * @param excludeCurrent  - exclude the current scope
+		 * @param bindingName     the value of the identifier
+		 * @param onlyBlockscoped only include block scoped
+		 *                        bindings
+		 * @param excludeParams   exclude the param scope
+		 * @param excludeCurrent  exclude the current scope
 		 *
 		 * @return true if given name is defined in the current function, false
 		 *         otherwise
 		 */
-		public boolean has(String labelName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent) {
-			return StringUtils.isNotEmpty(labeltype(labelName, onlyBlockscoped, excludeParams, excludeCurrent));
+		public boolean has(String bindingName, boolean onlyBlockscoped, boolean excludeParams, boolean excludeCurrent) {
+			return StringUtils.isNotEmpty(bindingtype(bindingName, onlyBlockscoped, excludeParams, excludeCurrent));
 		}
 
 		/**
-		 * Create a new function-scoped JSHint label and add it to the current
-		 * scope. See the {@link Block#add} for coresponding logic to create
-		 * block-scoped JSHint labels
+		 * Create a new function-scoped binding and add it to the current scope. See the
+		 * {@link Block#add} for coresponding logic to create
+		 * block-scoped bindings.
 		 *
-		 * @param labelName - the value of the identifier
-		 * @param type      - the type of the JSHint label; either "function"
-		 *                  or "var"
-		 * @param tok       - the token that triggered the definition
-		 * @param unused    - `true` if the JSHint label has not been
-		 *                  referenced
+		 * @param bindingName the value of the identifier
+		 * @param type        the type of the binding; either "function" or
+		 *                    "var"
+		 * @param tok         the token that triggered the definition
+		 * @param unused      `true` if the binding has not been
+		 *                    referenced
 		 */
-		public void add(String labelName, String type, Token tok, boolean unused) {
-			current.getLabels().put(labelName, new Label(type, tok, false, currentFunctBody, unused, false));
+		public void add(String bindingName, String type, Token tok, boolean unused) {
+			current.bindings.put(bindingName, new Binding(type, tok, false, currentFunctBody, unused, false));
 		}
 	}
 
@@ -966,17 +968,17 @@ public class ScopeManager {
 		 * @return true if block is global, false otherwise.
 		 */
 		public boolean isGlobal() {
-			return current.getType().equals("global");
+			return current.type.equals("global");
 		}
 
 		/**
-		 * Resolve a reference to a binding and mark the corresponding JSHint
-		 * label as "used."
+		 * Resolve a reference to a binding and mark the corresponding binding as
+		 * "used."
 		 *
-		 * @param labelName - the value of the identifier
-		 * @param token     - the token value that triggered the reference
+		 * @param bindingName the value of the identifier
+		 * @param token       the token value that triggered the reference
 		 */
-		public void use(String labelName, Token token) {
+		public void use(String bindingName, Token token) {
 			// If the name resolves to a parameter of the current function, then do
 			// not store usage. This is because in cases such as the following:
 			//
@@ -987,12 +989,12 @@ public class ScopeManager {
 			//
 			// the usage of `a` will resolve to the parameter, not to the unset
 			// variable binding.
-			Scope paramScope = currentFunctBody.getParent();
-			if (paramScope != null && paramScope.getLabels().containsKey(labelName) &&
-					paramScope.getLabels().get(labelName).getType().equals("param")) {
+			Scope paramScope = currentFunctBody.parent;
+			if (paramScope != null && paramScope.bindings.containsKey(bindingName) &&
+					paramScope.bindings.get(bindingName).type.equals("param")) {
 				// then check its not declared by a block scope variable
-				if (!funct.has(labelName, true, true, false)) {
-					paramScope.getLabels().get(labelName).setUnused(false);
+				if (!funct.has(bindingName, true, true, false)) {
+					paramScope.bindings.get(bindingName).unused = false;
 				}
 			}
 
@@ -1000,77 +1002,77 @@ public class ScopeManager {
 				token.setIgnoreUndef(true);
 			}
 
-			setupUsages(labelName);
+			setupUsages(bindingName);
 
-			current.getUsages().get(labelName).setOnlyUsedSubFunction(false);
+			current.usages.get(bindingName).onlyUsedSubFunction = false;
 
 			if (token != null) {
 				token.setFunction(currentFunctBody);
-				current.getUsages().get(labelName).getTokens().add(token);
+				current.usages.get(bindingName).tokens.add(token);
 			}
 
 			// Block-scoped bindings can't be used within their initializer due to
 			// "temporal dead zone" (TDZ) restrictions.
-			Label label = current.getLabels().get(labelName);
-			if (label != null && label.isBlockscoped() && !label.isInitialized()) {
-				error("E056", token, labelName, label.getType());
+			Binding binding = current.bindings.get(bindingName);
+			if (binding != null && binding.blockscoped && !binding.initialized) {
+				error("E056", token, bindingName, binding.type);
 			}
 		}
 
-		public void reassign(String labelName, Token token) {
+		public void reassign(String bindingName, Token token) {
 			token.setIgnoreW020(state.getIgnored().asBoolean("W020"));
 			token.setIgnoreW021(state.getIgnored().asBoolean("W021"));
 
-			modify(labelName, token);
+			modify(bindingName, token);
 
-			current.getUsages().get(labelName).getReassigned().add(token);
+			current.usages.get(bindingName).reassigned.add(token);
 		}
 
-		public void modify(String labelName, Token token) {
-			setupUsages(labelName);
+		public void modify(String bindingName, Token token) {
+			setupUsages(bindingName);
 
-			current.getUsages().get(labelName).setOnlyUsedSubFunction(false);
-			current.getUsages().get(labelName).getModified().add(token);
-		}
-
-		/**
-		 * Create a new block-scoped JSHint label and add it to the current
-		 * scope. See the {@link Functor#add} method for coresponding logic to create
-		 * function-scoped JSHint labels.
-		 *
-		 * @param labelName - the value of the identifier
-		 * @param type      - the type of the JSHint label; one of "class",
-		 *                  "const", "function", "import", or "let"
-		 * @param tok       - the token that triggered the definition
-		 * @param unused    - `true` if the JSHint label has not been
-		 *                  referenced
-		 */
-		public void add(String labelName, String type, Token tok, boolean unused) {
-			add(labelName, type, tok, unused, false);
+			current.usages.get(bindingName).onlyUsedSubFunction = false;
+			current.usages.get(bindingName).modified.add(token);
 		}
 
 		/**
-		 * Create a new block-scoped JSHint label and add it to the current
-		 * scope. See the {@link Functor#add} method for coresponding logic to create
-		 * function-scoped JSHint labels.
+		 * Create a new block-scoped binding and add it to the current scope. See the
+		 * {@link Functor#add} method for coresponding logic to create
+		 * function-scoped bindings.
 		 *
-		 * @param labelName   - the value of the identifier
-		 * @param type        - the type of the JSHint label; one of "class",
+		 * @param bindingName the value of the identifier
+		 * @param type        the type of the binding; one of "class",
 		 *                    "const", "function", "import", or "let"
-		 * @param tok         - the token that triggered the definition
-		 * @param unused      - `true` if the JSHint label has not been
+		 * @param tok         the token that triggered the definition
+		 * @param unused      `true` if the binding has not been
 		 *                    referenced
-		 * @param initialized - `true` if the JSHint label has been
-		 *                    initialized (as is the case with JSHint
-		 *                    labels created via `import`
+		 */
+		public void add(String bindingName, String type, Token tok, boolean unused) {
+			add(bindingName, type, tok, unused, false);
+		}
+
+		/**
+		 * Create a new block-scoped binding and add it to the current scope. See the
+		 * {@link Functor#add} method for coresponding logic to create
+		 * function-scoped bindings.
+		 *
+		 * @param bindingName the value of the identifier
+		 * @param type        the type of the binding; one of "class",
+		 *                    "const", "function", "import", or "let"
+		 * @param tok         the token that triggered the definition
+		 * @param unused      `true` if the binding has not been
+		 *                    referenced
+		 * @param initialized `true` if the binding has been
+		 *                    initialized (as is the case with
+		 *                    bindings created via `import`
 		 *                    declarations)
 		 */
-		public void add(String labelName, String type, Token tok, boolean unused, boolean initialized) {
-			current.getLabels().put(labelName, new Label(type, tok, true, null, unused, initialized));
+		public void add(String bindingName, String type, Token tok, boolean unused, boolean initialized) {
+			current.bindings.put(bindingName, new Binding(type, tok, true, null, unused, initialized));
 		}
 
-		public void addBreakLabel(String labelName, Token token) {
-			if (funct.hasBreakLabel(labelName)) {
+		public void addLabel(String labelName, Token token) {
+			if (funct.hasLabel(labelName)) {
 				warning("E011", token, labelName);
 			} else if (state.getOption().get("shadow").equals("outer")) {
 				if (funct.has(labelName, false, false, false)) {
@@ -1079,99 +1081,32 @@ public class ScopeManager {
 					checkOuterShadow(labelName, token);
 				}
 			}
-			current.getBreakLabels().put(labelName, token);
+			current.labels.put(labelName, token);
 		}
 	}
 
 	protected static class Scope {
-
-		private Map<String, Label> labels;
+		private Map<String, Binding> bindings;
 		private Map<String, Usage> usages;
-		private Map<String, Token> breakLabels;
+		private Map<String, Token> labels;
 		private Scope parent;
 		private String type;
 		private List<String> params;
 		private Map<String, Boolean> predefined;
-		private boolean funcBody = false;
-
-		private Map<String, Label> getLabels() {
-			return labels;
-		}
-
-		private void setLabels(Map<String, Label> labels) {
-			this.labels = labels;
-		}
-
-		private Map<String, Usage> getUsages() {
-			return usages;
-		}
-
-		private void setUsages(Map<String, Usage> usages) {
-			this.usages = usages;
-		}
-
-		private Map<String, Token> getBreakLabels() {
-			return breakLabels;
-		}
-
-		private void setBreakLabels(Map<String, Token> breakLabels) {
-			this.breakLabels = breakLabels;
-		}
-
-		private Scope getParent() {
-			return parent;
-		}
-
-		private void setParent(Scope parent) {
-			this.parent = parent;
-		}
-
-		private String getType() {
-			return type;
-		}
-
-		private void setType(String type) {
-			this.type = type;
-		}
-
-		private List<String> getParams() {
-			return params;
-		}
-
-		private void setParams(List<String> params) {
-			this.params = params;
-		}
-
-		private Map<String, Boolean> getPredefined() {
-			return predefined;
-		}
-
-		private void setPredefined(Map<String, Boolean> predefined) {
-			this.predefined = predefined;
-		}
-
-		private boolean isFuncBody() {
-			return funcBody;
-		}
-
-		private void setFuncBody(boolean isFuncBody) {
-			this.funcBody = isFuncBody;
-		}
+		private boolean funcBody;
 	}
 
-	private static class Label {
-
+	private static class Binding {
 		private String type;
 		private Token token;
-		private boolean blockscoped = false;
+		private boolean blockscoped;
 		private Scope function;
-		private boolean unused = false;
-		private boolean initialized = false;
+		private boolean unused;
+		private boolean initialized;
+		private boolean useOutsideOfScope;
+		private boolean duplicated;
 
-		private boolean useOutsideOfScope = false;
-		private boolean duplicated = false;
-
-		private Label(String type, Token token, boolean blockscoped, Scope function, boolean unused,
+		private Binding(String type, Token token, boolean blockscoped, Scope function, boolean unused,
 				boolean initialized) {
 			this.type = type;
 			this.token = token;
@@ -1180,88 +1115,12 @@ public class ScopeManager {
 			this.unused = unused;
 			this.initialized = initialized;
 		}
-
-		private String getType() {
-			return type;
-		}
-
-		private Token getToken() {
-			return token;
-		}
-
-		private boolean isBlockscoped() {
-			return blockscoped;
-		}
-
-		private Scope getFunction() {
-			return function;
-		}
-
-		private boolean isUnused() {
-			return unused;
-		}
-
-		private void setUnused(boolean unused) {
-			this.unused = unused;
-		}
-
-		private boolean isInitialized() {
-			return initialized;
-		}
-
-		private void setInitialized(boolean initialized) {
-			this.initialized = initialized;
-		}
-
-		private boolean isUseOutsideOfScope() {
-			return useOutsideOfScope;
-		}
-
-		private void setUseOutsideOfScope(boolean useOutsideOfScope) {
-			this.useOutsideOfScope = useOutsideOfScope;
-		}
-
-		private boolean isDuplicated() {
-			return duplicated;
-		}
-
-		private void setDuplicated(boolean duplicated) {
-			this.duplicated = duplicated;
-		}
 	}
 
 	private static class Usage {
-
-		private List<Token> modified;
-		private List<Token> reassigned;
-		private List<Token> tokens;
-
-		private boolean onlyUsedSubFunction = false;
-
-		private Usage() {
-			this.modified = new ArrayList<Token>();
-			this.reassigned = new ArrayList<Token>();
-			this.tokens = new ArrayList<Token>();
-		}
-
-		private List<Token> getModified() {
-			return modified;
-		}
-
-		private List<Token> getReassigned() {
-			return reassigned;
-		}
-
-		private List<Token> getTokens() {
-			return tokens;
-		}
-
-		private boolean isOnlyUsedSubFunction() {
-			return onlyUsedSubFunction;
-		}
-
-		private void setOnlyUsedSubFunction(boolean onlyUsedSubFunction) {
-			this.onlyUsedSubFunction = onlyUsedSubFunction;
-		}
+		private List<Token> modified = new ArrayList<>();
+		private List<Token> reassigned = new ArrayList<>();
+		private List<Token> tokens = new ArrayList<>();
+		private boolean onlyUsedSubFunction;
 	}
 }

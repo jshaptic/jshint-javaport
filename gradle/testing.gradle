@@ -19,9 +19,14 @@ task test262(type: Test, dependsOn: testClasses, group: "verification") {
 	useTestNG() {
 		suites "src/test/resources/test262.xml"
 	}
+
+	testLogging {
+        outputs.upToDateWhen {false}
+        showStandardStreams = true
+    }
 }
 
-// For coveralls check jacoco xml report should be turned on
+// For coverage report jacoco xml report should be turned on
 jacocoTestReport {
 	dependsOn test
 	reports {
@@ -31,5 +36,4 @@ jacocoTestReport {
 
 testlogger {
 	theme 'mocha'
-	showStandardStreams true
 }

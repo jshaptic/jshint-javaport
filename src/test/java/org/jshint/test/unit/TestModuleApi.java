@@ -18,27 +18,25 @@ import org.testng.annotations.Test;
  * "module" API hygienically:
  *
  * - Only one JSHint "module" should be added at any time, regardless of the
- *   number of tests executed
+ * number of tests executed
  * - No JSHint "module" should run following the completion of this group of
- *   tests
+ * tests
  */
-public class TestModuleApi extends Assert
-{	
+public class TestModuleApi extends Assert {
 	@Test
-	public void testIdentifiers()
-	{
+	public void testIdentifiers() {
 		JSHint jshint = new JSHint();
-		
+
 		String[] src = {
-			"var x = {",
-		    "  y: 23,",
-		    "  'z': 45",
-		    "};"
+				"var x = {",
+				"  y: 23,",
+				"  'z': 45",
+				"};"
 		};
-		
+
 		EventContext context;
-		List<EventContext> expected = new ArrayList<EventContext>();
-		
+		List<EventContext> expected = new ArrayList<>();
+
 		context = new EventContext();
 		context.setLine(1);
 		context.setCharacter(6);
@@ -47,7 +45,7 @@ public class TestModuleApi extends Assert
 		context.setRawName("x");
 		context.setProperty(false);
 		expected.add(context);
-		
+
 		context = new EventContext();
 		context.setLine(2);
 		context.setCharacter(4);
@@ -56,26 +54,22 @@ public class TestModuleApi extends Assert
 		context.setRawName("y");
 		context.setProperty(false);
 		expected.add(context);
-		
-		final List<EventContext> actual = new ArrayList<EventContext>();
-		jshint.addModule(new JSHintModule()
-			{
-				@Override
-				public void execute(JSHint linter)
-				{
-					linter.on("Identifier", new LexerEventListener()
-						{
-							@Override
-							public void accept(EventContext x) throws JSHintException
-							{
-								actual.add(x);
-							}
-						});
-				}
-			});
-		
+
+		final List<EventContext> actual = new ArrayList<>();
+		jshint.addModule(new JSHintModule() {
+			@Override
+			public void execute(JSHint linter) {
+				linter.on("Identifier", new LexerEventListener() {
+					@Override
+					public void accept(EventContext x) throws JSHintException {
+						actual.add(x);
+					}
+				});
+			}
+		});
+
 		jshint.lint(src);
-		
+
 		assertEquals(actual, expected);
 	}
 }

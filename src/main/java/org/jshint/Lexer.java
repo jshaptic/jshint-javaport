@@ -109,7 +109,7 @@ public class Lexer {
 	// environment state.
 	public static class AsyncTrigger {
 
-		private List<Runnable> checks = new ArrayList<Runnable>();
+		private List<Runnable> checks = new ArrayList<>();
 
 		private AsyncTrigger() {
 		}
@@ -166,8 +166,8 @@ public class Lexer {
 		setFrom(1);
 		setInput("");
 		setComment(false);
-		setContext(new ArrayList<LexerContext>());
-		setTemplateStarts(new ArrayList<TemplateStart>());
+		setContext(new ArrayList<>());
+		setTemplateStarts(new ArrayList<>());
 
 		for (int i = 0; i < state.getOption().asInt("indent"); i++) {
 			state.setTab(state.getTab() + " ");
@@ -383,7 +383,6 @@ public class Lexer {
 			case "]":
 			case ":":
 			case "~":
-			case "?":
 				return new LexerToken(LexerTokenType.PUNCTUATOR, ch1);
 
 			// A block/object opener
@@ -410,6 +409,16 @@ public class Lexer {
 		// Peek more characters
 		String ch2 = peek(1);
 		String ch3 = peek(2);
+
+		if (ch1.equals("?")) {
+			// Optional chaining
+			if (ch2.equals(".") && !Reg.isDecimalDigit(ch3)) {
+				return new LexerToken(LexerTokenType.PUNCTUATOR, "?.");
+			}
+
+			return new LexerToken(LexerTokenType.PUNCTUATOR, ch2.equals("?") ? "??" : "?");
+		}
+
 		String ch4 = peek(3);
 
 		// 4-character punctuator: >>>=
@@ -682,7 +691,7 @@ public class Lexer {
 	}
 
 	// PORT INFO: test regexp /^[0-9]$/ was replaced with straight check
-	private boolean isDecimalDigit(String str) {
+	private static boolean isDecimalDigit(String str) {
 		if (str.length() != 1)
 			return false;
 		char c = str.charAt(0);
@@ -690,22 +699,26 @@ public class Lexer {
 	}
 
 	// PORT INFO: test regexp /^[0-7]$/ was replaced with straight check
-	private boolean isOctalDigit(String str) {
+	private static boolean isOctalDigit(String str) {
 		if (str.length() != 1)
 			return false;
 		char c = str.charAt(0);
 		return c >= '0' && c <= '7';
 	}
 
+	private static boolean isNonOctalDigit(String str) {
+		return str.equals("8") || str.equals("9");
+	}
+
 	// PORT INFO: test regexp /^[01]$/ was replaced with straight check
-	private boolean isBinaryDigit(String str) {
+	private static boolean isBinaryDigit(String str) {
 		if (str.length() != 1)
 			return false;
 		char c = str.charAt(0);
 		return c == '0' || c == '1';
 	}
 
-	private boolean isIdentifierStart(String ch) {
+	private static boolean isIdentifierStart(String ch) {
 		if (ch.length() != 1)
 			return false;
 		char c = ch.charAt(0);
@@ -889,9 +902,10 @@ public class Lexer {
 		String value = "";
 		int length = input.length();
 		String chr = peek(index);
-		Predicate<String> isAllowedDigit = this::isDecimalDigit;
+		Predicate<String> isAllowedDigit = Lexer::isDecimalDigit;
 		int base = 10;
 		boolean isLegacy = false;
+		boolean isNonOctal = false;
 
 		// Numbers must start either with a decimal digit or a point.
 
@@ -916,7 +930,7 @@ public class Lexer {
 
 				// Base-8 numbers.
 				if (chr.equals("o") || chr.equals("O")) {
-					isAllowedDigit = this::isOctalDigit;
+					isAllowedDigit = Lexer::isOctalDigit;
 					base = 8;
 
 					if (!state.inES6(true)) {
@@ -934,7 +948,7 @@ public class Lexer {
 
 				// Base-2 numbers.
 				if (chr.equals("b") || chr.equals("B")) {
-					isAllowedDigit = this::isBinaryDigit;
+					isAllowedDigit = Lexer::isBinaryDigit;
 					base = 2;
 
 					if (!state.inES6(true)) {
@@ -952,37 +966,56 @@ public class Lexer {
 
 				// Legacy base-8 numbers.
 				if (isOctalDigit(chr)) {
-					isAllowedDigit = this::isOctalDigit;
+					isAllowedDigit = Lexer::isOctalDigit;
 					base = 8;
 					isLegacy = true;
 
-					index += 1;
-					value += chr;
-				}
-
-				// Decimal numbers that start with '0' such as '09' are illegal
-				// but we still parse them and return as malformed.
-				if (!isOctalDigit(chr) && isDecimalDigit(chr)) {
-					index += 1;
-					value += chr;
+				} else if (isDecimalDigit(chr)) {
+					isNonOctal = true;
 				}
 			}
 
 			while (index < length) {
 				chr = peek(index);
 
-				// Numbers like '019' (note the 9) are not valid octals
-				// but we still parse them and mark as malformed.
-				if (!(isLegacy && isDecimalDigit(chr)) && !isAllowedDigit.test(chr)) {
+				if (isLegacy && isNonOctalDigit(chr)) {
+					base = 10;
+					isLegacy = false;
+					isNonOctal = true;
+					isAllowedDigit = Lexer::isDecimalDigit;
+				}
+
+				if (!isAllowedDigit.test(chr)) {
 					break;
 				}
 				value += chr;
 				index += 1;
 			}
 
-			if (base != 10) {
-				if (!isLegacy && value.length() <= 2) // 0x
-				{
+			boolean isBigInt = peek(index).equals("n");
+
+			// PORT INFO: instead of comparing functions, check base
+			if (base != 10 || isBigInt) {
+				if (isBigInt) {
+					context = new EventContext();
+					context.setCode("W119");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("BigInt", "11");
+					triggerAsync("warning", context, checks, () -> !state.inES11());
+
+					if (isLegacy || isNonOctal) {
+						context = new EventContext();
+						context.setCode("E067");
+						context.setLine(line);
+						context.setCharacter(character);
+						context.setData(value + chr);
+						triggerAsync("error", context, checks, () -> true);
+					}
+
+					value += chr;
+					index += 1;
+				} else if (!isLegacy && value.length() <= 2) { // 0x
 					LexerToken token = new LexerToken(LexerTokenType.NUMERICLITERAL, value);
 					token.setBase(0);
 					token.setMalformed(true);
@@ -1057,10 +1090,23 @@ public class Lexer {
 			}
 		}
 
-		LexerToken token = new LexerToken(LexerTokenType.NUMERICLITERAL, value);
+		// JSHINT_TODO: Extend this check to other numeric literals
+		context = new EventContext();
+		context.setCode("W045");
+		context.setLine(line);
+		context.setCharacter(character + value.length());
+		context.setData(value);
+		// PORT INFO: separate variable is needed, because java complains that value is
+		// not final
+		boolean isValueInfinite = Double.isInfinite(Double.valueOf(value));
+		triggerAsync("warning", context, checks, () -> isValueInfinite);
+
+		LexerToken token = new LexerToken(LexerTokenType.NUMERICLITERAL,
+				value);
 		token.setBase(base);
 		token.setLegacy(isLegacy);
-		token.setMalformed(Double.isInfinite(Double.valueOf(value)));
+		token.setNonOctal(isNonOctal);
+		token.setMalformed(false);
 		return token;
 	}
 
@@ -1164,9 +1210,6 @@ public class Lexer {
 				break;
 			case "\\":
 				chr = "\\\\";
-				break;
-			case "\"":
-				chr = "\\\"";
 				break;
 			case "/":
 				break;
@@ -1418,10 +1461,10 @@ public class Lexer {
 	public LexerToken scanRegExp(AsyncTrigger checks) throws JSHintException {
 		AtomicInteger index = new AtomicInteger(0);
 		int length = input.length();
-		AtomicReference<String> chr = new AtomicReference<String>(peek());
+		AtomicReference<String> chr = new AtomicReference<>(peek());
 		StringBuilder value = new StringBuilder(chr.get());
 		StringBuilder body = new StringBuilder();
-		List<Integer> groupReferences = new ArrayList<Integer>();
+		List<Integer> groupReferences = new ArrayList<>();
 		StringBuilder allFlags = new StringBuilder();
 		StringBuilder es5Flags = new StringBuilder();
 		AtomicBoolean malformed = new AtomicBoolean();
@@ -1483,6 +1526,50 @@ public class Lexer {
 				}
 			}
 
+			if (chr.get().equals("p") || chr.get().equals("P")) {
+				int y = index.get() + 2;
+				StringBuilder sequence = new StringBuilder("");
+				String next = "";
+
+				if (peek(index.get() + 1).equals("{")) {
+					next = peek(y);
+					while (StringUtils.isNotEmpty(next) && !next.equals("}")) {
+						sequence.append(next);
+						y += 1;
+						next = peek(y);
+					}
+				}
+
+				// Module loading is intentionally deferred as an optimization for
+				// Node.js users who do not use Unicode escape sequences.
+				if (sequence.length() == 0 || !ValidateUnicodeEscapeSequence.validate(sequence.toString())) {
+					EventContext context = new EventContext();
+					context.setCode("E016");
+					context.setLine(line);
+					context.setCharacter(character);
+					context.setData("Invalid Unicode property escape sequence");
+					triggerAsync("error", context, checks, hasUFlag);
+				}
+
+				if (sequence.length() > 0) {
+					sequence = new StringBuilder(chr + "{" + sequence + "}");
+					body.append(sequence);
+					value.append(sequence);
+					index.set(y + 1);
+
+					if (!state.inES9()) {
+						EventContext context = new EventContext();
+						context.setCode("W119");
+						context.setLine(line);
+						context.setCharacter(character);
+						context.setData("Unicode property escape", "9");
+						triggerAsync("warning", context, checks, hasUFlag);
+					}
+
+					return sequence.toString();
+				}
+			}
+
 			// Unexpected control character
 			if (chr.get().length() > 0 && chr.get().charAt(0) < ' ') {
 				malformed.set(true);
@@ -1502,6 +1589,13 @@ public class Lexer {
 				context.setCharacter(character);
 				context.setData(chr.get());
 				triggerAsync("warning", context, checks, () -> true);
+			} else if (chr.get().equals("0") && Reg.isDecimalDigit(peek(index.get() + 1))) {
+				EventContext context = new EventContext();
+				context.setCode("E016");
+				context.setLine(line);
+				context.setCharacter(character);
+				context.setData("Invalid decimal escape sequence");
+				triggerAsync("error", context, checks, hasUFlag);
 			}
 
 			index.addAndGet(1);
@@ -1653,6 +1747,11 @@ public class Lexer {
 				continue;
 			}
 
+			if (isCharSet) {
+				index.addAndGet(1);
+				continue;
+			}
+
 			if (chr.get().equals("{") && !hasInvalidQuantifier) {
 				hasInvalidQuantifier = !checkQuantifier.getAsBoolean();
 			}
@@ -1751,6 +1850,8 @@ public class Lexer {
 						char escapedChar = (char) c;
 						return escapedChar == 'u' ||
 								escapedChar == '/' ||
+								escapedChar == '0' ||
+								Reg.isControlEscapes(String.valueOf(escapedChar)) ||
 								Reg.isCharClasses(String.valueOf(escapedChar)) ||
 								Reg.isSyntaxChars(String.valueOf(escapedChar));
 					});
@@ -1999,7 +2100,8 @@ public class Lexer {
 		if (type == Token.Type.IDENTIFIER) {
 			if (value.equals("return") || value.equals("case") || value.equals("yield") ||
 					value.equals("typeof") || value.equals("instanceof") || value.equals("void") ||
-					value.equals("await")) {
+					value.equals("await") || value.equals("new") || value.equals("delete") ||
+					value.equals("default") || value.equals("extends")) {
 				prereg = true;
 			}
 
@@ -2158,14 +2260,12 @@ public class Lexer {
 							token, checks);
 				case NUMERICLITERAL:
 					if (token.isMalformed()) {
-						// This condition unequivocally describes a syntax error.
-						// JSHINT_TODO: Re-factor as an "error" (not a "warning").
 						context = new EventContext();
-						context.setCode("W045");
+						context.setCode("E067");
 						context.setLine(line);
 						context.setCharacter(character);
 						context.setData(token.getValue());
-						trigger("warning", context);
+						trigger("error", context);
 					}
 
 					context = new EventContext();
@@ -2181,6 +2281,13 @@ public class Lexer {
 					context.setCharacter(character);
 					triggerAsync("warning", context, checks,
 							() -> state.isStrict() && token.getBase() == 8 && token.isLegacy());
+
+					context = new EventContext();
+					context.setCode("E068");
+					context.setLine(line);
+					context.setCharacter(character);
+					triggerAsync("error", context, checks,
+							() -> state.isStrict() && token.isNonOctal());
 
 					context = new EventContext();
 					context.setLine(line);
@@ -2226,6 +2333,7 @@ public class Lexer {
 		private int tokenLength = 0;
 		private int base = 0;
 		private boolean isLegacy = false;
+		private boolean isNonOctal = false;
 		private boolean isUnclosed = false;
 		private String quote;
 		private int startLine = 0;
@@ -2316,6 +2424,14 @@ public class Lexer {
 
 		private void setLegacy(boolean isLegacy) {
 			this.isLegacy = isLegacy;
+		}
+
+		public boolean isNonOctal() {
+			return isNonOctal;
+		}
+
+		private void setNonOctal(boolean isNonOctal) {
+			this.isNonOctal = isNonOctal;
 		}
 
 		public boolean isUnclosed() {

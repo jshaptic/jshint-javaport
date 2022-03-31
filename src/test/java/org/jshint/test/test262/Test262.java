@@ -1,5 +1,7 @@
 package org.jshint.test.test262;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,10 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +47,6 @@ public class Test262 extends Assert {
 			"W024",
 			"W025",
 			"W052",
-			"W067",
 			"W076",
 			"W077",
 			"W090",
@@ -65,22 +64,22 @@ public class Test262 extends Assert {
 			"/src/test/resources/test262/expectations.txt");
 	private static final Path javaExpectationsFile = Paths.get(System.getProperty("user.dir"),
 			"/src/test/resources/test262/java-expectations.txt");
-	private static final Stream262 stream = new Stream262.Builder(
+	private static final Test262Stream stream = new Test262Stream.Builder(
 			Paths.get(System.getProperty("user.dir"), "/src/test/resources/test262/test262"))
-					.omitRuntime()
-					.build();
+			.omitRuntime()
+			.build();
 	private static final AtomicInteger count = new AtomicInteger(0);
 
-	private Set<String> whitelist;
+	private List<String> whitelist;
 	private boolean passed = true;
-	private List<String> allowedSuccess = new ArrayList<String>();
-	private List<String> allowedFailure = new ArrayList<String>();
-	private List<String> allowedFalsePositive = new ArrayList<String>();
-	private List<String> allowedFalseNegative = new ArrayList<String>();
-	private List<String> disallowedSuccess = new ArrayList<String>();
-	private List<String> disallowedFailure = new ArrayList<String>();
-	private List<String> disallowedFalsePositive = new ArrayList<String>();
-	private List<String> disallowedFalseNegative = new ArrayList<String>();
+	private List<String> allowedSuccess = new ArrayList<>();
+	private List<String> allowedFailure = new ArrayList<>();
+	private List<String> allowedFalsePositive = new ArrayList<>();
+	private List<String> allowedFalseNegative = new ArrayList<>();
+	private List<String> disallowedSuccess = new ArrayList<>();
+	private List<String> disallowedFailure = new ArrayList<>();
+	private List<String> disallowedFalsePositive = new ArrayList<>();
+	private List<String> disallowedFalseNegative = new ArrayList<>();
 	private List<String> unrecognized = Collections.emptyList();
 
 	@Test
@@ -88,10 +87,8 @@ public class Test262 extends Assert {
 		System.out.println("Now running tests...");
 
 		String contents = new String(Files.readAllBytes(expectationsFile), StandardCharsets.UTF_8);
-		whitelist = parseWhitelist(contents);
-
-		contents = new String(Files.readAllBytes(javaExpectationsFile), StandardCharsets.UTF_8);
-		whitelist.addAll(parseWhitelist(contents));
+		String javaContents = new String(Files.readAllBytes(javaExpectationsFile), StandardCharsets.UTF_8);
+		whitelist = parseWhitelist(contents, javaContents);
 
 		stream
 				.onTest(test -> {
@@ -101,7 +98,7 @@ public class Test262 extends Assert {
 					}
 
 					String id = normalizePath(test.getFile()) + "(" + test.getScenario() + ")";
-					TestStatus expected = "early".equals(test.getAttrs().getNegativePhase()) ? TestStatus.FAIL
+					TestStatus expected = "parse".equals(test.getAttrs().getNegativePhase()) ? TestStatus.FAIL
 							: TestStatus.PASS;
 					TestStatus actual = runTest(test) ? TestStatus.PASS : TestStatus.FAIL;
 
@@ -112,7 +109,7 @@ public class Test262 extends Assert {
 					System.exit(1);
 				})
 				.onFinish(() -> {
-					unrecognized = new ArrayList<String>(whitelist);
+					unrecognized = new ArrayList<>(whitelist);
 					if (unrecognized.size() > 0) {
 						passed = false;
 					}
@@ -128,24 +125,32 @@ public class Test262 extends Assert {
 
 	// JSHINT_BUG: in original results-interpreter/src/whitelist.js file this is
 	// parsed incorrectly - comment lines are not filtered out
-	private Set<String> parseWhitelist(String contents) {
-		return Arrays.stream(contents.split("\n", -1))
+	private List<String> parseWhitelist(String contents, String javaContents) {
+		List<String> result = Arrays.stream(contents.split("\n", -1))
 				.map(line -> commentPattern.matcher(line).replaceFirst("").trim())
 				.filter(line -> line.length() > 0)
-				.collect(Collectors.toSet());
+				.collect(toList());
+		result.addAll(Arrays.stream(javaContents.split("\n", -1))
+				.map(line -> commentPattern.matcher(line).replaceFirst("").trim())
+				.filter(line -> line.length() > 0)
+				.filter(line -> !result.remove(line))
+				.collect(toList()));
+		return result;
 	}
 
 	private String normalizePath(Path path) {
 		return StringUtils.replace(path.toString(), "\\", "/");
 	}
 
-	private boolean runTest(File262 test) {
+	private boolean runTest(Test262File test) {
 		JSHint jshint = new JSHint();
 		boolean isModule = test.getAttrs().isModule();
 
 		try {
-			jshint.lint(test.getContents(),
-					new LinterOptions().set("esversion", 9).set("maxerr", Integer.MAX_VALUE).set("module", isModule));
+			jshint.lint(test.getContents(), new LinterOptions()
+					.set("esversion", 11)
+					.set("maxerr", Integer.MAX_VALUE)
+					.set("module", isModule));
 		} catch (Exception e) {
 			return false;
 		}
@@ -155,9 +160,13 @@ public class Test262 extends Assert {
 
 	private boolean isFailure(List<LinterWarning> errors) {
 		return errors != null && errors.stream().filter(msg -> {
-			if (msg.getCode().startsWith("W"))
-				return ArrayUtils.indexOf(incorrectSeverity, msg.getCode()) >= 0;
-			return ArrayUtils.indexOf(incorrectSeverity, msg.getCode()) < 0;
+			if (msg.getCode().startsWith("W")) {
+				return ArrayUtils.contains(incorrectSeverity, msg.getCode());
+			} else if (msg.getCode().startsWith("I")) {
+				return false;
+			}
+
+			return !ArrayUtils.contains(incorrectSeverity, msg.getCode());
 		}).findAny().isPresent();
 	}
 
@@ -199,8 +208,8 @@ public class Test262 extends Assert {
 				allowedFalseNegative.size()
 						+ " valid programs produced a parsing error (and allowed by the expectations file)"
 		};
-		List<String> badnews = new ArrayList<String>();
-		List<String> badnewsDetails = new ArrayList<String>();
+		List<String> badnews = new ArrayList<>();
+		List<String> badnewsDetails = new ArrayList<>();
 
 		badnews(disallowedSuccess, "valid programs parsed without error (in violation of the expectations file)",
 				badnews, badnewsDetails);

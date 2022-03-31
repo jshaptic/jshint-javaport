@@ -44,13 +44,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initMainTable() {
 		if (table == null) {
-			table = new HashMap<String, InnerOption>();
+			table = new HashMap<>();
 		}
 	}
 
 	private void initMainTable(Map<String, InnerOption> table) {
 		if (table != null) {
-			this.table = new HashMap<String, InnerOption>(table);
+			this.table = new HashMap<>(table);
 		}
 	}
 
@@ -124,7 +124,7 @@ public class LinterOptions implements Iterable<String> {
 
 		return new Iterator<String>() {
 
-			private List<String> keys = new ArrayList<String>(table.keySet());
+			private List<String> keys = new ArrayList<>(table.keySet());
 			private int index = -1;
 
 			@Override
@@ -168,13 +168,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initPredefineds() {
 		if (predefineds == null) {
-			predefineds = new HashMap<String, Boolean>();
+			predefineds = new HashMap<>();
 		}
 	}
 
 	private void initPredefineds(Map<String, Boolean> predefineds) {
 		if (predefineds != null) {
-			this.predefineds = new HashMap<String, Boolean>(predefineds);
+			this.predefineds = new HashMap<>(predefineds);
 		}
 	}
 
@@ -224,13 +224,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initGlobals() {
 		if (globals == null) {
-			globals = new HashMap<String, Boolean>();
+			globals = new HashMap<>();
 		}
 	}
 
 	private void initGlobals(Map<String, Boolean> globals) {
 		if (globals != null) {
-			this.globals = new HashMap<String, Boolean>(globals);
+			this.globals = new HashMap<>(globals);
 		}
 	}
 
@@ -280,13 +280,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initExporteds() {
 		if (exporteds == null) {
-			exporteds = new HashMap<String, Boolean>();
+			exporteds = new HashMap<>();
 		}
 	}
 
 	private void initExporteds(Map<String, Boolean> exporteds) {
 		if (exporteds != null) {
-			this.exporteds = new HashMap<String, Boolean>(exporteds);
+			this.exporteds = new HashMap<>(exporteds);
 		}
 	}
 
@@ -339,7 +339,7 @@ public class LinterOptions implements Iterable<String> {
 	}
 
 	public List<String> getExporteds() {
-		return exporteds != null ? Collections.unmodifiableList(new ArrayList<String>(exporteds.keySet()))
+		return exporteds != null ? Collections.unmodifiableList(new ArrayList<>(exporteds.keySet()))
 				: Collections.<String>emptyList();
 	}
 
@@ -347,13 +347,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initUnstables() {
 		if (unstables == null) {
-			unstables = new HashMap<String, Boolean>();
+			unstables = new HashMap<>();
 		}
 	}
 
 	private void initUnstables(Map<String, Boolean> unstables) {
 		if (unstables != null) {
-			this.unstables = new HashMap<String, Boolean>(unstables);
+			this.unstables = new HashMap<>(unstables);
 		}
 	}
 
@@ -397,7 +397,7 @@ public class LinterOptions implements Iterable<String> {
 	}
 
 	public List<String> getUnstables() {
-		return unstables != null ? Collections.unmodifiableList(new ArrayList<String>(unstables.keySet()))
+		return unstables != null ? Collections.unmodifiableList(new ArrayList<>(unstables.keySet()))
 				: Collections.<String>emptyList();
 	}
 
@@ -424,13 +424,13 @@ public class LinterOptions implements Iterable<String> {
 
 	private void initIgnoredDelimiters() {
 		if (ignoreDelimiters == null) {
-			ignoreDelimiters = new ArrayList<Delimiter>();
+			ignoreDelimiters = new ArrayList<>();
 		}
 	}
 
 	private void initIgnoredDelimiters(List<Delimiter> ignoreDelimiters) {
 		if (ignoreDelimiters != null) {
-			this.ignoreDelimiters = new ArrayList<Delimiter>(ignoreDelimiters);
+			this.ignoreDelimiters = new ArrayList<>(ignoreDelimiters);
 		}
 	}
 
@@ -502,7 +502,7 @@ public class LinterOptions implements Iterable<String> {
 			if (container.isArray(name)) {
 				result = container.get(name).asList(String.class);
 			} else {
-				result = new ArrayList<String>(container.get(name).keys());
+				result = new ArrayList<>(container.get(name).keys());
 			}
 		}
 
