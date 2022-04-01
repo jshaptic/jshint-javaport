@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.3-0] - 2022-04-01
+
+### Changed
+
+- Ported all changes from JSHint v2.13.3
+
 ## [2.10.1-4] - 2022-01-14
 
 ### Changed
@@ -12,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GH-3: Refactored State object to be non-static (and thus thread safe), thanks to Jarrah Watson (abonstu)
 - Moved project from Travis to Github Actions
 - Replaced inhouse minimatch implementation with external library minimatch-javaport
-- Upgraded dependency libraries and gradle to the latest versions
+- Upgraded dependency libraries and tooling to the latest versions
 
 ## [2.10.1-3] - 2020-05-10
 
@@ -34,27 +40,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.10.1-0] - 2019-05-30
 
-### Added
+### Changed
 
-- New version of JSHint v2.10.1 is ported
+- Ported all changes from JSHint v2.10.1
 
 ## [2.9.7-0] - 2018-12-17
 
-### Added
+### Changed
 
-- New version of JSHint v2.9.7 is ported
+- Ported all changes from JSHint v2.9.7
 
 ## [2.9.6-0] - 2018-11-13
 
-### Added
+### Changed
 
-- New version of JSHint v2.9.6 is ported
+- Ported all changes from JSHint v2.9.6
 
 ## [2.9.5-3] - 2018-08-20
 
 ### Changed
 
-- Upgraded dependency libraries and gradle
+- Upgraded dependency libraries and tooling
 
 ## [2.9.5-2] - 2017-08-01
 
@@ -64,12 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.9.5-0] - 2017-07-31
 
-### Added
+### Changed
 
-- Ported changes of JSHint v2.9.5
+- Ported all changes from JSHint v2.9.5
 
 ## [2.9.3-0] - 2017-07-24
 
 ### Added
 
-- Frist implementation
+- First implementation of a Java Port
