@@ -3,12 +3,12 @@ targetCompatibility = project.javaVersion
 
 compileJava {
 	options.encoding = project.defaultEncoding
-	options.compilerArgs += ["-Xlint:-options"]
+	options.compilerArgs += ["-Xlint:-options", "-Xlint:deprecation"]
 }
 
 compileTestJava {
 	options.encoding = project.defaultEncoding
-	options.compilerArgs += ["-Xlint:-options"]
+	options.compilerArgs += ["-Xlint:-options", "-Xlint:deprecation"]
 	classpath = files(jar.archiveFile) + configurations.testRuntimeClasspath
 }
 

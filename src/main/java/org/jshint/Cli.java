@@ -253,7 +253,7 @@ public class Cli {
 		String className = path.getFileName().toString();
 
 		try (URLClassLoader loader = new URLClassLoader(new URL[] { classPath.toUri().toURL() });) {
-			reporter = (JSHintReporter) loader.loadClass(className).newInstance();
+			reporter = (JSHintReporter) loader.loadClass(className).getDeclaredConstructor().newInstance();
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		}
