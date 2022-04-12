@@ -789,10 +789,8 @@ public class TestParser extends Assert {
 				"a = /\\u{110000}/u;"
 		}, new LinterOptions().set("esnext", true));
 
-		// PORT INFO: this test is not possible to implement at the moment due to
-		// different RegExp engine
-		// th.newTest("Guard against regression from escape sequence substitution");
-		// th.test("void /\\u{3f}/u;", new LinterOptions().set("esversion", 6));
+		th.newTest("Guard against regression from escape sequence substitution");
+		th.test("void /\\u{3f}/u;", new LinterOptions().set("esversion", 6));
 
 		// Hexidecimal in range patterns
 		th.newTest();
@@ -870,16 +868,12 @@ public class TestParser extends Assert {
 		th.newTest("Invalid character escape (permitted without flag)");
 		th.test("void /\\m/;", new LinterOptions().set("esversion", 6));
 
-		// PORT INFO: this test is not possible to implement at the moment due to
-		// different RegExp engine
-		// th.newTest("Invalid quantifed group");
-		// th.addError(1, 6, "Invalid regular expression.");
-		// th.test("void /(?=.)?/u;", new LinterOptions().set("esversion", 6));
+		th.newTest("Invalid quantifed group");
+		th.addError(1, 6, "Invalid regular expression.");
+		th.test("void /(?=.)?/u;", new LinterOptions().set("esversion", 6));
 
-		// PORT INFO: this test is not possible to implement at the moment due to
-		// different RegExp engine
-		// th.newTest("Invalid quantifed group (permitted without flag)");
-		// th.test("void /(?=.)?/;", new LinterOptions().set("esversion", 6));
+		th.newTest("Invalid quantifed group (permitted without flag)");
+		th.test("void /(?=.)?/;", new LinterOptions().set("esversion", 6));
 
 		th.newTest("Invalid quantifier - unclosed");
 		th.addError(1, 6, "Invalid regular expression.");
@@ -909,17 +903,12 @@ public class TestParser extends Assert {
 		th.addError(1, 6, "Invalid regular expression.");
 		th.test("void /[\\s-1]/u;", new LinterOptions().set("esversion", 6));
 
-		// PORT INFO: this test is not possible to implement at the moment due to
-		// different RegExp engine
-		// th.newTest("Character class in upper bound of range (permitted without
-		// flag)");
-		// th.test("void /[1-\\W]/;", new LinterOptions().set("esversion", 6));
+		th.newTest("Character class in upper bound of range (permitted without flag)");
+		th.test("void /[1-\\W]/;", new LinterOptions().set("esversion", 6));
 
-		// PORT INFO: this test is not possible to implement at the moment due to
-		// different RegExp engine
-		// th.newTest("Character class in upper bound of range");
-		// th.addError(1, 6, "Invalid regular expression.");
-		// th.test("void /[1-\\W]/u;", new LinterOptions().set("esversion", 6));
+		th.newTest("Character class in upper bound of range");
+		th.addError(1, 6, "Invalid regular expression.");
+		th.test("void /[1-\\W]/u;", new LinterOptions().set("esversion", 6));
 
 		th.newTest();
 		th.test("void /[\\s0-1\\s2-3\\s]/u;", new LinterOptions().set("esversion", 6));

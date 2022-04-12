@@ -15,8 +15,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+import com.github.jshaptic.js4j.ContainerFactory;
+import com.github.jshaptic.js4j.UniversalContainer;
+import com.google.common.primitives.Ints;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.regex.RegexLanguage;
+import com.oracle.truffle.regex.RegexOptions;
+import com.oracle.truffle.regex.RegexSource;
+import com.oracle.truffle.regex.tregex.parser.RegexValidator;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -27,10 +33,6 @@ import org.jshint.data.NonAsciiIdentifierStartTable;
 import org.jshint.data.UnicodeData;
 import org.jshint.utils.EventContext;
 import org.jshint.utils.EventEmitter;
-
-import com.github.jshaptic.js4j.ContainerFactory;
-import com.github.jshaptic.js4j.UniversalContainer;
-import com.google.common.primitives.Ints;
 
 /*
  * Lexer for JSHint.
@@ -60,9 +62,6 @@ import com.google.common.primitives.Ints;
  */
 public class Lexer {
 
-	// PORT INFO: Static javascript engine, which is used to validate regexps
-	private static final ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
-
 	// Some of these token types are from JavaScript Parser API
 	// while others are specific to JSHint parser.
 	// JS Parser API:
@@ -87,7 +86,9 @@ public class Lexer {
 		TEMPLATE
 	}
 
-	// PORT INFO: test regexp /^[0-9a-fA-F]+$/ was replaced with straight check
+	// [PORTING NOTES]
+	// To improve performance this function was reimplemented using straight logic
+	// instead of using regexp
 	private static boolean isHex(String str) {
 		if (str == null || str.length() == 0)
 			return false;
@@ -142,7 +143,9 @@ public class Lexer {
 	private boolean ignoringLinterErrors = false;
 
 	public Lexer(State state, String source) {
-		this(state, Reg.splitByEOL(source)); // PORT INFO: split regexp was moved to Reg class
+		// [PORTING NOTES]
+		// Splitting logic by new line was moved to a separate method in Reg class
+		this(state, Reg.splitByEOL(source));
 	}
 
 	public Lexer(State state, String[] lines) {
@@ -368,8 +371,9 @@ public class Lexer {
 		switch (ch1) {
 			// Most common single-character punctuators
 			case ".":
-				if (isDecimalDigit(peek(1))) // PORT INFO: test regexp /^[0-9]$/ was replaced with isDecimalDigit method
-				{
+				// [PORTING NOTES]
+				// Condition in this if was moved to a separate method isDecimalDigit
+				if (isDecimalDigit(peek(1))) {
 					return null;
 				}
 				if (peek(1).equals(".") && peek(2).equals(".")) {
@@ -671,7 +675,9 @@ public class Lexer {
 	 * @return lexer token.
 	 */
 	public LexerToken scanKeyword() {
-		String result = Reg.getIdentifier(input); // PORT INFO: exec regexp was moved to Reg class
+		// [PORTING NOTES]
+		// Regex logic was moved to a separate method in Reg class
+		String result = Reg.getIdentifier(input);
 		String[] keywords = {
 				"if", "in", "do", "var", "for", "new",
 				"try", "let", "this", "else", "case",
@@ -690,7 +696,9 @@ public class Lexer {
 		return null;
 	}
 
-	// PORT INFO: test regexp /^[0-9]$/ was replaced with straight check
+	// [PORTING NOTES]
+	// To improve performance this function was reimplemented using straight logic
+	// instead of using regexp
 	private static boolean isDecimalDigit(String str) {
 		if (str.length() != 1)
 			return false;
@@ -698,7 +706,9 @@ public class Lexer {
 		return c >= '0' && c <= '9';
 	}
 
-	// PORT INFO: test regexp /^[0-7]$/ was replaced with straight check
+	// [PORTING NOTES]
+	// To improve performance this function was reimplemented using straight logic
+	// instead of using regexp
 	private static boolean isOctalDigit(String str) {
 		if (str.length() != 1)
 			return false;
@@ -710,7 +720,9 @@ public class Lexer {
 		return str.equals("8") || str.equals("9");
 	}
 
-	// PORT INFO: test regexp /^[01]$/ was replaced with straight check
+	// [PORTING NOTES]
+	// To improve performance this function was reimplemented using straight logic
+	// instead of using regexp
 	private static boolean isBinaryDigit(String str) {
 		if (str.length() != 1)
 			return false;
@@ -859,8 +871,9 @@ public class Lexer {
 		return null;
 	}
 
-	// PORT INFO: replace regexp /\\u([0-9a-fA-F]{4})/g was replaced with straight
-	// logic
+	// [PORTING NOTES]
+	// To improve performance this function was reimplemented using straight logic
+	// instead of using regexp
 	private String removeEscapeSequences(String id) {
 		StringBuilder result = new StringBuilder(id);
 		int uIndex = result.indexOf("\\u");
@@ -994,7 +1007,8 @@ public class Lexer {
 
 			boolean isBigInt = peek(index).equals("n");
 
-			// PORT INFO: instead of comparing functions, check base
+			// [PORTING NOTES]
+			// Instead of comparing functions just checking base value
 			if (base != 10 || isBigInt) {
 				if (isBigInt) {
 					context = new EventContext();
@@ -1096,8 +1110,10 @@ public class Lexer {
 		context.setLine(line);
 		context.setCharacter(character + value.length());
 		context.setData(value);
-		// PORT INFO: separate variable is needed, because java complains that value is
-		// not final
+
+		// [PORTING NOTES]
+		// Separate variable is needed here, because java complains that variable
+		// "value" is not final
 		boolean isValueInfinite = Double.isInfinite(Double.valueOf(value));
 		triggerAsync("warning", context, checks, () -> isValueInfinite);
 
@@ -1900,24 +1916,53 @@ public class Lexer {
 
 		// Check regular expression for correctness.
 
-		// PORT INFO: tried several JAVA RE engines to parse javascript regexps:
-		// * org.jruby.joni:joni:2.1.25 - produced infinite loop on regexps like
-		// /\u0000/
-		// * com.google.re2j:re2j:1.2 - there were a lot of errors on valid js regexps
-		// * com.basistech.tclre:tcl-regex:0.14.0 - there were many errors on valid js
-		// regexps, but much better than re2j
-		// * com.github.florianingerl.util:regex:1.1.6 - slightly better than tcl-regex
-		// * xerces:xercesImpl:2.12.0 - slightly better than florianingerl.util.regex
-		// * java.util.regex.Pattern - slightly better than xercesImpl
-		// * org.mozilla:rhino:1.7.10 - very good compatibility, only several valid js
-		// regexps weren't parsed
-		// * javax.script.ScriptEngine - slightly better than rhino
-		//
-		// RegExp engine inside Nashorn engine very close to original JS RegExp engine
-		// and it doesn't require external dependency so it's used as a validator of
-		// javascript regular expressions
+		// [PORTING NOTES]
+		// Multiple Java libraries were evaluated to handle javascript regexps, there
+		// are list from worst to best:
+
+		// * com.eclipsesource.j2v8:j2v8_win32_x86_64:4.6.0 - memory leak and/or
+		// infinite loop, was never able to finish 262test; also this project is very
+		// outdated and barely maintained
+
+		// * com.caoccao.javet:javet:1.1.2 - same problem as j2v8, consuming lots of RAM
+		// and just dying at some point in 262test
+
+		// * com.google.re2j - lots of errors on valid regexps; but to be fair aim of
+		// this project is to make expressions work in linear time by supporting only
+		// basic RE features
+
+		// * xerces:xercesImpl:2.12.2 - lots of errors on valid regexps
+
+		// * org.jruby.joni:joni:2.1.43 - slightly better than xercesImpl, but still
+		// lots of errors on valid regexps and some invalid regexps don't throw error
+
+		// * com.github.florianingerl.util:regex:1.1.9 - slightly better than joni; this
+		// library has some vulnerabilities in dependecies and was updated for the
+		// last 3 years
+
+		// * java.util.regex.Pattern - slightly better than florianingerl regexp
+
+		// * com.basistech.tclre:tcl-regex:0.14.4 - way better than standard Java RE
+		// engine, but there are many invalid regexps, which didn't throw any error;
+		// this library has some vulnerabilities in dependecies
+
+		// * javax.script.ScriptEngine - good compatibility with JS regex engine;
+		// Nashorn is deprecated and removed in JDK 15, however there is an option to
+		// use standalone version
+
+		// * org.mozilla:rhino:1.7.14 - good compatibility with JS regex engine
+
+		// * org.graalvm.regex:regex:22.0.0.2 - very close to JS regex engine only few
+		// invalid expressions didn't produce error
+
+		// Regex engine in GraalVM project is super close to original one in JavaScript
+		// and it's not a such big dependency comparing to full scale JS engines as
+		// Nashorn or Rhino
 		try {
-			jsEngine.eval("/" + body.toString() + "/" + es5Flags, jsEngine.createBindings());
+
+			Source source = Source.newBuilder(RegexLanguage.ID, "/" + body + "/" + es5Flags, RegexLanguage.ID).build();
+			RegexValidator
+					.validate(new RegexSource(body.toString(), es5Flags.toString(), RegexOptions.DEFAULT, source));
 		} catch (Exception err) {
 			/**
 			 * Because JSHint relies on the current engine's RegExp parser to
