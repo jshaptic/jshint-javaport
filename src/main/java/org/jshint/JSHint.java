@@ -105,6 +105,13 @@ public class JSHint {
 	private List<JSHintModule> extraModules = new ArrayList<>();
 	private EventEmitter emitter = new EventEmitter();
 
+	public JSHint() {
+		buildSyntaxTable();
+		initEcmaScriptParser();
+		buildStatementTable();
+		addModule(new Style());
+	}
+
 	private Boolean checkOption(String name, boolean isStable, Token t) {
 		String type;
 		Set<String> validNames;
@@ -2740,7 +2747,7 @@ public class JSHint {
 	}
 
 	// ECMAScript parser
-	private void ecmaScriptParser() {
+	private void initEcmaScriptParser() {
 		Token x;
 
 		delim("(endline)");
@@ -7301,13 +7308,6 @@ public class JSHint {
 	}
 
 	private void init(LinterOptions o, LinterGlobals g) {
-		// TODO: move this methods to constructor class when State class will be
-		// non-static
-		buildSyntaxTable();
-		ecmaScriptParser();
-		buildStatementTable();
-		addModule(new Style());
-
 		state.reset();
 
 		if (o.hasOption("scope")) {
