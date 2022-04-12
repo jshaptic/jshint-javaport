@@ -19,5 +19,5 @@ apply from: "gradle/packaging.gradle"		// setup packaging settings and tasks
 apply from: "gradle/publishing.gradle"		// setup publishing settings and tasks
 
 wrapper {
-    gradleVersion = "7.3.3"
+    gradleVersion = "7.4.2"
 }
