@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.13.3-0] - 2022-04-01
+## [2.13.3-0] - 2022-04-12
 
 ### Changed
 
 - Ported all changes from JSHint v2.13.3
+- Changed regex engine from Nashorn to GraalVM
 
 ## [2.10.1-4] - 2022-01-14
 
